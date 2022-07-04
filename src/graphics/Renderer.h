@@ -10,6 +10,7 @@
 #include "Shader.h"
 #include "../window.h"
 #include "Renderable.h"
+#include "Cube.h"
 
 class Renderer {
 private:
@@ -33,10 +34,15 @@ public:
     void Update(ApplicationWindow *win);
 
 
+    void Cleanup(ApplicationWindow *win);
+
+    void DrawRenderableDebug(Renderable *r, ApplicationWindow *win);
+
 private:
     void InitImGui(ApplicationWindow *win);
     void UpdateImGui(ApplicationWindow *win);
     static std::unique_ptr<Shader> InitMainShader();
+
 };
 
 #endif //GUI_RENDERER_H

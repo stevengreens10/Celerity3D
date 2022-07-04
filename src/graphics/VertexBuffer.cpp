@@ -1,5 +1,6 @@
 #include "VertexBuffer.h"
 #include "GL/glew.h"
+#include <iostream>
 
 VertexBuffer::VertexBuffer(const void *data, unsigned int size) {
   unsigned int id;
@@ -7,10 +8,7 @@ VertexBuffer::VertexBuffer(const void *data, unsigned int size) {
   glBindBuffer(GL_ARRAY_BUFFER, id);
   glBufferData(GL_ARRAY_BUFFER, size, data, GL_DYNAMIC_DRAW);
   rendererID = id;
-}
-
-VertexBuffer::~VertexBuffer() {
-  glDeleteBuffers(1, &rendererID);
+  std::cout << "Creating vertex buf: " << rendererID << ", size: " << size << std::endl;
 }
 
 void VertexBuffer::Bind() const {

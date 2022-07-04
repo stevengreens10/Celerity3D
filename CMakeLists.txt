@@ -7,9 +7,7 @@ FILE(GLOB_RECURSE MainSources src/*.cpp)
 FILE(GLOB IMGUI_SOURCES vendor/imgui/*.cpp)
 list(APPEND IMGUI_SOURCES vendor/imgui/backends/imgui_impl_win32.cpp vendor/imgui/backends/imgui_impl_opengl3.cpp)
 
-list(REMOVE_ITEM MainSources src/main.cpp)
-
-add_executable(${PROJECT_NAME} ${MainSources} ${IMGUI_SOURCES} src/graphics/Renderable.h src/graphics/Cube.cpp src/graphics/Cube.h)
+add_executable(${PROJECT_NAME} ${MainSources} ${IMGUI_SOURCES})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
 

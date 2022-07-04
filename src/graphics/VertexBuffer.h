@@ -7,10 +7,10 @@ private:
 public:
     VertexBuffer(const void *data, unsigned int size);
 
-    ~VertexBuffer();
-
     void Bind() const;
     void Unbind() const;
+
+    inline unsigned int GetId() const { return rendererID; }
 };
 
 #endif //GUI_VERTEXBUFFER_H

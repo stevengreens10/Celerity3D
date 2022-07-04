@@ -8,10 +8,9 @@
 #include "graphics/Renderer.h"
 #include "graphics/Texture.h"
 #include "backends/imgui_impl_opengl3.h"
-#include "backends/imgui_impl_win32.h"
 #include "GLFW/glfw3.h"
 #include "graphics/Cube.h"
-#include <glm/glm.hpp>
+#include "backends/imgui_impl_win32.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wwritable-strings"
@@ -45,13 +44,15 @@ void handleEvent(EventType type, unsigned long p1, unsigned long p2) {
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow) {
 
-
+  ImGui_ImplWin32_EnableDpiAwareness();
   win = NewWindow(hInstance, &handleEvent, "Test window", INIT_WIDTH, INIT_HEIGHT);
   renderer = new Renderer();
   renderer->Init(win);
 
   auto texture = std::make_shared<Texture>("assets/images/square.png");
   Cube cube(texture.get(), renderer->MAIN_SHADER.get());
+  cube.pos = glm::vec3(INIT_WIDTH / 2, INIT_HEIGHT / 2, 0.0f);
+  cube.scale = 75;
 
   bool debug = true;
   while(win->running) {
@@ -59,19 +60,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
     renderer->NewFrame();
 
-
+    renderer->SetProjection(win->width, win->height);
     if(debug){
-      ImGui::Begin("Settings");
-      ImGui::SliderFloat("modelScale", &cube.scale, 50, 1000);
-
-      ImGui::SliderFloat("modelX", &cube.pos.x, 0, win->width);
-      ImGui::SliderFloat("modelY", &cube.pos.y, 0, win->height);
-      ImGui::SliderFloat("modelZ", &cube.pos.z, 0.2, 5);
-
-      ImGui::SliderFloat3("modelRotate", &cube.rot.x, 0, 359);
-
-      ImGui::Text("%.3f ms/frame (%.1f) FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-      ImGui::End();
+      ImGui::ShowDemoWindow(&debug);
+      renderer->DrawRenderableDebug(&cube, win);
     }
 
     renderer->Draw(cube);
@@ -80,10 +72,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
   }
 
   // Cleanup
-  ImGui_ImplOpenGL3_Shutdown();
-  ImGui::DestroyContext();
-  ImGui_ImplWin32_Shutdown();
-  wglDeleteContext(win->renderContext);
+  renderer->Cleanup(win);
 
   return 0;
 }

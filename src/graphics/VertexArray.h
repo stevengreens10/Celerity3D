@@ -8,6 +8,7 @@
 class VertexArray {
 private:
     unsigned int rendererID;
+    std::vector<unsigned int> bufIds;
 public:
     VertexArray();
 

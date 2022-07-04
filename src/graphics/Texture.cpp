@@ -11,6 +11,7 @@ Texture::Texture(const char *filePath)
   unsigned char* localBuffer = stbi_load(filePath, &width, &height, &BPP, 4);
 
   glGenTextures(1, &rendererId);
+  printf("Creating texture: %d\n", rendererId);
   glBindTexture(GL_TEXTURE_2D, rendererId);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -27,6 +28,7 @@ Texture::Texture(const char *filePath)
 }
 
 Texture::~Texture() {
+  printf("Deleting texture %d\n", rendererId);
   glDeleteTextures(1, &rendererId);
 }
 

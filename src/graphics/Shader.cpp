@@ -57,6 +57,11 @@ int Shader::GetUniformLocation(char *name) {
   if(uniformCache.contains(name)) return uniformCache[name];
 
   int location = glGetUniformLocation(rendererId, name);
+
+  if(location == -1) {
+    printf("WARN: Uniform %s not found", name);
+  }
+
   uniformCache[name] = location;
   return location;
 }

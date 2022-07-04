@@ -20,10 +20,17 @@ void Renderer::Init(ApplicationWindow *win) {
 
   InitImGui(win);
 
-  cameraPos = glm::vec3(0.0f, 0.0f, 1.0f);
-  cameraTarget = glm::vec3(0);
+  cameraPos = glm::vec3(0.0f, 0.0f, -2.0f);
+  cameraTarget = glm::vec3(0, 0, 1.0f);
   MAIN_SHADER = InitMainShader();
   Cube::InitBuffers();
+}
+
+void Renderer::Cleanup(ApplicationWindow *win) {
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui::DestroyContext();
+  ImGui_ImplWin32_Shutdown();
+  wglDeleteContext(win->renderContext);
 }
 
 void Renderer::Update(ApplicationWindow *win) {
@@ -44,17 +51,17 @@ void Renderer::NewFrame() {
 }
 
 void Renderer::Draw(const Renderable &r) const {
+
   r.shader->Bind();
+  r.texture->Bind();
   r.vao->Bind();
   r.ibo->Bind();
-  r.texture->Bind();
+
+  glm::mat4 view = glm::mat4(1.0f);//GetView();
+  glm::mat4 model = GetModel(glm::vec3(0.0f), r.scale, r.pos, r.rot);
   r.shader->SetUniform1i("u_Texture", 0);
-
-  glm::mat4 view = GetView();
-  glm::mat4 model = GetModel(glm::vec3(0.0f), r.scale, glm::vec3(100.0f, 100.0f, 0.0f), r.rot);
   r.shader->SetUniformMat4f("u_MVP", proj * view * model);
-
-  glDrawElements(GL_TRIANGLES, r.ibo->getCount(), GL_UNSIGNED_INT, nullptr);
+  glDrawElements(GL_TRIANGLES, (int) r.ibo->getCount(), GL_UNSIGNED_INT, nullptr);
 }
 
 void Renderer::SetProjection(int width, int height) {
@@ -78,7 +85,7 @@ glm::mat4 Renderer::GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelT
   glm::mat4 ref2originM = glm::translate(glm::mat4(1.0f), -pivot);
 
 // scale
-  glm::mat4 scaleM = glm::scale(glm::mat4(1.0), glm::vec3(modelScale));
+  glm::mat4 scaleM = glm::scale(glm::mat4(1.0), glm::vec3(modelScale, modelScale, modelScale));
 
 // rotate
   glm::mat4 rotationM(1.0);
@@ -96,7 +103,7 @@ glm::mat4 Renderer::GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelT
 
 void Renderer::InitImGui(ApplicationWindow *win) {
   IMGUI_CHECKVERSION();
-  ImGui_ImplWin32_EnableDpiAwareness();
+
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO(); (void)io;
 
@@ -138,4 +145,18 @@ void Renderer::UpdateImGui(ApplicationWindow *win) {
 
 std::unique_ptr<Shader> Renderer::InitMainShader() {
   return std::make_unique<Shader>("assets/shaders/shader.vert", "assets/shaders/shader.frag");
+}
+
+void Renderer::DrawRenderableDebug(Renderable *r, ApplicationWindow *win) {
+  ImGui::Begin("Settings");
+  ImGui::SliderFloat("modelScale", &(r->scale), 50, 150);
+
+  ImGui::SliderFloat("modelX", &(r->pos.x), 0, win->width);
+  ImGui::SliderFloat("modelY", &(r->pos.y), 0, win->height);
+  ImGui::SliderFloat("modelZ", &(r->pos.z), 0.2, 5);
+
+  ImGui::SliderFloat3("modelRotate", &(r->rot.x), 0, 359);
+
+  ImGui::Text("%.3f ms/frame (%.1f) FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+  ImGui::End();
 }
