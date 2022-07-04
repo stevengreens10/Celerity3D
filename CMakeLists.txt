@@ -9,7 +9,7 @@ list(APPEND IMGUI_SOURCES vendor/imgui/backends/imgui_impl_win32.cpp vendor/imgu
 
 list(REMOVE_ITEM MainSources src/main.cpp)
 
-add_executable(${PROJECT_NAME} ${MainSources} ${IMGUI_SOURCES})
+add_executable(${PROJECT_NAME} ${MainSources} ${IMGUI_SOURCES} src/graphics/Renderable.h src/graphics/Cube.cpp src/graphics/Cube.h)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
 

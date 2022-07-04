@@ -1,6 +1,6 @@
 #include "Shader.h"
 
-Shader::Shader(char *vertFile, char *fragFile) {
+Shader::Shader(const char *vertFile, const char *fragFile) {
   char *vertSource = readFile(vertFile);
   char *fragSource = readFile(fragFile);
 

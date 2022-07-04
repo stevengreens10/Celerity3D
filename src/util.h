@@ -16,6 +16,6 @@ typedef struct {
     Float2 uv;
 } Vertex;
 
-char *readFile(char *path);
+char *readFile(const char *path);
 
 #endif //GUI_UTIL_H

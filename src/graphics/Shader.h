@@ -15,7 +15,7 @@ private:
   unsigned int rendererId;
   std::unordered_map<char*, int> uniformCache;
 public:
-    Shader(char *vertFile, char *fragFile);
+    Shader(const char *vertFile, const char *fragFile);
     ~Shader();
 
     void Bind() const;

@@ -1,6 +1,6 @@
 #include "util.h"
 
-char *readFile(char *path) {
+char *readFile(const char *path) {
   FILE *file = fopen(path, "r");
   if(!file) {
     return nullptr;
