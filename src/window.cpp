@@ -154,6 +154,8 @@ bool HandleWindowMessage() {
   return msg.message != WM_QUIT;
 }
 
+bool mouseDisabled = false;
+
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -175,8 +177,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     case WM_MOUSEMOVE:
 //      appWin->eventCallback(MOUSEMOVE_EVENT, wParam, lParam);
       break;
+    case WM_SETFOCUS: {
+      if (mouseDisabled) {
+        disableMouse(hWnd);
+      }
+    }
     case WM_INPUT: {
-      printf("Raw input: ");
       UINT size = 0;
       auto ri = (HRAWINPUT) lParam;
       RAWINPUT *data;
@@ -187,16 +193,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
       if (GetRawInputData(ri, RID_INPUT,
                           data, &size,
                           sizeof(RAWINPUTHEADER)) == (UINT) -1) {
-        printf("Error: %s\n", "Win32: Failed to retrieve raw input data");
         break;
       }
 
       if (data->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
-        printf(" Absolute\n");
+        printf("Absolute mouse mode not supported yet\n");
         dx = data->data.mouse.lLastX;// - lastCursorPosX;
         dy = data->data.mouse.lLastY;// - lastCursorPosY;
       } else {
-        printf(" Relative\n");
         dx = data->data.mouse.lLastX;
         dy = data->data.mouse.lLastY;
       }
@@ -225,7 +229,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
   return 0;
 }
 
-bool mouseDisabled = false;
 
 void disableMouse(HWND hWnd) {
   mouseDisabled = true;
@@ -240,4 +243,15 @@ void disableMouse(HWND hWnd) {
   ClientToScreen(hWnd, (POINT *) &clipRect.right);
   ClipCursor(&clipRect);
   ShowCursor(false);
+}
+
+void enableMouse() {
+  const RAWINPUTDEVICE rid = {0x01, 0x02, RIDEV_REMOVE, nullptr};
+
+  ClipCursor(nullptr);
+  ShowCursor(true);
+  if (!RegisterRawInputDevices(&rid, 1, sizeof(rid))) {
+    printf("Error: %s\n",
+           "Win32: Failed to remove raw input device");
+  }
 }

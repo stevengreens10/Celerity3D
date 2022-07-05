@@ -21,14 +21,21 @@ ApplicationWindow *win;
 
 using std::cos, std::sin, std::acos;
 
-float lastX, lastY;
-bool firstMouse = true;
+bool shouldDisableMouse = false;
 
 void handleEvent(EventType type, unsigned long p1, unsigned long p2) {
   if (type == KEYDOWN_EVENT) {
     if (p1 == VK_ESCAPE) {
       printf("Closing\n");
       win->running = false;
+    }
+    if (p1 == VK_RETURN) {
+      if (shouldDisableMouse) {
+        enableMouse();
+      } else {
+        disableMouse(win->window);
+      }
+      shouldDisableMouse = !shouldDisableMouse;
     }
 
     float speed = 5.0f;
@@ -78,7 +85,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
   ImGui_ImplWin32_EnableDpiAwareness();
   win = NewWindow(hInstance, &handleEvent, "Test window", INIT_WIDTH, INIT_HEIGHT);
-  disableMouse(win->window);
   renderer = new Renderer();
   renderer->Init(win);
 
