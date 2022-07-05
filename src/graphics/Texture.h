@@ -9,12 +9,15 @@ private:
     int width, height, BPP;
 public:
     Texture(const char *filePath);
+
     ~Texture();
 
     void Bind(unsigned int slot = 0) const;
-    static void Unbind() ;
+
+    static void Unbind();
 
     inline int GetWidth() const { return width; }
+
     inline int GetHeight() const { return height; }
 
 

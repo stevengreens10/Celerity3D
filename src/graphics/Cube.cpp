@@ -4,15 +4,14 @@
 
 #include "Cube.h"
 
-Cube::Cube(Texture *t, Shader *s) {
-  texture = t;
+Cube::Cube(Material &m) : Renderable(std::reference_wrapper<Material>(m)) {
   pos = glm::vec3(0.0f);
   scale = 1.0f;
   rot = glm::vec3(0.0f);
 
   vao = CUBE_VAO.get();
   ibo = CUBE_IBO.get();
-  shader = s;
+  material = m;
 }
 
 
@@ -21,15 +20,15 @@ std::shared_ptr<VertexArray> Cube::CreateVertexBuffer() {
   float x = -0.5, y = -0.5, z = -0.5;
   Vertex vertices[] = {
           // Front vertices
-          {{x, y, z},{0.0f, 0.0f}},
-          {{x+size, y, z},{1.0f, 0.0f}},
-          {{x+size, y+size, z},{1.0f, 1.0f}},
-          {{x, y+size, z},{0.0f, 1.0f}},
+          {{x,        y,        z},        {0.0f, 0.0f}},
+          {{x + size, y,        z},        {1.0f, 0.0f}},
+          {{x + size, y + size, z},        {1.0f, 1.0f}},
+          {{x,        y + size, z},        {0.0f, 1.0f}},
           // Back vertices
-          {{x, y, z-size},{0.0f, 0.0f}},
-          {{x+size, y, z-size},{1.0f, 0.0f}},
-          {{x+size, y+size, z-size},{1.0f, 1.0f}},
-          {{x, y+size, z-size},{0.0f, 1.0f}}
+          {{x,        y,        z + size}, {1.0f, 0.0f}},
+          {{x + size, y,        z + size}, {0.0f, 0.0f}},
+          {{x + size, y + size, z + size}, {0.0f, 1.0f}},
+          {{x,        y + size, z + size}, {1.0f, 1.0f}}
   };
 
 

@@ -15,15 +15,16 @@ const EventType RESIZE_EVENT = 3;
 typedef void (*WinEventCallback)(EventType, unsigned long, unsigned long);
 
 typedef struct {
-  HWND window;
-  HDC deviceContext;
-  HGLRC renderContext;
-  WinEventCallback eventCallback;
-  int width, height;
-  bool running = true;
+    HWND window;
+    HDC deviceContext;
+    HGLRC renderContext;
+    WinEventCallback eventCallback;
+    int width, height;
+    bool running = true;
 } ApplicationWindow;
 
-ApplicationWindow * WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, char *title, int w, int h);
+ApplicationWindow *WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, char *title, int w, int h);
+
 bool HandleWindowMessage(HWND hWnd);
 
 #endif //GUI_WINDOW_H

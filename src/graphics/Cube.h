@@ -11,10 +11,13 @@ private:
     inline static std::shared_ptr<VertexArray> CUBE_VAO;
     inline static std::shared_ptr<IndexBuffer> CUBE_IBO;
 public:
-    Cube(Texture *texture, Shader *shader);
+    Cube(Material &material);
+
     static void InitBuffers();
+
 private:
     static std::shared_ptr<VertexArray> CreateVertexBuffer();
+
     static std::shared_ptr<IndexBuffer> CreateIndexBuffer();
 };
 

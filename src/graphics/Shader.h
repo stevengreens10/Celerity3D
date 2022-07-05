@@ -1,9 +1,6 @@
 #ifndef GUI_SHADER_H
 #define GUI_SHADER_H
 
-// If matrices need to be transposed
-#define TRANSPOSE false
-
 #include "../util.h"
 #include "GL/glew.h"
 #include "glm/detail/type_mat4x4.hpp"
@@ -11,25 +8,18 @@
 
 class Shader {
 
-private:
-  unsigned int rendererId;
-  std::unordered_map<char*, int> uniformCache;
 public:
+    unsigned int rendererId;
+
     Shader(const char *vertFile, const char *fragFile);
+
     ~Shader();
 
     void Bind() const;
-    static void Unbind() ;
 
-    // Set uniforms
-    void SetUniform4f(char *name, float v0, float v1, float v2, float v3);
-    void SetUniform1i(char *name, int v0);
-    void SetUniform1f(char *name, float v0);
-
-    void SetUniformMat4f(char *name, glm::mat4 mat);
+    static void Unbind();
 
 private:
-    int GetUniformLocation(char *name);
     static unsigned int CompileShader(char *source, GLenum type);
 };
 

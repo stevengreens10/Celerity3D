@@ -6,16 +6,18 @@
 #include "IndexBuffer.h"
 #include "Shader.h"
 #include "Texture.h"
+#include "Material.h"
 
 class Renderable {
 public:
-    glm::vec3 pos;
-    float scale;
-    glm::vec3 rot;
-    VertexArray *vao;
-    IndexBuffer *ibo;
-    Shader *shader;
-    Texture *texture;
+    Renderable(std::reference_wrapper<Material> material) : material(material) {}
+
+    glm::vec3 pos{};
+    float scale{};
+    glm::vec3 rot{};
+    VertexArray *vao{};
+    IndexBuffer *ibo{};
+    std::reference_wrapper<Material> material;
 };
 
 

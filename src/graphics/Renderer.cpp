@@ -18,10 +18,12 @@ void Renderer::Init(ApplicationWindow *win) {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+  glEnable(GL_DEPTH_TEST);
+
   InitImGui(win);
 
-  cameraPos = glm::vec3(0.0f, 0.0f, -2.0f);
-  cameraTarget = glm::vec3(0, 0, 1.0f);
+  cameraPos = glm::vec3(0.0f, 0.0f, -100.0f);
+  RotateCamera(0.0f, -90.0f);
   MAIN_SHADER = InitMainShader();
   Cube::InitBuffers();
 }
@@ -52,32 +54,34 @@ void Renderer::NewFrame() {
 
 void Renderer::Draw(const Renderable &r) const {
 
-  r.shader->Bind();
-  r.texture->Bind();
+
   r.vao->Bind();
   r.ibo->Bind();
 
-  glm::mat4 view = glm::mat4(1.0f);//GetView();
+  glm::mat4 view = GetView();
   glm::mat4 model = GetModel(glm::vec3(0.0f), r.scale, r.pos, r.rot);
-  r.shader->SetUniform1i("u_Texture", 0);
-  r.shader->SetUniformMat4f("u_MVP", proj * view * model);
+
+  glm::mat4 mvp = proj * view * model;
+  r.material.get().SetUniform("u_MVP", UM4f, (void *) &mvp);
+  r.material.get().Bind();
   glDrawElements(GL_TRIANGLES, (int) r.ibo->getCount(), GL_UNSIGNED_INT, nullptr);
 }
 
 void Renderer::SetProjection(int width, int height) {
-  proj = glm::ortho(0.0f, (float) width, 0.0f, (float) height, 0.0f, 100.0f);
+  proj = glm::perspective(glm::radians(59.0f), (float) width / (float) height, 0.1f, 1000.0f);
+
+}
+
+void Renderer::RotateCamera(float yaw, float pitch) {
+  this->yaw = yaw;
+  this->pitch = pitch;
+  cameraDir.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+  cameraDir.y = sin(glm::radians(pitch));
+  cameraDir.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 }
 
 glm::mat4 Renderer::GetView() const {
-  glm::vec3 cameraDir = glm::normalize(cameraPos - cameraTarget);
-
-  glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-  glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDir));
-  glm::vec3 cameraUp = glm::cross(cameraDir, cameraRight);
-
-
-  glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, up);
-  return view;
+  return glm::lookAt(cameraPos, cameraPos + glm::normalize(cameraDir), glm::vec3(0, 1, 0));
 }
 
 glm::mat4 Renderer::GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelTranslate, glm::vec3 modelRotate) const {
@@ -105,7 +109,8 @@ void Renderer::InitImGui(ApplicationWindow *win) {
   IMGUI_CHECKVERSION();
 
   ImGui::CreateContext();
-  ImGuiIO& io = ImGui::GetIO(); (void)io;
+  ImGuiIO &io = ImGui::GetIO();
+  (void) io;
 
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
@@ -114,9 +119,8 @@ void Renderer::InitImGui(ApplicationWindow *win) {
   ImGui::StyleColorsClassic();
 
   // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
-  ImGuiStyle& style = ImGui::GetStyle();
-  if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-  {
+  ImGuiStyle &style = ImGui::GetStyle();
+  if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
     style.WindowRounding = 0.0f;
     style.Colors[ImGuiCol_WindowBg].w = 1.0f;
   }
@@ -128,14 +132,14 @@ void Renderer::InitImGui(ApplicationWindow *win) {
 void Renderer::UpdateImGui(ApplicationWindow *win) {
   // Rendering
   ImGui::Render();
-  ImGuiIO& io = ImGui::GetIO(); (void)io;
-  glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+  ImGuiIO &io = ImGui::GetIO();
+  (void) io;
+  glViewport(0, 0, (int) io.DisplaySize.x, (int) io.DisplaySize.y);
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
   // Update and Render additional Platform Windows
   // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
-  if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-  {
+  if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
     HDC backup_current_context = GetDC(win->window);
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
@@ -147,15 +151,16 @@ std::unique_ptr<Shader> Renderer::InitMainShader() {
   return std::make_unique<Shader>("assets/shaders/shader.vert", "assets/shaders/shader.frag");
 }
 
-void Renderer::DrawRenderableDebug(Renderable *r, ApplicationWindow *win) {
-  ImGui::Begin("Settings");
+void Renderer::DrawRenderableDebug(char *name, Renderable *r, ApplicationWindow *win) {
+  ImGui::Begin(name);
   ImGui::SliderFloat("modelScale", &(r->scale), 50, 150);
 
-  ImGui::SliderFloat("modelX", &(r->pos.x), 0, win->width);
-  ImGui::SliderFloat("modelY", &(r->pos.y), 0, win->height);
-  ImGui::SliderFloat("modelZ", &(r->pos.z), 0.2, 5);
+  ImGui::SliderFloat3("modelX", &(r->pos.x), -300, 300);
 
   ImGui::SliderFloat3("modelRotate", &(r->rot.x), 0, 359);
+
+  ImGui::SliderFloat3("cameraPos", &(cameraPos.x), -300, 300);
+  ImGui::SliderFloat3("cameraDir", &(cameraDir.x), -1, 1);
 
   ImGui::Text("%.3f ms/frame (%.1f) FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
   ImGui::End();
