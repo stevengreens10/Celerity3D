@@ -177,11 +177,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     case WM_MOUSEMOVE:
 //      appWin->eventCallback(MOUSEMOVE_EVENT, wParam, lParam);
       break;
-    case WM_SETFOCUS: {
-      if (mouseDisabled) {
+    case WM_KILLFOCUS:
+      printf("Lose focus\n");
+      if (mouseDisabled)
+        enableMouse();
+      break;
+    case WM_LBUTTONDOWN:
+    case WM_SETFOCUS:
+      if (!mouseDisabled) {
         disableMouse(hWnd);
+        SetFocus(hWnd);
+        break;
       }
-    }
     case WM_INPUT: {
       UINT size = 0;
       auto ri = (HRAWINPUT) lParam;
@@ -246,8 +253,8 @@ void disableMouse(HWND hWnd) {
 }
 
 void enableMouse() {
+  mouseDisabled = false;
   const RAWINPUTDEVICE rid = {0x01, 0x02, RIDEV_REMOVE, nullptr};
-
   ClipCursor(nullptr);
   ShowCursor(true);
   if (!RegisterRawInputDevices(&rid, 1, sizeof(rid))) {

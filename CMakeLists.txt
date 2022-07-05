@@ -21,6 +21,5 @@ target_include_directories(${PROJECT_NAME}
         PUBLIC ./vendor/stb
         PUBLIC ./vendor/glm
         PUBLIC ./vendor/imgui)
-target_link_directories(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/glfw/src
-        PRIVATE ${CMAKE_BINARY_DIR}/lib)
+target_link_directories(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/lib)
 target_link_libraries(${PROJECT_NAME} libglew32d.a d2d1 opengl32 Ws2_32 ole32 comctl32 gdi32 comdlg32 uuid dwmapi xinput)

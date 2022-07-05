@@ -9,6 +9,5 @@ This is a personal project for me to learn OpenGL and Win32 programming.
 - FPS style controls to fly around scene
 - ImGui support to create windows and change values live
 ## Inputs
-- ENTER to capture the mouse for camera control
-- W/A/S/D to move around the scene
-- ESC to close the application
+- W/A/S/D + Mouse to move around the scene
+- ESC to regain mouse control

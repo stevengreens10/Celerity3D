@@ -26,16 +26,8 @@ bool shouldDisableMouse = false;
 void handleEvent(EventType type, unsigned long p1, unsigned long p2) {
   if (type == KEYDOWN_EVENT) {
     if (p1 == VK_ESCAPE) {
-      printf("Closing\n");
-      win->running = false;
-    }
-    if (p1 == VK_RETURN) {
-      if (shouldDisableMouse) {
-        enableMouse();
-      } else {
-        disableMouse(win->window);
-      }
-      shouldDisableMouse = !shouldDisableMouse;
+      // Lose focus on escape
+      SetFocus(nullptr);
     }
 
     float speed = 5.0f;
