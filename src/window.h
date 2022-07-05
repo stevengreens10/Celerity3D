@@ -28,4 +28,6 @@ WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, const std:
 
 bool HandleWindowMessage();
 
+void disableMouse(HWND hWnd);
+
 #endif //GUI_WINDOW_H

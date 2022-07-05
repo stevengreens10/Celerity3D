@@ -15,6 +15,7 @@
 class Renderer {
 private:
     glm::mat4 proj;
+    glm::mat4 view;
 public:
     inline static std::unique_ptr<Shader> MAIN_SHADER;
 
@@ -24,7 +25,7 @@ public:
 
     void SetProjection(int width, int height);
 
-    [[nodiscard]] glm::mat4 GetView() const;
+    void ResetView();
 
     static glm::mat4 GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelTranslate, glm::vec3 modelRotate);
 

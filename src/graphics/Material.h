@@ -8,7 +8,7 @@
 #include "Shader.h"
 
 enum UniformType {
-    U4f, U4i, UM4f
+    U4f, U3f, U4i, UM4f
 };
 
 struct UniformMapping {
@@ -25,9 +25,9 @@ private:
     std::unordered_map<std::string, int> uniformCache;
 public:
     Shader &shader;
-    Texture &texture;
+    Texture *texture;
 
-    Material(Shader &s, Texture &t) :
+    Material(Shader &s, Texture *t) :
             shader(s), texture(t) {}
 
 

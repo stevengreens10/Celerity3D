@@ -1,13 +1,8 @@
 #include "Cube.h"
 
 Cube::Cube(Material &m) : Renderable(std::reference_wrapper<Material>(m)) {
-  pos = glm::vec3(0.0f);
-  scale = 1.0f;
-  rot = glm::vec3(0.0f);
-
   vao = CUBE_VAO.get();
   ibo = CUBE_IBO.get();
-  material = m;
 }
 
 

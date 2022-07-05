@@ -7,6 +7,7 @@
 #include "../log.h"
 #include "GL/wglew.h"
 #include "Cube.h"
+#include "TriangularPrism.h"
 
 void Renderer::Init(ApplicationWindow *win) {
   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -22,10 +23,11 @@ void Renderer::Init(ApplicationWindow *win) {
 
   Renderer::InitImGui(win);
 
-  cameraPos = glm::vec3(0.0f, 0.0f, -100.0f);
-  RotateCamera(0.0f, -90.0f);
+  cameraPos = glm::vec3(0.0f, 0.0f, -250.0f);
+  RotateCamera(90.0f, 0.0f);
   MAIN_SHADER = InitMainShader();
   Cube::InitBuffers();
+  TriangularPrism::InitBuffers();
 }
 
 void Renderer::Cleanup(ApplicationWindow *win) {
@@ -53,12 +55,9 @@ void Renderer::NewFrame() {
 }
 
 void Renderer::Draw(const Renderable &r) const {
-
-
   r.vao->Bind();
   r.ibo->Bind();
 
-  glm::mat4 view = GetView();
   glm::mat4 model = GetModel(glm::vec3(0.0f), r.scale, r.pos, r.rot);
 
   glm::mat4 mvp = proj * view * model;
@@ -79,10 +78,11 @@ void Renderer::RotateCamera(float _yaw, float _pitch) {
   cameraDir.y = sin(glm::radians(pitch));
   cameraDir.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
   cameraDir = glm::normalize(cameraDir);
+  ResetView();
 }
 
-glm::mat4 Renderer::GetView() const {
-  return glm::lookAt(cameraPos, cameraPos + glm::normalize(cameraDir), glm::vec3(0, 1, 0));
+void Renderer::ResetView() {
+  view = glm::lookAt(cameraPos, cameraPos + glm::normalize(cameraDir), glm::vec3(0, 1, 0));
 }
 
 glm::mat4 Renderer::GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelTranslate, glm::vec3 modelRotate) {

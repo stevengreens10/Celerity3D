@@ -147,7 +147,7 @@ WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, const std:
 bool HandleWindowMessage() {
   MSG msg;
   ZeroMemory(&msg, sizeof(msg));
-  if (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
+  while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
     ::TranslateMessage(&msg);
     ::DispatchMessage(&msg);
   }
@@ -173,8 +173,38 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
       appWin->eventCallback(KEYDOWN_EVENT, wParam, lParam);
       break;
     case WM_MOUSEMOVE:
-      appWin->eventCallback(MOUSEMOVE_EVENT, wParam, lParam);
+//      appWin->eventCallback(MOUSEMOVE_EVENT, wParam, lParam);
       break;
+    case WM_INPUT: {
+      printf("Raw input: ");
+      UINT size = 0;
+      auto ri = (HRAWINPUT) lParam;
+      RAWINPUT *data;
+      int dx, dy;
+      GetRawInputData(ri, RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER));
+      data = static_cast<RAWINPUT *>(calloc(1, sizeof(RAWINPUT)));
+
+      if (GetRawInputData(ri, RID_INPUT,
+                          data, &size,
+                          sizeof(RAWINPUTHEADER)) == (UINT) -1) {
+        printf("Error: %s\n", "Win32: Failed to retrieve raw input data");
+        break;
+      }
+
+      if (data->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
+        printf(" Absolute\n");
+        dx = data->data.mouse.lLastX;// - lastCursorPosX;
+        dy = data->data.mouse.lLastY;// - lastCursorPosY;
+      } else {
+        printf(" Relative\n");
+        dx = data->data.mouse.lLastX;
+        dy = data->data.mouse.lLastY;
+      }
+
+      appWin->eventCallback(MOUSEMOVE_EVENT, dx, dy);
+
+      break;
+    }
     case WM_DPICHANGED:
       if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports) {
         //const int dpi = HIWORD(wParam);
@@ -193,4 +223,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
       return DefWindowProc(hWnd, message, wParam, lParam);
   }
   return 0;
+}
+
+bool mouseDisabled = false;
+
+void disableMouse(HWND hWnd) {
+  mouseDisabled = true;
+  const RAWINPUTDEVICE rid = {0x01, 0x02, 0, hWnd};
+  if (!RegisterRawInputDevices(&rid, 1, sizeof(rid))) {
+    printf("Error: Could not register raw mouse input");
+  }
+
+  RECT clipRect;
+  GetClientRect(hWnd, &clipRect);
+  ClientToScreen(hWnd, (POINT *) &clipRect.left);
+  ClientToScreen(hWnd, (POINT *) &clipRect.right);
+  ClipCursor(&clipRect);
+  ShowCursor(false);
 }

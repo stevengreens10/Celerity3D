@@ -7,8 +7,10 @@ void Material::SetUniform(const std::string &name, UniformType type, void *data)
 
 void Material::Bind() {
   shader.Bind();
-  texture.Bind(0);
-  glUniform1i(GetUniformLocation("u_Texture"), 0);
+  if (texture) {
+    texture->Bind(0);
+    glUniform1i(GetUniformLocation("u_Texture"), 0);
+  }
   for (const auto &uMapping: uniforms) {
     auto name = uMapping.first;
     auto u = uMapping.second;
@@ -19,6 +21,11 @@ void Material::Bind() {
       case U4f: {
         auto floats = (float *) data;
         glUniform4f(location, floats[0], floats[1], floats[2], floats[3]);
+        break;
+      }
+      case U3f: {
+        auto floats = (float *) data;
+        glUniform3f(location, floats[0], floats[1], floats[2]);
         break;
       }
       case U4i: {
