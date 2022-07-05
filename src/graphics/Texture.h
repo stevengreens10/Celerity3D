@@ -2,13 +2,14 @@
 #define GUI_TEXTURE_H
 
 #include <GL/glew.h>
+#include <string>
 
 class Texture {
 private:
     unsigned int rendererId;
     int width, height, BPP;
 public:
-    Texture(const char *filePath);
+    explicit Texture(const std::string &filePath);
 
     ~Texture();
 
@@ -16,9 +17,9 @@ public:
 
     static void Unbind();
 
-    inline int GetWidth() const { return width; }
+    [[nodiscard]] inline int GetWidth() const { return width; }
 
-    inline int GetHeight() const { return height; }
+    [[nodiscard]] inline int GetHeight() const { return height; }
 
 
 };

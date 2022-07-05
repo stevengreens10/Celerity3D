@@ -7,7 +7,7 @@ FILE(GLOB_RECURSE MainSources src/*.cpp)
 FILE(GLOB IMGUI_SOURCES vendor/imgui/*.cpp)
 list(APPEND IMGUI_SOURCES vendor/imgui/backends/imgui_impl_win32.cpp vendor/imgui/backends/imgui_impl_opengl3.cpp)
 
-add_executable(${PROJECT_NAME} ${MainSources} ${IMGUI_SOURCES} src/graphics/Material.cpp src/graphics/Material.h)
+add_executable(${PROJECT_NAME} ${MainSources} ${IMGUI_SOURCES})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
 

@@ -11,7 +11,7 @@ private:
     inline static std::shared_ptr<VertexArray> CUBE_VAO;
     inline static std::shared_ptr<IndexBuffer> CUBE_IBO;
 public:
-    Cube(Material &material);
+    explicit Cube(Material &material);
 
     static void InitBuffers();
 

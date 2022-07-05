@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <GL/glew.h>
 #include <functional>
+#include <string>
 
 #ifndef GUI_WINDOW_H
 #define GUI_WINDOW_H
@@ -11,20 +12,20 @@ const EventType KEYUP_EVENT = 1;
 const EventType MOUSEMOVE_EVENT = 2;
 const EventType RESIZE_EVENT = 3;
 
-//typedef std::function<void(EventType, unsigned long, unsigned long)> WinEventCallback;
 typedef void (*WinEventCallback)(EventType, unsigned long, unsigned long);
 
-typedef struct {
-    HWND window;
-    HDC deviceContext;
-    HGLRC renderContext;
-    WinEventCallback eventCallback;
-    int width, height;
+struct ApplicationWindow {
+    HWND window{};
+    HDC deviceContext{};
+    HGLRC renderContext{};
+    WinEventCallback eventCallback = nullptr;
+    int width = 0, height = 0;
     bool running = true;
-} ApplicationWindow;
+};
 
-ApplicationWindow *WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, char *title, int w, int h);
+ApplicationWindow *
+WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, const std::string &title, int w, int h);
 
-bool HandleWindowMessage(HWND hWnd);
+bool HandleWindowMessage();
 
 #endif //GUI_WINDOW_H

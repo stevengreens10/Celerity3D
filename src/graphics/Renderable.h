@@ -10,7 +10,7 @@
 
 class Renderable {
 public:
-    Renderable(std::reference_wrapper<Material> material) : material(material) {}
+    explicit Renderable(std::reference_wrapper<Material> material) : material(material) {}
 
     glm::vec3 pos{};
     float scale{};

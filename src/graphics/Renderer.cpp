@@ -20,7 +20,7 @@ void Renderer::Init(ApplicationWindow *win) {
 
   glEnable(GL_DEPTH_TEST);
 
-  InitImGui(win);
+  Renderer::InitImGui(win);
 
   cameraPos = glm::vec3(0.0f, 0.0f, -100.0f);
   RotateCamera(0.0f, -90.0f);
@@ -36,11 +36,11 @@ void Renderer::Cleanup(ApplicationWindow *win) {
 }
 
 void Renderer::Update(ApplicationWindow *win) {
-  UpdateImGui(win);
+  Renderer::UpdateImGui(win);
   SwapBuffers(win->deviceContext);
 }
 
-void Renderer::Clear() const {
+void Renderer::Clear() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear Screen And Depth Buffer
 }
 
@@ -72,19 +72,20 @@ void Renderer::SetProjection(int width, int height) {
 
 }
 
-void Renderer::RotateCamera(float yaw, float pitch) {
-  this->yaw = yaw;
-  this->pitch = pitch;
+void Renderer::RotateCamera(float _yaw, float _pitch) {
+  yaw = _yaw;
+  pitch = _pitch;
   cameraDir.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
   cameraDir.y = sin(glm::radians(pitch));
   cameraDir.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+  cameraDir = glm::normalize(cameraDir);
 }
 
 glm::mat4 Renderer::GetView() const {
   return glm::lookAt(cameraPos, cameraPos + glm::normalize(cameraDir), glm::vec3(0, 1, 0));
 }
 
-glm::mat4 Renderer::GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelTranslate, glm::vec3 modelRotate) const {
+glm::mat4 Renderer::GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelTranslate, glm::vec3 modelRotate) {
 // translate "pivot" to origin
   glm::mat4 ref2originM = glm::translate(glm::mat4(1.0f), -pivot);
 
@@ -151,8 +152,8 @@ std::unique_ptr<Shader> Renderer::InitMainShader() {
   return std::make_unique<Shader>("assets/shaders/shader.vert", "assets/shaders/shader.frag");
 }
 
-void Renderer::DrawRenderableDebug(char *name, Renderable *r, ApplicationWindow *win) {
-  ImGui::Begin(name);
+void Renderer::DrawRenderableDebug(const std::string &name, Renderable *r) {
+  ImGui::Begin(name.c_str());
   ImGui::SliderFloat("modelScale", &(r->scale), 50, 150);
 
   ImGui::SliderFloat3("modelX", &(r->pos.x), -300, 300);

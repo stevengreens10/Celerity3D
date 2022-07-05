@@ -3,8 +3,6 @@
 #include <bits/stdc++.h>
 
 #include <imgui.h>
-#include <backends/imgui_impl_win32.h>
-#include <backends/imgui_impl_opengl3.h>
 #include <imgui_internal.h>
 
 #include "window.h"
@@ -20,7 +18,7 @@ int InitGL(GLvoid)                                      // All Setup For OpenGL 
   if (glewInit() != GLEW_OK) {
     printf("Could not init glew");
     return FALSE;
-  };
+  }
   glShadeModel(GL_SMOOTH);                            // Enable Smooth Shading
   glClearColor(0.20f, 0.90f, 0.92f, 0.5f);               // Set Background
   glClearDepth(1.0f);                                 // Depth Buffer Setup
@@ -47,7 +45,7 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height)     // Resize And Initialize
 
 
 ApplicationWindow *
-WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, char *title, int width, int height) {
+WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, const std::string &title, int width, int height) {
   if (!wcex) {
     wcex = std::make_unique<WNDCLASSEX>();
     wcex->cbSize = sizeof(WNDCLASSEX);
@@ -69,7 +67,7 @@ WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, char *titl
     exit(1);
   }
 
-  auto hWnd = CreateWindow(szWindowClass, TEXT(title), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+  auto hWnd = CreateWindow(szWindowClass, TEXT(title.c_str()), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
                            width, height, nullptr, nullptr, hInstance, nullptr);
 
   if (!hWnd) {
@@ -121,9 +119,6 @@ WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, char *titl
     printf("ERROR: Could not create render context");
     exit(1);
   }
-  // Setup Dear ImGui binding
-//  InitImGui(hWnd);
-
 
   if (!wglMakeCurrent(hDC, hRC)) {
     printf("ERROR: Could not activate render context");
@@ -133,7 +128,7 @@ WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, char *titl
   auto appWindow = static_cast<ApplicationWindow *>(malloc(sizeof(ApplicationWindow)));
   *appWindow = ApplicationWindow{hWnd, hDC, hRC, eventCallback, width, height};
   SetLastError(0);
-  int retVal = SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR) appWindow);
+  SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR) appWindow);
 
   ShowWindow(hWnd, SW_SHOW);
   SetForegroundWindow(hWnd);
@@ -149,10 +144,10 @@ WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, char *titl
   return appWindow;
 }
 
-bool HandleWindowMessage(HWND hWnd) {
+bool HandleWindowMessage() {
   MSG msg;
   ZeroMemory(&msg, sizeof(msg));
-  if (::PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
+  if (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
     ::TranslateMessage(&msg);
     ::DispatchMessage(&msg);
   }
@@ -185,7 +180,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         //const int dpi = HIWORD(wParam);
         //printf("WM_DPICHANGED to %d (%.0f%%)\n", dpi, (float)dpi / 96.0f * 100.0f);
         const RECT *suggested_rect = (RECT *) lParam;
-        ::SetWindowPos(hWnd, NULL, suggested_rect->left, suggested_rect->top,
+        ::SetWindowPos(hWnd, nullptr, suggested_rect->left, suggested_rect->top,
                        suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top,
                        SWP_NOZORDER | SWP_NOACTIVATE);
       }

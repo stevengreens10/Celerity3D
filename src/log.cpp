@@ -1,5 +1,6 @@
 #include "log.h"
 #include <cstdio>
+#include <string>
 
 void APIENTRY GLDebugMessageCallback(GLenum
                                      source,
@@ -10,9 +11,9 @@ void APIENTRY GLDebugMessageCallback(GLenum
                                      const GLchar *msg,
                                      const void *data
 ) {
-  char *_source;
-  char *_type;
-  char *_severity;
+  std::string _source;
+  std::string _type;
+  std::string _severity;
 
   switch (source) {
     case GL_DEBUG_SOURCE_API:
@@ -36,9 +37,6 @@ void APIENTRY GLDebugMessageCallback(GLenum
       break;
 
     case GL_DEBUG_SOURCE_OTHER:
-      _source = "UNKNOWN";
-      break;
-
     default:
       _source = "UNKNOWN";
       break;
@@ -101,7 +99,8 @@ void APIENTRY GLDebugMessageCallback(GLenum
   }
 
   printf("%d: %s of %s severity, raised from %s: %s\n",
-         id, _type, _severity, _source, msg);
+         id, _type.c_str(), _severity.c_str(), _source.c_str(), msg);
+  printf("%s %d\n", data, length);
 
   __debugbreak();
 

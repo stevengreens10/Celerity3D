@@ -2,18 +2,12 @@
 #define GUI_UTIL_H
 
 #include <fstream>
+#include "glm/vec3.hpp"
+#include "glm/vec2.hpp"
 
 typedef struct {
-    float f1, f2;
-} Float2;
-
-typedef struct {
-    float f1, f2, f3;
-} Float3;
-
-typedef struct {
-    Float3 pos;
-    Float2 uv;
+    glm::vec3 pos;
+    glm::vec2 uv;
 } Vertex;
 
 char *readFile(const char *path);

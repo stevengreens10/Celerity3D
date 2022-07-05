@@ -31,13 +31,13 @@ public:
             shader(s), texture(t) {}
 
 
-    void SetUniform(std::string name, UniformType type, void *data);
+    void SetUniform(const std::string &name, UniformType type, void *data);
 
     void Bind();
 
     void Unbind();
 
-    int GetUniformLocation(std::string name);
+    int GetUniformLocation(const std::string &name);
 };
 
 #endif //GUI_MATERIAL_H

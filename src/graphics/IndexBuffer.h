@@ -4,7 +4,7 @@
 
 class IndexBuffer {
 private:
-    unsigned int rendererID;
+    unsigned int rendererID{};
     unsigned int count;
 public:
     IndexBuffer(const unsigned int *data, unsigned int count);
@@ -13,9 +13,9 @@ public:
 
     void Bind() const;
 
-    void Unbind() const;
+    static void Unbind();
 
-    inline unsigned int getCount() const { return count; }
+    [[nodiscard]] inline unsigned int getCount() const { return count; }
 };
 
 

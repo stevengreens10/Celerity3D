@@ -35,9 +35,9 @@ public:
       stride += sizeof(T) * count;
     }
 
-    inline const std::vector<VertexBufferElement> &GetElements() const { return elements; }
+    [[nodiscard]] inline const std::vector<VertexBufferElement> &GetElements() const { return elements; }
 
-    inline unsigned int GetStride() const { return stride; }
+    [[nodiscard]] inline unsigned int GetStride() const { return stride; }
 
 private:
     static std::unordered_map<std::type_index, unsigned int> createMap() {

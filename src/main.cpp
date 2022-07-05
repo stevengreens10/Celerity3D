@@ -12,22 +12,14 @@
 #include "backends/imgui_impl_win32.h"
 #include "graphics/Material.h"
 
-#include <chrono>
-
-using std::chrono::duration_cast;
-using std::chrono::milliseconds;
-using std::chrono::seconds;
-using std::chrono::system_clock;
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wwritable-strings"
-
 #define INIT_WIDTH 800
 #define INIT_HEIGHT 600
 
 Shader *shader;
 Renderer *renderer;
 ApplicationWindow *win;
+
+using std::cos, std::sin, std::acos;
 
 void handleEvent(EventType type, unsigned long p1, unsigned long p2) {
   if (type == KEYDOWN_EVENT) {
@@ -71,18 +63,22 @@ void handleEvent(EventType type, unsigned long p1, unsigned long p2) {
 
 
   } else if (type == MOUSEMOVE_EVENT) {
-    float mouseX = (float) GET_X_LPARAM(p2);
-    float mouseY = (float) win->height - GET_Y_LPARAM(p2);
+    int mouseX = GET_X_LPARAM(p2);
+    int mouseY = win->height - GET_Y_LPARAM(p2);
 
-    float centerX = ((float) win->width) / 2;
-    float centerY = ((float) win->height) / 2;
-    float xDiff = mouseX - centerX;
-    float yDiff = mouseY - centerY - 34;
+    int centerX = win->width / 2;
+    int centerY = win->height / 2;
+    int xDiff = mouseX - centerX;
+    int yDiff = mouseY - centerY - 34;
     float sens = 0.1f;
     printf("(%f, %f)\n", xDiff, yDiff);
 
-    float yawVal = xDiff * sens;
-    float pitchVal = yDiff * sens;
+    float yawVal = (float) xDiff * sens;
+    float pitchVal = (float) yDiff * sens;
+    if (pitchVal > 89.0f)
+      pitchVal = 89.0f;
+    if (pitchVal < -89.0f)
+      pitchVal = -89.0f;
     renderer->RotateCamera(renderer->yaw + yawVal, renderer->pitch + pitchVal);
 
     SetCursorPos(centerX, centerY);
@@ -116,28 +112,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
   cube2.scale = 50;
 
   bool debug = true;
-  auto start = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
   while (win->running) {
-    HandleWindowMessage(win->window);
+    HandleWindowMessage();
 
-    renderer->NewFrame();
+    Renderer::NewFrame();
 
     renderer->SetProjection(win->width, win->height);
     if (debug) {
       ImGui::ShowDemoWindow(&debug);
-      renderer->DrawRenderableDebug("Cube1", &cube, win);
+      renderer->DrawRenderableDebug("Cube1", &cube);
     }
 
     renderer->Draw(cube);
     renderer->Draw(cube2);
 
-    renderer->Update(win);
+    Renderer::Update(win);
   }
 
   // Cleanup
-  renderer->Cleanup(win);
+  Renderer::Cleanup(win);
 
   return 0;
 }
-
-#pragma clang diagnostic pop

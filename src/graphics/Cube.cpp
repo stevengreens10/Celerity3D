@@ -1,7 +1,3 @@
-//
-// Created by steve on 7/4/2022.
-//
-
 #include "Cube.h"
 
 Cube::Cube(Material &m) : Renderable(std::reference_wrapper<Material>(m)) {

@@ -11,7 +11,7 @@ public:
 
     void Unbind() const;
 
-    inline unsigned int GetId() const { return rendererID; }
+    [[nodiscard]] inline unsigned int GetId() const { return rendererID; }
 };
 
 #endif //GUI_VERTEXBUFFER_H

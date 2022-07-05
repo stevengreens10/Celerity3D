@@ -18,37 +18,37 @@ private:
 public:
     inline static std::unique_ptr<Shader> MAIN_SHADER;
 
-    void Clear() const;
+    static void Clear();
 
     void Draw(const Renderable &r) const;
 
     void SetProjection(int width, int height);
 
-    glm::mat4 GetView() const;
+    [[nodiscard]] glm::mat4 GetView() const;
 
-    glm::mat4 GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelTranslate, glm::vec3 modelRotate) const;
+    static glm::mat4 GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelTranslate, glm::vec3 modelRotate);
 
-    void NewFrame();
+    static void NewFrame();
 
     void Init(ApplicationWindow *win);
 
-    void Update(ApplicationWindow *win);
+    static void Update(ApplicationWindow *win);
 
 
-    void Cleanup(ApplicationWindow *win);
+    static void Cleanup(ApplicationWindow *win);
 
-    void DrawRenderableDebug(char *name, Renderable *r, ApplicationWindow *win);
+    void DrawRenderableDebug(const std::string &name, Renderable *r);
 
-    void RotateCamera(float yaw, float pitch);
+    void RotateCamera(float _yaw, float pitch);
 
     glm::vec3 cameraPos;
     glm::vec3 cameraDir;
     float yaw;
     float pitch;
 private:
-    void InitImGui(ApplicationWindow *win);
+    static void InitImGui(ApplicationWindow *win);
 
-    void UpdateImGui(ApplicationWindow *win);
+    static void UpdateImGui(ApplicationWindow *win);
 
     static std::unique_ptr<Shader> InitMainShader();
 

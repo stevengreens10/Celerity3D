@@ -7,7 +7,7 @@
 
 class VertexArray {
 private:
-    unsigned int rendererID;
+    unsigned int rendererID = 0;
     std::vector<unsigned int> bufIds;
 public:
     VertexArray();
@@ -16,7 +16,7 @@ public:
 
     void Bind() const;
 
-    void Unbind() const;
+    static void Unbind();
 
     void AddBuffer(const VertexBuffer &buffer, const BufferLayout &layout);
 };

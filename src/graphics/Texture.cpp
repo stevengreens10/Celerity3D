@@ -2,13 +2,13 @@
 
 #include "stb_image.h"
 
-Texture::Texture(const char *filePath)
+Texture::Texture(const std::string &filePath)
         : rendererId(0), width(0), height(0), BPP(0) {
 
   // Flips upside down
   stbi_set_flip_vertically_on_load(1);
   // RGBA = 4 channels
-  unsigned char *localBuffer = stbi_load(filePath, &width, &height, &BPP, 4);
+  unsigned char *localBuffer = stbi_load(filePath.c_str(), &width, &height, &BPP, 4);
 
   glGenTextures(1, &rendererId);
   printf("Creating texture: %d\n", rendererId);

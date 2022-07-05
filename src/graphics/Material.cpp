@@ -1,7 +1,7 @@
 #include <iostream>
 #include "Material.h"
 
-void Material::SetUniform(std::string name, UniformType type, void *data) {
+void Material::SetUniform(const std::string &name, UniformType type, void *data) {
   uniforms[name] = {type, data};
 }
 
@@ -41,7 +41,7 @@ void Material::Unbind() {
 
 }
 
-int Material::GetUniformLocation(std::string name) {
+int Material::GetUniformLocation(const std::string &name) {
   if (uniformCache.contains(name)) return uniformCache[name];
 
   int location = glGetUniformLocation(shader.rendererId, name.c_str());
