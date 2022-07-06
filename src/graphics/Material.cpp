@@ -54,7 +54,7 @@ int Material::GetUniformLocation(const std::string &name) {
   int location = glGetUniformLocation(shader.rendererId, name.c_str());
 
   if (location == -1) {
-    printf("WARN: Uniform %s not found", name.c_str());
+    printf("WARN: Uniform %s not found\n", name.c_str());
   }
 
   uniformCache[name] = location;

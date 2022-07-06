@@ -59,8 +59,9 @@ void Renderer::Draw(const Renderable &r) const {
 
   glm::mat4 model = GetModel(glm::vec3(0.0f), r.scale, r.pos, r.rot);
 
-  glm::mat4 mvp = proj * view * model;
-  r.material.get().SetUniform("u_MVP", UM4f, (void *) &mvp);
+  glm::mat4 vp = proj * view;
+  r.material.get().SetUniform("u_VP", UM4f, (void *) &vp);
+  r.material.get().SetUniform("u_M", UM4f, (void *) &model);
   r.material.get().Bind();
   glDrawElements(GL_TRIANGLES, (int) r.ibo->getCount(), GL_UNSIGNED_INT, nullptr);
 }

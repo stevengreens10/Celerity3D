@@ -83,24 +83,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
   Shader *mainShader = Shader::CreateShader("shader");
   Shader *colorShader = Shader::CreateShader("color");
+  Shader *lightShader = Shader::CreateShader("light");
 
-  auto texture = std::make_shared<Texture>("assets/images/square.png");
-  Material mat1(*mainShader, texture.get());
+//  auto texture = std::make_shared<Texture>("assets/images/square.png");
 
-  Material mat2(*colorShader, nullptr);
-  float color[] = {0.1f, 0.1f, 0.1f};
-  mat2.SetUniform("u_color", U3f, color);
+  Material m(*lightShader, nullptr);
+  glm::vec4 col = color(66, 135, 245, 255);
+  m.SetUniform("u_color", U4f, &(col.x));
 
-  Cube cube(mat1);
+  Mesh cube("assets/mesh/cube.obj", m);
   cube.pos = glm::vec3(0, 0, 0.0f);
-  cube.scale = 75;
+  cube.scale = 50;
 
-  auto meshTex = std::make_shared<Texture>("assets/images/meshTexture.png");
-  Mesh mesh("assets/mesh/gun.obj", mat2);
+  Mesh mesh("assets/mesh/gun.obj", m);
   mesh.pos = glm::vec3(220, -10, 30);
   mesh.scale = 50;
 
+  Material lightSource(*colorShader, nullptr);
+  Cube light(lightSource);
+  light.pos = glm::vec3(110.0f, 0.0f, -300.0f);
+  light.scale = 25;
+
   bool debug = true;
+  glm::vec3 intensities = glm::vec3(0.4f, 0.5f, 1.0f);
+  glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+  glm::vec3 material = glm::vec3(1.0f, 1.0f, 100);
   while (win->running) {
     HandleWindowMessage();
 
@@ -108,10 +115,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
     renderer->SetProjection(win->width, win->height);
     if (debug) {
-      ImGui::ShowDemoWindow(&debug);
-      renderer->DrawRenderableDebug("Mesh", &mesh);
+      ImGui::Begin("Light");
+      ImGui::SliderFloat3("lightPos", &(light.pos.x), -300, 300);
+      ImGui::SliderFloat3("lightColor", &(lightColor.x), 0.0f, 1.0f);
+      ImGui::SliderFloat3("lightIntensity", &(intensities.x), 0, 2);
+      ImGui::SliderFloat("ambient strength", &(material.x), 0, 2);
+      ImGui::SliderFloat("diffuse strength", &(material.y), 0, 2);
+      ImGui::SliderFloat("shininess", &(material.z), 0, 1000);
+      ImGui::Text("(%f, %f, %f)", renderer->cameraPos.x, renderer->cameraPos.y, renderer->cameraPos.z);
+      ImGui::End();
     }
+    glm::vec4 lightCol4 = glm::vec4(lightColor, 1.0f);
+    lightSource.SetUniform("u_color", U4f, &(lightCol4.x));
+    m.SetUniform("u_cameraPos", U3f, &(renderer->cameraPos.x));
+    m.SetUniform("u_lightPos", U3f, &(light.pos.x));
+    m.SetUniform("u_lightColor", U3f, &(lightColor.x));
+    m.SetUniform("u_lightIntensities", U3f, &(intensities.x));
+    m.SetUniform("u_material", U3f, &(material.x));
 
+    renderer->Draw(light);
     renderer->Draw(cube);
     renderer->Draw(mesh);
 

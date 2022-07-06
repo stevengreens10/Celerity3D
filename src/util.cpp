@@ -37,3 +37,7 @@ vector<string> split(const string &s, const string &delimiter) {
   res.push_back(s.substr(pos_start));
   return res;
 }
+
+glm::vec4 color(float r, float g, float b, float a) {
+  return {r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f};
+}
