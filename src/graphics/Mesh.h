@@ -4,10 +4,12 @@
 #include <memory>
 #include "Renderable.h"
 
-struct SubMesh {
-    std::unique_ptr<VertexArray> vao;
-    std::unique_ptr<IndexBuffer> ibo;
-    std::shared_ptr<Material> m;
+using std::string, std::unordered_map, std::unique_ptr, std::shared_ptr, std::vector, std::ifstream;
+using std::reference_wrapper, std::tuple, std::make_unique, std::make_shared;
+
+struct MeshData {
+    unique_ptr<VertexArray> vao;
+    unordered_map<shared_ptr<Material>, unique_ptr<IndexBuffer>> matToIBO;
 };
 
 struct MeshVertex {
@@ -18,12 +20,16 @@ struct MeshVertex {
 
 class Mesh : public Renderable {
 private:
-    std::vector<SubMesh> meshes;
+    vector<MeshData> meshes;
 public:
-    explicit Mesh(const std::string &fileName, Material &m);
+    explicit Mesh(const string &fileName, Material &m);
+
+    virtual void Draw() const override;
 
 private:
-    bool loadMesh(const std::string &fileName);
+    bool loadMesh(const string &fileName);
+
+    static unordered_map<string, shared_ptr<Material>> loadMats(const string &fileName);
 
 };
 

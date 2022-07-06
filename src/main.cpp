@@ -86,9 +86,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
   Shader *colorShader = Shader::CreateShader("color");
   Shader *lightShader = Shader::CreateShader("light");
 
-  auto texture = std::make_shared<Texture>("assets/images/uvtest.png");
+  auto texture = std::make_shared<Texture>("assets/images/wood.png");
 
-  Material m(*lightShader, nullptr);
+  Material m(*lightShader, "testMaterial");
 
   m.matData.ambientColor = {0.857576, 0.857576, 0.857576};
   m.matData.diffuseColor = color(90, 209, 114, 1);
@@ -105,9 +105,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
   Mesh mesh("assets/mesh/gun.obj", m);
   mesh.pos = glm::vec3(220, -10, 30);
-  mesh.scale = 50;
+  mesh.scale = 1;
 
-  Material lightSource(*colorShader, nullptr);
+//  Mesh ground("assets/mesh/cube.obj", m);
+//  ground.pos = glm::vec3(0, -1100, 0.0f);
+//  ground.scale = 1000;
+
+  Material lightSource(*colorShader, "lightMat");
   Cube light(lightSource);
   light.pos = glm::vec3(110.0f, 0.0f, -300.0f);
   light.scale = 25;
@@ -127,11 +131,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     ImGui::SliderFloat3("lightColor", &(lightColor.x), 0.0f, 1.0f);
     ImGui::SliderFloat3("lightIntensity", &(intensities.x), 0, 2);
     ImGui::NewLine();
-    ImGui::SliderFloat3("ambientColor", &(m.matData.ambientColor.x), 0.0f, 1.0f);
-    ImGui::SliderFloat3("diffuseColor", &(m.matData.diffuseColor.x), 0.0f, 1.0f);
-    ImGui::SliderFloat3("specColor", &(m.matData.specColor.x), 0.0f, 1.0f);
-    ImGui::SliderFloat("shininess", &(m.matData.shininess), 1.0f, 1000.0f);
-    ImGui::SliderFloat("alpha", &(m.matData.alpha), 0.0f, 1.0f);
+    ImGui::SliderFloat("meshScale", &(mesh.scale), 0, 1);
     ImGui::NewLine();
     ImGui::Text("(%f, %f, %f)", renderer->cameraPos.x, renderer->cameraPos.y, renderer->cameraPos.z);
     ImGui::End();
@@ -142,10 +142,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     m.SetUniform("u_lightPos", U3f, &(light.pos.x));
     m.SetUniform("u_lightColor", U3f, &(lightColor.x));
     m.SetUniform("u_lightIntensities", U3f, &(intensities.x));
-    m.SetUniform("u_material", U3f, &(material.x));
 
     renderer->Draw(light);
-    renderer->Draw(cube);
+//    renderer->Draw(ground);
+//    renderer->Draw(cube);
     renderer->Draw(mesh);
 
     Renderer::Update(win);

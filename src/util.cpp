@@ -45,3 +45,29 @@ glm::vec4 color(int r, int g, int b, int a) {
 glm::vec4 color(float r, float g, float b, float a) {
   return {r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f};
 }
+
+glm::vec3 sToVec3(vector<string> s, int startIdx) {
+  glm::vec3 vec;
+  float *f = &vec.x;
+  for (int i = 0; i < 3; i++) {
+    try {
+      f[i] = stof(s[i + startIdx]);
+    } catch (std::exception &e) {
+      f[i] = 0.0f;
+    }
+  }
+  return vec;
+}
+
+glm::vec2 sToVec2(vector<string> s, int startIdx) {
+  glm::vec2 vec;
+  float *f = &vec.x;
+  for (int i = 0; i < 2; i++) {
+    try {
+      f[i] = stof(s[i + startIdx]);
+    } catch (int e) {
+      f[i] = 0.0f;
+    }
+  }
+  return vec;
+}

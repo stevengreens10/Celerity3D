@@ -36,7 +36,7 @@ public:
 
     static void Cleanup(ApplicationWindow *win);
 
-    void DrawRenderableDebug(const std::string &name, Renderable *r);
+    static void DrawRenderableDebug(const std::string &name, Renderable *r);
 
     void RotateCamera(float _yaw, float pitch);
 

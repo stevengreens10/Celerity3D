@@ -10,6 +10,13 @@
 
 class Renderable {
 public:
+    glm::vec3 pos{};
+    float scale{};
+    glm::vec3 rot{};
+    VertexArray *vao{};
+    IndexBuffer *ibo{};
+    std::reference_wrapper<Material> material;
+
     explicit Renderable(std::reference_wrapper<Material> material) : material(material) {
       pos = glm::vec3(0.0f);
       scale = 1.0f;
@@ -21,12 +28,12 @@ public:
       delete ibo;
     }
 
-    glm::vec3 pos{};
-    float scale{};
-    glm::vec3 rot{};
-    VertexArray *vao{};
-    IndexBuffer *ibo{};
-    std::reference_wrapper<Material> material;
+    virtual void Draw() const {
+      vao->Bind();
+      ibo->Bind();
+      material.get().Bind();
+      glDrawElements(GL_TRIANGLES, (int) ibo->getCount(), GL_UNSIGNED_INT, nullptr);
+    }
 };
 
 

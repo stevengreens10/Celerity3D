@@ -21,6 +21,8 @@ void Renderer::Init(ApplicationWindow *win) {
 
   glEnable(GL_DEPTH_TEST);
 
+  glEnable(GL_MULTISAMPLE);
+
   Renderer::InitImGui(win);
 
   cameraPos = glm::vec3(0.0f, 0.0f, -250.0f);
@@ -54,20 +56,21 @@ void Renderer::NewFrame() {
 }
 
 void Renderer::Draw(const Renderable &r) const {
-  r.vao->Bind();
-  r.ibo->Bind();
-
   glm::mat4 model = GetModel(glm::vec3(0.0f), r.scale, r.pos, r.rot);
 
   glm::mat4 vp = proj * view;
-  r.material.get().SetUniform("u_VP", UM4f, (void *) &vp);
-  r.material.get().SetUniform("u_M", UM4f, (void *) &model);
-  r.material.get().Bind();
-  glDrawElements(GL_TRIANGLES, (int) r.ibo->getCount(), GL_UNSIGNED_INT, nullptr);
+
+  // TODO: Share this across all shaders
+  auto shader = Shader::LoadShader("light");
+  shader->Bind();
+  glUniformMatrix4fv(glGetUniformLocation(shader->rendererId, "u_VP"), 1, false, &(vp[0][0]));
+  glUniformMatrix4fv(glGetUniformLocation(shader->rendererId, "u_M"), 1, false, &(model[0][0]));
+
+  r.Draw();
 }
 
 void Renderer::SetProjection(int width, int height) {
-  proj = glm::perspective(glm::radians(59.0f), (float) width / (float) height, 0.1f, 1000.0f);
+  proj = glm::perspective(glm::radians(59.0f), (float) width / (float) height, 0.1f, 10000.0f);
 
 }
 

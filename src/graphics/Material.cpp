@@ -29,7 +29,6 @@ void Material::Bind() {
         break;
       }
       case U3f: {
-        auto floats = (float *) data;
         glUniform3fv(location, 1, (float *) data);
         break;
       }

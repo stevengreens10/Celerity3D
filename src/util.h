@@ -24,4 +24,8 @@ glm::vec4 color(float r, float g, float b, float a);
 
 glm::vec4 color(int r, int g, int b, int a);
 
+glm::vec2 sToVec2(vector<string> s, int startIdx);
+
+glm::vec3 sToVec3(vector<string> s, int startIdx);
+
 #endif //GUI_UTIL_H

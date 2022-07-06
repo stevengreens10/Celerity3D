@@ -39,13 +39,14 @@ public:
     Shader &shader;
     MaterialData matData{};
 
+    std::string name;
     std::shared_ptr<Texture> ambientTex;
     std::shared_ptr<Texture> diffuseTex;
     std::shared_ptr<Texture> specTex;
     std::shared_ptr<Texture> shininessTex;
 
-    Material(Shader &s, std::shared_ptr<Texture> ambient) :
-            shader(s), ambientTex(std::move(ambient)) {}
+    Material(Shader &s, std::string name) :
+            shader(s), name(std::move(name)) {}
 
 
     void SetUniform(const std::string &name, UniformType type, void *data);
