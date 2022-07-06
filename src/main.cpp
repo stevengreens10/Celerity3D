@@ -88,8 +88,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 //  auto texture = std::make_shared<Texture>("assets/images/square.png");
 
   Material m(*lightShader, nullptr);
-  glm::vec4 col = color(66, 135, 245, 255);
-  m.SetUniform("u_color", U4f, &(col.x));
+
+  m.matData.ambientColor = {0.857576, 0.857576, 0.857576};
+  m.matData.diffuseColor = {0.800000, 0.800000, 0.800000};
+  m.matData.specColor = {0.718182, 0.718182, 0.718182};
+  m.matData.shininess = 551.193766;
+  m.matData.refractionIndex = 1.45f;
+  m.matData.alpha = 1.0f;
 
   Mesh cube("assets/mesh/cube.obj", m);
   cube.pos = glm::vec3(0, 0, 0.0f);

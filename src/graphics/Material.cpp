@@ -7,10 +7,16 @@ void Material::SetUniform(const std::string &name, UniformType type, void *data)
 
 void Material::Bind() {
   shader.Bind();
-  if (texture) {
-    texture->Bind(0);
-    glUniform1i(GetUniformLocation("u_Texture"), 0);
-  }
+  // Bitmap for textures present
+  int texturesPresent = 0;
+  texturesPresent |= setTexture("u_ambientTex", ambientTex, 0);
+  texturesPresent |= setTexture("u_diffuseTex", diffuseTex, 1) << 1;
+  texturesPresent |= setTexture("u_specTex", specTex, 2) << 2;
+  texturesPresent |= setTexture("u_shinyTex", shininessTex, 3) << 3;
+  glUniform1i(GetUniformLocation("u_texturesPresent"), texturesPresent);
+
+  setMaterialData(matData);
+
   for (const auto &uMapping: uniforms) {
     auto name = uMapping.first;
     auto u = uMapping.second;
@@ -19,17 +25,16 @@ void Material::Bind() {
     int location = GetUniformLocation(name);
     switch (type) {
       case U4f: {
-        auto floats = (float *) data;
-        glUniform4f(location, floats[0], floats[1], floats[2], floats[3]);
+        glUniform4fv(location, 1, (float *) data);
         break;
       }
       case U3f: {
         auto floats = (float *) data;
-        glUniform3f(location, floats[0], floats[1], floats[2]);
+        glUniform3fv(location, 1, (float *) data);
         break;
       }
       case U4i: {
-        glUniform1i(location, (*(int *) data));
+        glUniform1iv(location, 1, (int *) data);
         break;
       }
       case UM4f: {
@@ -43,6 +48,25 @@ void Material::Bind() {
 
   }
 }
+
+int Material::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture, int slot) {
+  if (texture) {
+    texture->Bind(slot);
+    glUniform1i(GetUniformLocation(name), slot);
+    return 1;
+  }
+  return 0;
+}
+
+void Material::setMaterialData(MaterialData data) {
+  glUniform3fv(GetUniformLocation("u_ambientColor"), 1, &(data.ambientColor.x));
+  glUniform3fv(GetUniformLocation("u_diffuseColor"), 1, &(data.diffuseColor.x));
+  glUniform3fv(GetUniformLocation("u_specColor"), 1, &(data.specColor.x));
+  glUniform1f(GetUniformLocation("u_shininess"), data.shininess);
+  glUniform1f(GetUniformLocation("u_refractionIndex"), data.refractionIndex);
+  glUniform1f(GetUniformLocation("u_alpha"), data.alpha);
+}
+
 
 void Material::Unbind() {
 
