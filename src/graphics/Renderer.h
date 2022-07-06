@@ -17,15 +17,13 @@ private:
     glm::mat4 proj;
     glm::mat4 view;
 public:
-    inline static std::unique_ptr<Shader> MAIN_SHADER;
-
     static void Clear();
 
     void Draw(const Renderable &r) const;
 
     void SetProjection(int width, int height);
 
-    void ResetView();
+    void CalculateView();
 
     static glm::mat4 GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelTranslate, glm::vec3 modelRotate);
 
@@ -50,8 +48,6 @@ private:
     static void InitImGui(ApplicationWindow *win);
 
     static void UpdateImGui(ApplicationWindow *win);
-
-    static std::unique_ptr<Shader> InitMainShader();
 
 };
 

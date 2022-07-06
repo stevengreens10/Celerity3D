@@ -1,6 +1,6 @@
 #include "Shader.h"
 
-Shader::Shader(const char *vertFile, const char *fragFile) {
+Shader::Shader(const std::string &vertFile, const std::string &fragFile) {
   char *vertSource = readFile(vertFile);
   char *fragSource = readFile(fragFile);
 
@@ -22,7 +22,6 @@ Shader::Shader(const char *vertFile, const char *fragFile) {
   glDeleteShader(fragId);
   free(vertSource);
   free(fragSource);
-
 }
 
 Shader::~Shader() {
@@ -44,4 +43,14 @@ unsigned int Shader::CompileShader(char *source, GLenum type) {
   int result;
   glGetShaderiv(id, GL_COMPILE_STATUS, &result);
   return id;
+}
+
+Shader *Shader::LoadShader(const std::string &name) {
+  return shaders[name];
+}
+
+Shader *Shader::CreateShader(const string &name) {
+  auto s = new Shader(SHADER_PATH + name + ".vert", SHADER_PATH + name + ".frag");
+  shaders[name] = s;
+  return s;
 }

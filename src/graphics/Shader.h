@@ -8,10 +8,11 @@
 
 class Shader {
 
+private:
+    inline static std::unordered_map<std::string, Shader *> shaders;
+    inline static std::string SHADER_PATH = "assets/shaders/";
 public:
     unsigned int rendererId;
-
-    Shader(const char *vertFile, const char *fragFile);
 
     ~Shader();
 
@@ -19,7 +20,13 @@ public:
 
     static void Unbind();
 
+    static Shader *LoadShader(const std::string &name);
+
+    static Shader *CreateShader(const std::string &name);
+
 private:
+    Shader(const std::string &vertFile, const std::string &fragFile);
+
     static unsigned int CompileShader(char *source, GLenum type);
 };
 

@@ -178,17 +178,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 //      appWin->eventCallback(MOUSEMOVE_EVENT, wParam, lParam);
       break;
     case WM_KILLFOCUS:
-      printf("Lose focus\n");
       if (mouseDisabled)
         enableMouse();
       break;
     case WM_LBUTTONDOWN:
-    case WM_SETFOCUS:
-      if (!mouseDisabled) {
+    case WM_SETFOCUS: {
+      bool imGuiWantsMouse = ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantCaptureMouse;
+      if (!mouseDisabled && !imGuiWantsMouse) {
         disableMouse(hWnd);
         SetFocus(hWnd);
-        break;
       }
+      break;
+    }
     case WM_INPUT: {
       UINT size = 0;
       auto ri = (HRAWINPUT) lParam;

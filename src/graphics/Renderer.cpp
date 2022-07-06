@@ -25,7 +25,6 @@ void Renderer::Init(ApplicationWindow *win) {
 
   cameraPos = glm::vec3(0.0f, 0.0f, -250.0f);
   RotateCamera(90.0f, 0.0f);
-  MAIN_SHADER = InitMainShader();
   Cube::InitBuffers();
   TriangularPrism::InitBuffers();
 }
@@ -78,10 +77,10 @@ void Renderer::RotateCamera(float _yaw, float _pitch) {
   cameraDir.y = sin(glm::radians(pitch));
   cameraDir.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
   cameraDir = glm::normalize(cameraDir);
-  ResetView();
+  CalculateView();
 }
 
-void Renderer::ResetView() {
+void Renderer::CalculateView() {
   view = glm::lookAt(cameraPos, cameraPos + glm::normalize(cameraDir), glm::vec3(0, 1, 0));
 }
 
@@ -148,10 +147,6 @@ void Renderer::UpdateImGui(ApplicationWindow *win) {
   }
 }
 
-std::unique_ptr<Shader> Renderer::InitMainShader() {
-  return std::make_unique<Shader>("assets/shaders/shader.vert", "assets/shaders/shader.frag");
-}
-
 void Renderer::DrawRenderableDebug(const std::string &name, Renderable *r) {
   ImGui::Begin(name.c_str());
   ImGui::SliderFloat("modelScale", &(r->scale), 50, 150);
@@ -159,9 +154,6 @@ void Renderer::DrawRenderableDebug(const std::string &name, Renderable *r) {
   ImGui::SliderFloat3("modelX", &(r->pos.x), -300, 300);
 
   ImGui::SliderFloat3("modelRotate", &(r->rot.x), 0, 359);
-
-  ImGui::SliderFloat3("cameraPos", &(cameraPos.x), -300, 300);
-  ImGui::SliderFloat3("cameraDir", &(cameraDir.x), -1, 1);
 
   ImGui::Text("%.3f ms/frame (%.1f) FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
   ImGui::End();

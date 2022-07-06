@@ -2,7 +2,7 @@
 
 This is a personal project for me to learn OpenGL and Win32 programming.
 
-![](assets/images/example.png)
+![](assets/images/example.gif)
 
 ## Current features:
 - Render 3D scene with different materials/textures - no lighting

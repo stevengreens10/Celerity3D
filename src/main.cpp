@@ -10,7 +10,7 @@
 #include "graphics/Cube.h"
 #include "backends/imgui_impl_win32.h"
 #include "graphics/Material.h"
-#include "graphics/TriangularPrism.h"
+#include "graphics/Mesh.h"
 
 #define INIT_WIDTH 800
 #define INIT_HEIGHT 600
@@ -20,8 +20,6 @@ Renderer *renderer;
 ApplicationWindow *win;
 
 using std::cos, std::sin, std::acos;
-
-bool shouldDisableMouse = false;
 
 void handleEvent(EventType type, unsigned long p1, unsigned long p2) {
   if (type == KEYDOWN_EVENT) {
@@ -50,7 +48,7 @@ void handleEvent(EventType type, unsigned long p1, unsigned long p2) {
       renderer->cameraPos -= glm::vec3(renderer->cameraDir.x, 0, renderer->cameraDir.z) * speed;
     }
 
-    renderer->ResetView();
+    renderer->CalculateView();
 
   } else if (type == MOUSEMOVE_EVENT) {
     auto dx = (int) p1;
@@ -77,25 +75,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
   ImGui_ImplWin32_EnableDpiAwareness();
   win = NewWindow(hInstance, &handleEvent, "Test window", INIT_WIDTH, INIT_HEIGHT);
+  printf("Version: %s\n", glGetString(GL_VERSION));
+  printf("GLSL Version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+
   renderer = new Renderer();
   renderer->Init(win);
 
-  Shader colorShader("assets/shaders/color.vert", "assets/shaders/color.frag");
+  Shader *mainShader = Shader::CreateShader("shader");
+  Shader *colorShader = Shader::CreateShader("color");
 
   auto texture = std::make_shared<Texture>("assets/images/square.png");
-  Material mat1(*Renderer::MAIN_SHADER, texture.get());
+  Material mat1(*mainShader, texture.get());
 
-  Material mat2(colorShader, nullptr);
-  float color[] = {0.7f, 0.2f, 0.4f};
+  Material mat2(*colorShader, nullptr);
+  float color[] = {0.1f, 0.1f, 0.1f};
   mat2.SetUniform("u_color", U3f, color);
 
   Cube cube(mat1);
-  TriangularPrism prism(mat2);
   cube.pos = glm::vec3(0, 0, 0.0f);
   cube.scale = 75;
 
-  prism.pos = glm::vec3(220, -10, 30);
-  prism.scale = 50;
+  auto meshTex = std::make_shared<Texture>("assets/images/meshTexture.png");
+  Mesh mesh("assets/mesh/gun.obj", mat2);
+  mesh.pos = glm::vec3(220, -10, 30);
+  mesh.scale = 50;
 
   bool debug = true;
   while (win->running) {
@@ -106,11 +109,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     renderer->SetProjection(win->width, win->height);
     if (debug) {
       ImGui::ShowDemoWindow(&debug);
-      renderer->DrawRenderableDebug("Cube1", &cube);
+      renderer->DrawRenderableDebug("Mesh", &mesh);
     }
 
     renderer->Draw(cube);
-    renderer->Draw(prism);
+    renderer->Draw(mesh);
 
     Renderer::Update(win);
   }

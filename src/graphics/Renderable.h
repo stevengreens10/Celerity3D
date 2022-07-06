@@ -16,6 +16,11 @@ public:
       rot = glm::vec3(0.0f);
     }
 
+    ~Renderable() {
+      delete vao;
+      delete ibo;
+    }
+
     glm::vec3 pos{};
     float scale{};
     glm::vec3 rot{};
