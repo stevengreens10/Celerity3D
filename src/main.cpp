@@ -19,6 +19,8 @@ Shader *shader;
 Renderer *renderer;
 ApplicationWindow *win;
 
+glm::vec4 color(int i, int i1, int i2);
+
 using std::cos, std::sin, std::acos;
 
 void handleEvent(EventType type, unsigned long p1, unsigned long p2) {
@@ -81,20 +83,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
   renderer = new Renderer();
   renderer->Init(win);
 
-  Shader *mainShader = Shader::CreateShader("shader");
   Shader *colorShader = Shader::CreateShader("color");
   Shader *lightShader = Shader::CreateShader("light");
 
-//  auto texture = std::make_shared<Texture>("assets/images/square.png");
+  auto texture = std::make_shared<Texture>("assets/images/uvtest.png");
 
   Material m(*lightShader, nullptr);
 
   m.matData.ambientColor = {0.857576, 0.857576, 0.857576};
-  m.matData.diffuseColor = {0.800000, 0.800000, 0.800000};
+  m.matData.diffuseColor = color(90, 209, 114, 1);
   m.matData.specColor = {0.718182, 0.718182, 0.718182};
   m.matData.shininess = 551.193766;
   m.matData.refractionIndex = 1.45f;
   m.matData.alpha = 1.0f;
+
+  m.ambientTex = texture;
 
   Mesh cube("assets/mesh/cube.obj", m);
   cube.pos = glm::vec3(0, 0, 0.0f);
@@ -109,7 +112,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
   light.pos = glm::vec3(110.0f, 0.0f, -300.0f);
   light.scale = 25;
 
-  bool debug = true;
   glm::vec3 intensities = glm::vec3(0.4f, 0.5f, 1.0f);
   glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
   glm::vec3 material = glm::vec3(1.0f, 1.0f, 100);
@@ -119,17 +121,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     Renderer::NewFrame();
 
     renderer->SetProjection(win->width, win->height);
-    if (debug) {
-      ImGui::Begin("Light");
-      ImGui::SliderFloat3("lightPos", &(light.pos.x), -300, 300);
-      ImGui::SliderFloat3("lightColor", &(lightColor.x), 0.0f, 1.0f);
-      ImGui::SliderFloat3("lightIntensity", &(intensities.x), 0, 2);
-      ImGui::SliderFloat("ambient strength", &(material.x), 0, 2);
-      ImGui::SliderFloat("diffuse strength", &(material.y), 0, 2);
-      ImGui::SliderFloat("shininess", &(material.z), 0, 1000);
-      ImGui::Text("(%f, %f, %f)", renderer->cameraPos.x, renderer->cameraPos.y, renderer->cameraPos.z);
-      ImGui::End();
-    }
+#ifdef DEBUG
+    ImGui::Begin("Debug");
+    ImGui::SliderFloat3("lightPos", &(light.pos.x), -300, 300);
+    ImGui::SliderFloat3("lightColor", &(lightColor.x), 0.0f, 1.0f);
+    ImGui::SliderFloat3("lightIntensity", &(intensities.x), 0, 2);
+    ImGui::NewLine();
+    ImGui::SliderFloat3("ambientColor", &(m.matData.ambientColor.x), 0.0f, 1.0f);
+    ImGui::SliderFloat3("diffuseColor", &(m.matData.diffuseColor.x), 0.0f, 1.0f);
+    ImGui::SliderFloat3("specColor", &(m.matData.specColor.x), 0.0f, 1.0f);
+    ImGui::SliderFloat("shininess", &(m.matData.shininess), 1.0f, 1000.0f);
+    ImGui::SliderFloat("alpha", &(m.matData.alpha), 0.0f, 1.0f);
+    ImGui::NewLine();
+    ImGui::Text("(%f, %f, %f)", renderer->cameraPos.x, renderer->cameraPos.y, renderer->cameraPos.z);
+    ImGui::End();
+#endif
     glm::vec4 lightCol4 = glm::vec4(lightColor, 1.0f);
     lightSource.SetUniform("u_color", U4f, &(lightCol4.x));
     m.SetUniform("u_cameraPos", U3f, &(renderer->cameraPos.x));

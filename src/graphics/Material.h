@@ -37,15 +37,15 @@ private:
     std::unordered_map<std::string, int> uniformCache;
 public:
     Shader &shader;
-    MaterialData matData;
+    MaterialData matData{};
 
     std::shared_ptr<Texture> ambientTex;
     std::shared_ptr<Texture> diffuseTex;
     std::shared_ptr<Texture> specTex;
     std::shared_ptr<Texture> shininessTex;
 
-    Material(Shader &s, std::shared_ptr<Texture> diffuse) :
-            shader(s), diffuseTex(std::move(diffuse)) {}
+    Material(Shader &s, std::shared_ptr<Texture> ambient) :
+            shader(s), ambientTex(std::move(ambient)) {}
 
 
     void SetUniform(const std::string &name, UniformType type, void *data);

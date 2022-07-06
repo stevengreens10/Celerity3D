@@ -34,14 +34,14 @@ void main() {
     vec3 diffuseTex = vec3(1.0f);
     vec3 specTex = vec3(1.0f);
     float shinyTex = 1.0f;
-    if ((u_texturesPresent & 1) == 1)
-    ambientTex = vec3(texture(u_ambientTex, v_textureUV));
-    if ((u_texturesPresent & 2) == 1)
-    diffuseTex = vec3(texture(u_diffuseTex, v_textureUV));
-    if ((u_texturesPresent & 4) == 1)
-    specTex    = vec3(texture(u_specTex, v_textureUV));
-    if ((u_texturesPresent & 8) == 1)
-    shinyTex   = float(texture(u_shinyTex, v_textureUV));
+    if ((u_texturesPresent & 1) >= 1)
+        ambientTex = vec3(texture(u_ambientTex, v_textureUV));
+    if ((u_texturesPresent & 2) >= 1)
+        diffuseTex = vec3(texture(u_diffuseTex, v_textureUV));
+    if ((u_texturesPresent & 4) >= 1)
+        specTex    = vec3(texture(u_specTex, v_textureUV));
+    if ((u_texturesPresent & 8) >= 1)
+        shinyTex   = float(texture(u_shinyTex, v_textureUV));
 
     vec3 ambientColor = u_ambientColor * ambientTex;
     vec3 diffuseColor = u_diffuseColor * diffuseTex;

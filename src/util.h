@@ -22,4 +22,6 @@ vector<string> split(const string &s, const string &delimiter);
 
 glm::vec4 color(float r, float g, float b, float a);
 
+glm::vec4 color(int r, int g, int b, int a);
+
 #endif //GUI_UTIL_H
