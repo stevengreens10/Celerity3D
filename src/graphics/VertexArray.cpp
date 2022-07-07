@@ -5,14 +5,13 @@
 
 VertexArray::VertexArray() {
   glGenVertexArrays(1, &rendererID);
-  std::cout << "Creating vertex array: " << rendererID << std::endl;
+  Log::logf("Creating vertex array: %d", rendererID);
 }
 
 VertexArray::~VertexArray() {
-  std::cout << "Deleting vertex array: " << rendererID << std::endl;
-
+  Log::logf("Deleting vertex array: ", rendererID);
   for (auto bufId: bufIds) {
-    std::cout << "\tDeleting vertex buffer: " << bufId << std::endl;
+    Log::logf("\tDeleting vertex buffer: %d", bufId);
     glDeleteBuffers(1, &bufId);
   }
 
@@ -20,7 +19,7 @@ VertexArray::~VertexArray() {
 }
 
 void VertexArray::AddBuffer(const VertexBuffer &buffer, const BufferLayout &layout) {
-  std::cout << "Adding vertex array vbuf: " << rendererID << std::endl;
+  Log::logf("Adding vertex array vbuf: %d", rendererID);
   Bind();
   buffer.Bind();
   const auto &elements = layout.GetElements();

@@ -7,6 +7,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 
 #include "glm/gtx/hash.hpp"
+#include "../log.h"
 
 Mesh::Mesh(const string &fileName, Material &m) : Renderable(reference_wrapper<Material>(m)) {
   loadMesh(fileName);
@@ -26,7 +27,7 @@ void Mesh::Draw() const {
 }
 
 unordered_map<string, shared_ptr<Material>> Mesh::loadMats(const string &fileName) {
-  printf("Loading materials...\n");
+  Log::logf("Loading materials %s", fileName.c_str());
   ifstream f;
   unordered_map<string, shared_ptr<Material>> mats;
   f.open(fileName);
@@ -61,16 +62,16 @@ unordered_map<string, shared_ptr<Material>> Mesh::loadMats(const string &fileNam
       mats[currentMat]->specTex = make_shared<Texture>("assets/images/" + tokens[1]);
     } else if (tokens[0] == "Ke") {
       // TODO: Not using this yet
-      printf("Don't support Ke yet in MTL\n");
+      Log::debugf("Don't support Ke yet in MTL");
     } else if (tokens[0] == "Ni") {
       mats[currentMat]->matData.refractionIndex = stof(tokens[1]);
     } else if (tokens[0] == "d") {
       mats[currentMat]->matData.alpha = stof(tokens[1]);
     } else if (tokens[0] == "illum") {
       // TODO: Not using this yet
-      printf("Don't support illum yet in MTL\n");
+      Log::debugf("Don't support illum yet in MTL");
     } else if (tokens[0] != "#" && !tokens[0].empty()) {
-      printf("Unsupported line in MTL: %s\n", tokens[0].c_str());
+      Log::debugf("Unsupported line in MTL: %s", tokens[0].c_str());
     }
   }
 
@@ -79,7 +80,7 @@ unordered_map<string, shared_ptr<Material>> Mesh::loadMats(const string &fileNam
 
 bool Mesh::loadMesh(const string &fileName) {
   // Turn back... Don't read this code for your own sake.
-  printf("Loading mesh...\n");
+  Log::logf("Loading mesh %s", fileName.c_str());
   ifstream f;
   f.open(fileName);
   if (!f) {
@@ -193,7 +194,7 @@ bool Mesh::loadMesh(const string &fileName) {
     }
   }
 
-  printf("Mesh loaded!\n");
+  Log::logf("Mesh loaded!");
   return true;
 }
 

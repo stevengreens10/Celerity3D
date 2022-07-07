@@ -1,4 +1,5 @@
 #include "Shader.h"
+#include "../log.h"
 
 #include <utility>
 
@@ -7,7 +8,7 @@ Shader::Shader(const std::string &vertFile, const std::string &fragFile) {
   char *fragSource = readFile(fragFile);
 
   if (vertSource == nullptr || fragSource == nullptr) {
-    printf("ERR: Sources are null\n");
+    Log::logf("ERR: Sources are null");
     exit(1);
   }
 

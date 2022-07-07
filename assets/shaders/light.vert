@@ -1,4 +1,4 @@
-#version 460 core
+#version 450 core
 
 // Model view projection matrix
 layout(std140, binding = 1) uniform Transformations {

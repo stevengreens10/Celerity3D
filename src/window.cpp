@@ -6,6 +6,7 @@
 #include <imgui_internal.h>
 
 #include "window.h"
+#include "log.h"
 
 static TCHAR szWindowClass[] = TEXT("myWindowClass");
 
@@ -16,15 +17,9 @@ std::unique_ptr<WNDCLASSEX> wcex;
 int InitGL(GLvoid)                                      // All Setup For OpenGL Goes Here
 {
   if (glewInit() != GLEW_OK) {
-    printf("Could not init glew");
+    Log::logf("Could not init glew");
     return FALSE;
   }
-  glShadeModel(GL_SMOOTH);                            // Enable Smooth Shading
-  glClearColor(0.20f, 0.90f, 0.92f, 0.5f);               // Set Background
-  glClearDepth(1.0f);                                 // Depth Buffer Setup
-  glEnable(GL_DEPTH_TEST);                            // Enables Depth Testing
-  glDepthFunc(GL_LEQUAL);                             // The Type Of Depth Testing To Do
-  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);  // Really Nice Perspective Calculations
   return TRUE;                                        // Initialization Went OK
 }
 
@@ -63,7 +58,7 @@ WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, const std:
   }
 
   if (!RegisterClassEx(wcex.get())) {
-    std::cout << "Could not register class" << std::endl;
+    Log::logf("ERROR: Could not register class");
     exit(1);
   }
 
@@ -71,7 +66,7 @@ WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, const std:
                            width, height, nullptr, nullptr, hInstance, nullptr);
 
   if (!hWnd) {
-    std::cout << "Could not create window" << std::endl;
+    Log::logf("ERROR: Could not create window %s", title.c_str());
     exit(1);
   }
   BYTE bits = 24;
@@ -99,29 +94,29 @@ WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, const std:
 
   HDC hDC;
   if (!(hDC = GetDC(hWnd))) {
-    printf("ERROR: Could not get DC");
+    Log::logf("ERROR: Could not get DC");
     exit(1);
   }
   int PixelFormat;
   if (!(PixelFormat = ChoosePixelFormat(hDC, &pfd))) {
-    printf("ERROR: Could not choose pixel format");
+    Log::logf("ERROR: Could not choose pixel format");
     exit(1);
   }
 
   if (!SetPixelFormat(hDC, PixelFormat, &pfd))       // Are We Able To Set The Pixel Format?
   {
-    printf("ERROR: Could not set pixel format");
+    Log::logf("ERROR: Could not set pixel format");
     exit(1);
   }
 
   HGLRC hRC = wglCreateContext(hDC);
   if (!hRC) {
-    printf("ERROR: Could not create render context");
+    Log::logf("ERROR: Could not create render context");
     exit(1);
   }
 
   if (!wglMakeCurrent(hDC, hRC)) {
-    printf("ERROR: Could not activate render context");
+    Log::logf("ERROR: Could not activate render context");
     exit(1);
   }
 
@@ -136,7 +131,7 @@ WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, const std:
   UpdateWindow(hWnd);
 
   if (!InitGL()) {
-    printf("ERROR: Could not init openGL");
+    Log::logf("ERROR: Could not init openGL");
     exit(1);
   }
   ReSizeGLScene(width, height);
@@ -205,7 +200,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
       }
 
       if (data->data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
-        printf("Absolute mouse mode not supported yet\n");
+        Log::logf("Absolute mouse mode not supported yet");
         dx = data->data.mouse.lLastX;// - lastCursorPosX;
         dy = data->data.mouse.lLastY;// - lastCursorPosY;
       } else {
@@ -220,7 +215,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     case WM_DPICHANGED:
       if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports) {
         //const int dpi = HIWORD(wParam);
-        //printf("WM_DPICHANGED to %d (%.0f%%)\n", dpi, (float)dpi / 96.0f * 100.0f);
+        //Log::logf("WM_DPICHANGED to %d (%.0f%%)", dpi, (float)dpi / 96.0f * 100.0f);
         const RECT *suggested_rect = (RECT *) lParam;
         ::SetWindowPos(hWnd, nullptr, suggested_rect->left, suggested_rect->top,
                        suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top,
@@ -242,7 +237,7 @@ void disableMouse(HWND hWnd) {
   mouseDisabled = true;
   const RAWINPUTDEVICE rid = {0x01, 0x02, 0, hWnd};
   if (!RegisterRawInputDevices(&rid, 1, sizeof(rid))) {
-    printf("Error: Could not register raw mouse input");
+    Log::logf("Error: Could not register raw mouse input");
   }
 
   RECT clipRect;
@@ -259,7 +254,7 @@ void enableMouse() {
   ClipCursor(nullptr);
   ShowCursor(true);
   if (!RegisterRawInputDevices(&rid, 1, sizeof(rid))) {
-    printf("Error: %s\n",
-           "Win32: Failed to remove raw input device");
+    Log::logf("Error: %s",
+              "Win32: Failed to remove raw input device");
   }
 }

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "GL/glew.h"
+#include "../log.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <typeinfo>
@@ -31,7 +32,7 @@ public:
     void Push(unsigned int count) {
       const std::type_index &type = std::type_index(typeid(T));
       if (!glTypeMap.contains(type)) {
-        printf("Invalid type for BufferLayout push: \n", (typeid(T)).name());
+        Log::logf("Invalid type for BufferLayout push: ", (typeid(T)).name());
       }
       auto glType = glTypeMap[type];
       elements.push_back({glType, count, sizeof(T), stride, false});

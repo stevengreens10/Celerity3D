@@ -32,4 +32,4 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/bin/glew32.dll ${CMAKE_BINARY_DIR}
         )
 
-target_link_libraries(${PROJECT_NAME} glew32 d2d1 opengl32 Ws2_32 ole32 comctl32 gdi32 comdlg32 uuid dwmapi xinput)
+target_link_libraries(${PROJECT_NAME} glew32 d2d1 opengl32 Ws2_32 ole32 comctl32 gdi32 comdlg32 uuid dwmapi xinput dbghelp)

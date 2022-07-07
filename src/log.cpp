@@ -1,15 +1,96 @@
 #include "log.h"
 #include <cstdio>
 #include <string>
+#include <ctime>
 
-void APIENTRY GLDebugMessageCallback(GLenum
-                                     source,
-                                     GLenum type, GLuint
-                                     id,
-                                     GLenum severity, GLsizei
-                                     length,
-                                     const GLchar *msg,
-                                     const void *data
+#include <windows.h>
+#include <DbgHelp.h>
+
+#include <cstdio>
+#include <cstdlib>
+#include <sstream>
+
+string stack_trace() {
+
+  HANDLE process = GetCurrentProcess();
+  HANDLE thread = GetCurrentThread();
+
+  CONTEXT context;
+  memset(&context, 0, sizeof(CONTEXT));
+  context.ContextFlags = CONTEXT_FULL;
+  RtlCaptureContext(&context);
+
+  SymInitialize(process, NULL, TRUE);
+
+  DWORD image;
+  STACKFRAME64 stackframe;
+  ZeroMemory(&stackframe, sizeof(STACKFRAME64));
+
+#ifdef _M_IX86
+  image = IMAGE_FILE_MACHINE_I386;
+  stackframe.AddrPC.Offset = context.Eip;
+  stackframe.AddrPC.Mode = AddrModeFlat;
+  stackframe.AddrFrame.Offset = context.Ebp;
+  stackframe.AddrFrame.Mode = AddrModeFlat;
+  stackframe.AddrStack.Offset = context.Esp;
+  stackframe.AddrStack.Mode = AddrModeFlat;
+#elif _M_X64
+  image = IMAGE_FILE_MACHINE_AMD64;
+  stackframe.AddrPC.Offset = context.Rip;
+  stackframe.AddrPC.Mode = AddrModeFlat;
+  stackframe.AddrFrame.Offset = context.Rsp;
+  stackframe.AddrFrame.Mode = AddrModeFlat;
+  stackframe.AddrStack.Offset = context.Rsp;
+  stackframe.AddrStack.Mode = AddrModeFlat;
+#elif _M_IA64
+  image = IMAGE_FILE_MACHINE_IA64;
+  stackframe.AddrPC.Offset = context.StIIP;
+  stackframe.AddrPC.Mode = AddrModeFlat;
+  stackframe.AddrFrame.Offset = context.IntSp;
+  stackframe.AddrFrame.Mode = AddrModeFlat;
+  stackframe.AddrBStore.Offset = context.RsBSP;
+  stackframe.AddrBStore.Mode = AddrModeFlat;
+  stackframe.AddrStack.Offset = context.IntSp;
+  stackframe.AddrStack.Mode = AddrModeFlat;
+#endif
+
+  std::stringstream trace;
+  for (int i = 0; i < 25; i++) {
+
+    BOOL result = StackWalk64(
+            image, process, thread,
+            &stackframe, &context, nullptr,
+            SymFunctionTableAccess64, SymGetModuleBase64, nullptr);
+
+    if (!result) { break; }
+
+    char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)];
+    auto symbol = (PSYMBOL_INFO) buffer;
+    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+    symbol->MaxNameLen = MAX_SYM_NAME;
+    DWORD64 displacement = 0;
+    if (SymFromAddr(process, stackframe.AddrPC.Offset, &displacement, symbol)) {
+      trace << "[" << i << "] " << symbol->Name << "\n";
+    } else {
+      trace << "[" << i << "] ???\n";
+    }
+
+  }
+
+  SymCleanup(process);
+
+  return trace.str();
+
+}
+
+void APIENTRY Log::GLDebugMessageCallback(GLenum
+                                          source,
+                                          GLenum type, GLuint
+                                          id,
+                                          GLenum severity, GLsizei
+                                          length,
+                                          const GLchar *msg,
+                                          const void *data
 ) {
   std::string _source;
   std::string _type;
@@ -98,10 +179,27 @@ void APIENTRY GLDebugMessageCallback(GLenum
       break;
   }
 
-  printf("%d: %s of %s severity, raised from %s: %s\n",
-         id, _type.c_str(), _severity.c_str(), _source.c_str(), msg);
-  printf("%s %d\n", data, length);
+  logf("%d: %s of %s severity, raised from %s: %s",
+       id, _type.c_str(), _severity.c_str(), _source.c_str(), msg);
+  logf("%s %d", data, length);
 
+  string trace = stack_trace();
+  logf("TRACE: %s", trace.c_str());
   __debugbreak();
+}
 
+void Log::file(const string &filename) {
+  if (out != &std::cout) {
+    delete out;
+  }
+  out = new ofstream(filename, ofstream::out);
+}
+
+void Log::close() {
+  if (out != &std::cout) {
+    auto outFile = (ofstream *) out;
+    outFile->flush();
+    outFile->close();
+    delete out;
+  }
 }

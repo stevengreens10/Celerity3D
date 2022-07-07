@@ -12,17 +12,24 @@
 void Renderer::Init(ApplicationWindow *win) {
   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
   glEnable(GL_DEBUG_OUTPUT);
-  glDebugMessageCallback(&GLDebugMessageCallback, nullptr);
+  glDebugMessageCallback(&Log::GLDebugMessageCallback, nullptr);
 
   wglSwapIntervalEXT(1);
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  glEnable(GL_DEPTH_TEST);
+  glShadeModel(GL_SMOOTH);                            // Enable Smooth Shading
+  glClearColor(0.28f, 0.28f, 0.28f, 1.0f);               // Set Background
+  glClearDepth(1.0f);                                 // Depth Buffer Setup
+  glEnable(GL_DEPTH_TEST);                            // Enables Depth Testing
+  glDepthFunc(GL_LEQUAL);                             // The Type Of Depth Testing To Do
+  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);  // Really Nice Perspective Calculations
+  //TODO: Proper gamma correction
+  //  glEnable(GL_FRAMEBUFFER_SRGB);
 
   // TODO: Render to framebuffer with multisample
-  glEnable(GL_MULTISAMPLE);
+  //  glEnable(GL_MULTISAMPLE);
 
   // TODO: Fix primitive vertices then re-enable
   //  glEnable(GL_CULL_FACE);
@@ -44,9 +51,9 @@ void Renderer::Init(ApplicationWindow *win) {
 }
 
 void Renderer::Cleanup(ApplicationWindow *win) {
+  ImGui_ImplWin32_Shutdown();
   ImGui_ImplOpenGL3_Shutdown();
   ImGui::DestroyContext();
-  ImGui_ImplWin32_Shutdown();
   wglDeleteContext(win->renderContext);
 }
 

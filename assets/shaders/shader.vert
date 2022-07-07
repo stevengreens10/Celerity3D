@@ -1,4 +1,4 @@
-#version 460 core
+#version 450 core
 
 // Model view projection matrix
 uniform mat4 u_VP;

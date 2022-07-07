@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Material.h"
+#include "../log.h"
 
 void Material::SetUniform(const std::string &uName, UniformType type, void *data) {
   uniforms[uName] = {type, data};
@@ -78,7 +79,7 @@ int Material::GetUniformLocation(const std::string &uniName) {
   int location = glGetUniformLocation(shader.rendererId, uniName.c_str());
 
   if (location == -1) {
-    printf("WARN: Uniform %s not found\n", uniName.c_str());
+    Log::logf("WARN: Uniform %s not found", uniName.c_str());
   }
 
   uniformCache[uniName] = location;

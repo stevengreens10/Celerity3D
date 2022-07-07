@@ -3,6 +3,7 @@
 
 #include "IndexBuffer.h"
 #include "GL/glew.h"
+#include "../log.h"
 #include <iostream>
 
 IndexBuffer::IndexBuffer(const unsigned int *data, unsigned int count)
@@ -10,11 +11,11 @@ IndexBuffer::IndexBuffer(const unsigned int *data, unsigned int count)
   glGenBuffers(1, &rendererID);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rendererID);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr) count * sizeof(unsigned int), data, GL_DYNAMIC_DRAW);
-  std::cout << "Creating index buf: " << rendererID << ", count: " << count << std::endl;
+  Log::logf("Creating index buf: %d, count: %d", rendererID, count);
 }
 
 IndexBuffer::~IndexBuffer() {
-  std::cout << "Deleting index buf: " << rendererID << std::endl;
+  Log::logf("Deleting index buf: %d", rendererID);
   glDeleteBuffers(1, &rendererID);
 }
 
