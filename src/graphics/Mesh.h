@@ -8,8 +8,10 @@ using std::string, std::unordered_map, std::unique_ptr, std::shared_ptr, std::ve
 using std::reference_wrapper, std::tuple, std::make_unique, std::make_shared;
 
 struct MeshData {
+    string name;
     unique_ptr<VertexArray> vao;
     unordered_map<shared_ptr<Material>, unique_ptr<IndexBuffer>> matToIBO;
+    bool shouldRender = true;
 };
 
 struct MeshVertex {
@@ -20,8 +22,9 @@ struct MeshVertex {
 
 class Mesh : public Renderable {
 private:
-    vector<MeshData> meshes;
 public:
+    vector<MeshData> meshes;
+
     explicit Mesh(const string &fileName, Material &m);
 
     virtual void Draw() const override;

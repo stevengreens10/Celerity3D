@@ -23,12 +23,20 @@ void Renderer::Init(ApplicationWindow *win) {
 
   glEnable(GL_MULTISAMPLE);
 
-  Renderer::InitImGui(win);
 
   cameraPos = glm::vec3(0.0f, 0.0f, -250.0f);
   RotateCamera(90.0f, 0.0f);
   Cube::InitBuffers();
   TriangularPrism::InitBuffers();
+
+  BufferLayout transformationLayout;
+  transformationLayout.Push<glm::mat4>(2);
+  Shader::CreateGlobalUniform("Transformations", transformationLayout, 1);
+
+  BufferLayout sceneLayout;
+  sceneLayout.Push<glm::vec3>(4);
+  Shader::CreateGlobalUniform("Scene", sceneLayout, 2);
+  Renderer::InitImGui(win);
 }
 
 void Renderer::Cleanup(ApplicationWindow *win) {
@@ -56,16 +64,14 @@ void Renderer::NewFrame() {
 }
 
 void Renderer::Draw(const Renderable &r) const {
-  glm::mat4 model = GetModel(glm::vec3(0.0f), r.scale, r.pos, r.rot);
-
-  glm::mat4 vp = proj * view;
-
-  // TODO: Share this across all shaders
-  auto shader = Shader::LoadShader("light");
-  shader->Bind();
-  glUniformMatrix4fv(glGetUniformLocation(shader->rendererId, "u_VP"), 1, false, &(vp[0][0]));
-  glUniformMatrix4fv(glGetUniformLocation(shader->rendererId, "u_M"), 1, false, &(model[0][0]));
-
+  struct __attribute__ ((packed)) TransformationStruct {
+      glm::mat4 vp;
+      glm::mat4 model;
+  };
+  TransformationStruct t{};
+  t.model = GetModel(glm::vec3(0.0f), r.scale, r.pos, r.rot);
+  t.vp = proj * view;
+  Shader::SetGlobalUniform("Transformations", (char *) &t);
   r.Draw();
 }
 
@@ -149,16 +155,4 @@ void Renderer::UpdateImGui(ApplicationWindow *win) {
     ImGui::RenderPlatformWindowsDefault();
     wglMakeCurrent(backup_current_context, win->renderContext);
   }
-}
-
-void Renderer::DrawRenderableDebug(const std::string &name, Renderable *r) {
-  ImGui::Begin(name.c_str());
-  ImGui::SliderFloat("modelScale", &(r->scale), 50, 150);
-
-  ImGui::SliderFloat3("modelX", &(r->pos.x), -300, 300);
-
-  ImGui::SliderFloat3("modelRotate", &(r->rot.x), 0, 359);
-
-  ImGui::Text("%.3f ms/frame (%.1f) FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-  ImGui::End();
 }

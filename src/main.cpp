@@ -90,35 +90,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
   Material m(*lightShader, "testMaterial");
 
-  m.matData.ambientColor = {0.857576, 0.857576, 0.857576};
-  m.matData.diffuseColor = color(90, 209, 114, 1);
-  m.matData.specColor = {0.718182, 0.718182, 0.718182};
-  m.matData.shininess = 551.193766;
-  m.matData.refractionIndex = 1.45f;
-  m.matData.alpha = 1.0f;
-
-  m.ambientTex = texture;
-
   Mesh cube("assets/mesh/cube.obj", m);
   cube.pos = glm::vec3(0, 0, 0.0f);
   cube.scale = 50;
 
   Mesh mesh("assets/mesh/gun.obj", m);
   mesh.pos = glm::vec3(220, -10, 30);
-  mesh.scale = 1;
+  mesh.scale = 50;
 
-//  Mesh ground("assets/mesh/cube.obj", m);
-//  ground.pos = glm::vec3(0, -1100, 0.0f);
-//  ground.scale = 1000;
+  Mesh ground("assets/mesh/cube.obj", m);
+  ground.pos = glm::vec3(0, -1100, 0.0f);
+  ground.scale = 1000;
 
   Material lightSource(*colorShader, "lightMat");
   Cube light(lightSource);
   light.pos = glm::vec3(110.0f, 0.0f, -300.0f);
   light.scale = 25;
 
-  glm::vec3 intensities = glm::vec3(0.4f, 0.5f, 1.0f);
+  glm::vec3 intensities = glm::vec3(0.05f, 2.0f, 1.0f);
   glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
-  glm::vec3 material = glm::vec3(1.0f, 1.0f, 100);
+
+  struct __attribute__ ((packed)) Scene {
+      glm::vec3 camPos;
+      glm::vec3 lightPos;
+      glm::vec3 lightColor;
+      glm::vec3 lightIntensities;
+  };
+
+  Scene s{};
+
   while (win->running) {
     HandleWindowMessage();
 
@@ -131,21 +131,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     ImGui::SliderFloat3("lightColor", &(lightColor.x), 0.0f, 1.0f);
     ImGui::SliderFloat3("lightIntensity", &(intensities.x), 0, 2);
     ImGui::NewLine();
-    ImGui::SliderFloat("meshScale", &(mesh.scale), 0, 1);
+    ImGui::SliderFloat("meshScale", &(mesh.scale), 0, 50);
+    ImGui::SliderFloat3("meshRotate", &(mesh.rot.x), 0, 359);
+    ImGui::NewLine();
+    for (auto &submesh: mesh.meshes) {
+      ImGui::Checkbox(submesh.name.c_str(), &submesh.shouldRender);
+    }
     ImGui::NewLine();
     ImGui::Text("(%f, %f, %f)", renderer->cameraPos.x, renderer->cameraPos.y, renderer->cameraPos.z);
+    ImGui::Text("%.3f ms/frame (%.1f) FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::End();
 #endif
     glm::vec4 lightCol4 = glm::vec4(lightColor, 1.0f);
     lightSource.SetUniform("u_color", U4f, &(lightCol4.x));
-    m.SetUniform("u_cameraPos", U3f, &(renderer->cameraPos.x));
-    m.SetUniform("u_lightPos", U3f, &(light.pos.x));
-    m.SetUniform("u_lightColor", U3f, &(lightColor.x));
-    m.SetUniform("u_lightIntensities", U3f, &(intensities.x));
-
+    s.camPos = renderer->cameraPos;
+    s.lightPos = light.pos;
+    s.lightColor = lightColor;
+    s.lightIntensities = intensities;
+    Shader::SetGlobalUniform("Scene", (char *) &s);
     renderer->Draw(light);
 //    renderer->Draw(ground);
-//    renderer->Draw(cube);
+    renderer->Draw(cube);
     renderer->Draw(mesh);
 
     Renderer::Update(win);

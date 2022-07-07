@@ -49,16 +49,16 @@ public:
             shader(s), name(std::move(name)) {}
 
 
-    void SetUniform(const std::string &name, UniformType type, void *data);
+    void SetUniform(const std::string &uName, UniformType type, void *data);
 
     void Bind();
 
     void Unbind();
 
-    int GetUniformLocation(const std::string &name);
+    int GetUniformLocation(const std::string &uniName);
 
 private:
-    int setTexture(const std::string &name, const std::shared_ptr<Texture> &texture, int slot);
+    int setTexture(const std::string &texName, const std::shared_ptr<Texture> &texture, int slot);
 
     void setMaterialData(MaterialData data);
 };

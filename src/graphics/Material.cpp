@@ -1,8 +1,8 @@
 #include <iostream>
 #include "Material.h"
 
-void Material::SetUniform(const std::string &name, UniformType type, void *data) {
-  uniforms[name] = {type, data};
+void Material::SetUniform(const std::string &uName, UniformType type, void *data) {
+  uniforms[uName] = {type, data};
 }
 
 void Material::Bind() {
@@ -18,11 +18,11 @@ void Material::Bind() {
   setMaterialData(matData);
 
   for (const auto &uMapping: uniforms) {
-    auto name = uMapping.first;
+    auto uName = uMapping.first;
     auto u = uMapping.second;
     auto type = u.type;
     auto data = u.data;
-    int location = GetUniformLocation(name);
+    int location = GetUniformLocation(uName);
     switch (type) {
       case U4f: {
         glUniform4fv(location, 1, (float *) data);
@@ -38,7 +38,7 @@ void Material::Bind() {
       }
       case UM4f: {
         auto *mat = (glm::mat4 *) data;
-        glUniformMatrix4fv(GetUniformLocation(name), 1, TRANSPOSE, &((*mat)[0][0]));
+        glUniformMatrix4fv(GetUniformLocation(uName), 1, TRANSPOSE, &((*mat)[0][0]));
         break;
       }
       default:
@@ -48,10 +48,10 @@ void Material::Bind() {
   }
 }
 
-int Material::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture, int slot) {
+int Material::setTexture(const std::string &texName, const std::shared_ptr<Texture> &texture, int slot) {
   if (texture) {
     texture->Bind(slot);
-    glUniform1i(GetUniformLocation(name), slot);
+    glUniform1i(GetUniformLocation(texName), slot);
     return 1;
   }
   return 0;
@@ -71,15 +71,15 @@ void Material::Unbind() {
 
 }
 
-int Material::GetUniformLocation(const std::string &name) {
-  if (uniformCache.contains(name)) return uniformCache[name];
+int Material::GetUniformLocation(const std::string &uniName) {
+  if (uniformCache.contains(uniName)) return uniformCache[uniName];
 
-  int location = glGetUniformLocation(shader.rendererId, name.c_str());
+  int location = glGetUniformLocation(shader.rendererId, uniName.c_str());
 
   if (location == -1) {
-    printf("WARN: Uniform %s not found\n", name.c_str());
+    printf("WARN: Uniform %s not found\n", uniName.c_str());
   }
 
-  uniformCache[name] = location;
+  uniformCache[uniName] = location;
   return location;
 }

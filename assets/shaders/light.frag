@@ -10,6 +10,7 @@ uniform sampler2D u_diffuseTex;
 uniform sampler2D u_specTex;
 uniform sampler2D u_shinyTex;
 
+// Material properties
 uniform vec3 u_ambientColor;
 uniform vec3 u_diffuseColor;
 uniform vec3 u_specColor;
@@ -17,13 +18,16 @@ uniform float u_shininess;
 uniform float u_refractionIndex;
 uniform float u_alpha;
 
-uniform vec4 u_color;
-uniform vec3 u_cameraPos;
-uniform vec3 u_lightPos;
-uniform vec3 u_lightColor;
-// ambient, diffuse, specular
-uniform vec3 u_lightIntensities;
+// Scene properties
+layout(std140, binding=2) uniform Scene {
+    vec3 u_cameraPos;
+    vec3 u_lightPos;
+    vec3 u_lightColor;
+    // ambient, diffuse, specular
+    vec3 u_lightIntensities;
+};
 
+// Interpolated coords from vertex shader
 in vec3 v_pos;
 in vec2 v_textureUV;
 in vec3 v_normal;

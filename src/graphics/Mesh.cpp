@@ -14,10 +14,12 @@ Mesh::Mesh(const string &fileName, Material &m) : Renderable(reference_wrapper<M
 
 void Mesh::Draw() const {
   for (auto &mesh: meshes) {
+    if (!mesh.shouldRender)
+      continue;
     mesh.vao->Bind();
     for (auto &it: mesh.matToIBO) {
-      it.first->Bind();
       it.second->Bind();
+      it.first->Bind();
       glDrawElements(GL_TRIANGLES, (int) it.second->getCount(), GL_UNSIGNED_INT, nullptr);
     }
   }
@@ -42,19 +44,19 @@ unordered_map<string, shared_ptr<Material>> Mesh::loadMats(const string &fileNam
     } else if (tokens[0] == "Ns") {
       mats[currentMat]->matData.shininess = stof(tokens[1]);
     } else if (tokens[0] == "map_Ns") {
-      mats[currentMat]->shininessTex = make_shared<Texture>(tokens[1]);
+      mats[currentMat]->shininessTex = make_shared<Texture>("assets/images/" + tokens[1]);
     } else if (tokens[0] == "Ka") {
       mats[currentMat]->matData.ambientColor = sToVec3(tokens, 1);
     } else if (tokens[0] == "map_Ka") {
-      mats[currentMat]->ambientTex = make_shared<Texture>(tokens[1]);
+      mats[currentMat]->ambientTex = make_shared<Texture>("assets/images/" + tokens[1]);
     } else if (tokens[0] == "Kd") {
       mats[currentMat]->matData.diffuseColor = sToVec3(tokens, 1);
     } else if (tokens[0] == "map_Kd") {
-      mats[currentMat]->diffuseTex = make_shared<Texture>(tokens[1]);
+      mats[currentMat]->diffuseTex = make_shared<Texture>("assets/images/" + tokens[1]);
     } else if (tokens[0] == "Ks") {
       mats[currentMat]->matData.specColor = sToVec3(tokens, 1);
     } else if (tokens[0] == "map_Ks") {
-      mats[currentMat]->specTex = make_shared<Texture>(tokens[1]);
+      mats[currentMat]->specTex = make_shared<Texture>("assets/images/" + tokens[1]);
     } else if (tokens[0] == "Ke") {
       // TODO: Not using this yet
       printf("Don't support Ke yet in MTL\n");
@@ -65,6 +67,8 @@ unordered_map<string, shared_ptr<Material>> Mesh::loadMats(const string &fileNam
     } else if (tokens[0] == "illum") {
       // TODO: Not using this yet
       printf("Don't support illum yet in MTL\n");
+    } else if (tokens[0] != "#" && !tokens[0].empty()) {
+      printf("Unsupported line in MTL: %s\n", tokens[1].c_str());
     }
   }
 
@@ -72,6 +76,7 @@ unordered_map<string, shared_ptr<Material>> Mesh::loadMats(const string &fileNam
 }
 
 bool Mesh::loadMesh(const string &fileName) {
+  // Turn back... Don't read this code for your own sake.
   printf("Loading mesh...\n");
   ifstream f;
   f.open(fileName);
@@ -94,7 +99,7 @@ bool Mesh::loadMesh(const string &fileName) {
   // Maps position/uv/normal triplet to vertices index
   vector<unordered_map<TriIdxVals, uint32_t>> triVertexMap{};
 
-  /* Maps mesh to material to tri array
+  /* Maps submesh to material to tri array
     e.g.:
 
     Mesh
@@ -128,8 +133,20 @@ bool Mesh::loadMesh(const string &fileName) {
 
         if (!triVertexMap[meshIdx].contains(idxVals)) {
           triVertexMap[meshIdx][idxVals] = (int) vertices[meshIdx].size();
-          vertices[meshIdx].push_back(
-                  {positions[(int) idxVals.x - 1], uvCoords[(int) idxVals.y - 1], normals[(int) idxVals.z - 1]});
+          // Default to 0 if not provided
+          auto pos = glm::vec3(0.0f);
+          if (positions.size() > (int) idxVals.x - 1)
+            pos = positions[(int) idxVals.x - 1];
+
+          auto uv = glm::vec2(0.0f);
+          if (uvCoords.size() > (int) idxVals.y - 1)
+            uv = uvCoords[(int) idxVals.y - 1];
+
+          auto normal = glm::vec3(0.0f);
+          if (normals.size() > (int) idxVals.z - 1)
+            normal = normals[(int) idxVals.z - 1];
+
+          vertices[meshIdx].push_back({pos, uv, normal});
         }
 
       }
@@ -139,11 +156,7 @@ bool Mesh::loadMesh(const string &fileName) {
       }
     } else if (tokens[0] == "o") {
       meshIdx++;
-      if (meshes.size() == 1) {
-        printf("Not loading more than one mesh!\n");
-        break;
-      }
-      meshes.push_back({});
+      meshes.push_back({tokens[1]});
       // Make room for next mesh data
       vertices.emplace_back();
       triVertexMap.emplace_back();
