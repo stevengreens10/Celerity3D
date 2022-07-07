@@ -94,13 +94,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
   cube.pos = glm::vec3(0, 0, 0.0f);
   cube.scale = 50;
 
-  Mesh mesh("assets/mesh/gun.obj", m);
+  Mesh mesh("assets/mesh/corgi.obj", m);
   mesh.pos = glm::vec3(220, -10, 30);
   mesh.scale = 50;
-
-  Mesh ground("assets/mesh/cube.obj", m);
-  ground.pos = glm::vec3(0, -1100, 0.0f);
-  ground.scale = 1000;
 
   Material lightSource(*colorShader, "lightMat");
   Cube light(lightSource);

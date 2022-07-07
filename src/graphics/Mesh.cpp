@@ -13,10 +13,10 @@ Mesh::Mesh(const string &fileName, Material &m) : Renderable(reference_wrapper<M
 }
 
 void Mesh::Draw() const {
+  vao->Bind();
   for (auto &mesh: meshes) {
     if (!mesh.shouldRender)
       continue;
-    mesh.vao->Bind();
     for (auto &it: mesh.matToIBO) {
       it.second->Bind();
       it.first->Bind();
@@ -92,12 +92,10 @@ bool Mesh::loadMesh(const string &fileName) {
   typedef glm::vec3 TriIdxVals;
   typedef tuple<TriIdxVals, TriIdxVals, TriIdxVals> TriTriplet;
 
-  // --Indexed by mesh idx--
-
   // Used to build vertex buffer
-  vector<vector<MeshVertex>> vertices;
+  vector<MeshVertex> vertices;
   // Maps position/uv/normal triplet to vertices index
-  vector<unordered_map<TriIdxVals, uint32_t>> triVertexMap{};
+  unordered_map<TriIdxVals, uint32_t> triVertexMap{};
 
   /* Maps submesh to material to tri array
     e.g.:
@@ -131,8 +129,8 @@ bool Mesh::loadMesh(const string &fileName) {
         TriIdxVals idxVals = sToVec3(faceTokens, 0);
         faceVec.push_back(idxVals);
 
-        if (!triVertexMap[meshIdx].contains(idxVals)) {
-          triVertexMap[meshIdx][idxVals] = (int) vertices[meshIdx].size();
+        if (!triVertexMap.contains(idxVals)) {
+          triVertexMap[idxVals] = (int) vertices.size();
           // Default to 0 if not provided
           auto pos = glm::vec3(0.0f);
           if (positions.size() > (int) idxVals.x - 1)
@@ -146,7 +144,7 @@ bool Mesh::loadMesh(const string &fileName) {
           if (normals.size() > (int) idxVals.z - 1)
             normal = normals[(int) idxVals.z - 1];
 
-          vertices[meshIdx].push_back({pos, uv, normal});
+          vertices.push_back({pos, uv, normal});
         }
 
       }
@@ -158,26 +156,19 @@ bool Mesh::loadMesh(const string &fileName) {
       meshIdx++;
       meshes.push_back({tokens[1]});
       // Make room for next mesh data
-      vertices.emplace_back();
-      triVertexMap.emplace_back();
       triIndices.emplace_back();
-      // No longer needed for next mesh
-      positions.clear();
-      uvCoords.clear();
-      normals.clear();
     }
   }
 
+  vao = new VertexArray();
+  VertexBuffer vbuf(&vertices[0], vertices.size() * sizeof(MeshVertex));
+  BufferLayout layout;
+  layout.Push<float>(3); // Pos
+  layout.Push<float>(2); // UV
+  layout.Push<float>(3); // Normal
+  vao->AddBuffer(vbuf, layout);
   for (int n = 0; n < meshes.size(); n++) {
     auto &meshData = meshes[n];
-    meshData.vao = make_unique<VertexArray>();
-    VertexBuffer vbuf(&vertices[n][0], vertices[n].size() * sizeof(MeshVertex));
-    BufferLayout layout;
-    layout.Push<float>(3); // Pos
-    layout.Push<float>(2); // UV
-    layout.Push<float>(3); // Normal
-    meshData.vao->AddBuffer(vbuf, layout);
-
     for (auto &it: meshData.matToIBO) {
       // Tris specific to this material
       auto matTris = triIndices[n][it.first];
@@ -191,9 +182,9 @@ bool Mesh::loadMesh(const string &fileName) {
         auto t = matTris[i];
         int idx = i * 3;
         // Map pos/uv/normal idx triplet to index in vertex buffer
-        indices[idx] = triVertexMap[n][get<0>(t)];
-        indices[idx + 1] = triVertexMap[n][get<1>(t)];
-        indices[idx + 2] = triVertexMap[n][get<2>(t)];
+        indices[idx] = triVertexMap[get<0>(t)];
+        indices[idx + 1] = triVertexMap[get<1>(t)];
+        indices[idx + 2] = triVertexMap[get<2>(t)];
       }
       meshData.matToIBO[it.first] = std::make_unique<IndexBuffer>(
               &indices[0], sizeof(indices) / sizeof(uint32_t));
