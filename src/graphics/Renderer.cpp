@@ -21,8 +21,12 @@ void Renderer::Init(ApplicationWindow *win) {
 
   glEnable(GL_DEPTH_TEST);
 
+  // TODO: Render to framebuffer with multisample
   glEnable(GL_MULTISAMPLE);
 
+  // TODO: Fix primitive vertices then re-enable
+  //  glEnable(GL_CULL_FACE);
+  //  glCullFace(GL_BACK);
 
   cameraPos = glm::vec3(0.0f, 0.0f, -250.0f);
   RotateCamera(90.0f, 0.0f);

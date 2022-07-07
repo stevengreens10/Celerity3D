@@ -9,6 +9,7 @@ uniform sampler2D u_ambientTex;
 uniform sampler2D u_diffuseTex;
 uniform sampler2D u_specTex;
 uniform sampler2D u_shinyTex;
+uniform sampler2D u_bumpTex;
 
 // Material properties
 uniform vec3 u_ambientColor;
@@ -38,6 +39,7 @@ void main() {
     vec3 diffuseTex = vec3(1.0f);
     vec3 specTex = vec3(1.0f);
     float shinyTex = 1.0f;
+    vec3 bumpTex = vec3(1.0f);
     if ((u_texturesPresent & 1) >= 1)
         ambientTex = vec3(texture(u_ambientTex, v_textureUV));
     if ((u_texturesPresent & 2) >= 1)
@@ -46,13 +48,15 @@ void main() {
         specTex    = vec3(texture(u_specTex, v_textureUV));
     if ((u_texturesPresent & 8) >= 1)
         shinyTex   = float(texture(u_shinyTex, v_textureUV));
+    if ((u_texturesPresent & 16) >= 1)
+        bumpTex    = vec3(texture(u_bumpTex, v_textureUV));
 
     vec3 ambientColor = u_ambientColor * ambientTex;
     vec3 diffuseColor = u_diffuseColor * diffuseTex;
     vec3 specColor = u_specColor * specTex;
     float shininess = u_shininess * shinyTex;
 
-    vec3 normal = normalize(v_normal);
+    vec3 normal = normalize(v_normal) * bumpTex;
     vec3 lightDir = normalize(u_lightPos - v_pos);
 
     vec3 ambient = u_lightColor * u_lightIntensities[0];

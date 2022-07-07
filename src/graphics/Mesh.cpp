@@ -53,6 +53,8 @@ unordered_map<string, shared_ptr<Material>> Mesh::loadMats(const string &fileNam
       mats[currentMat]->matData.diffuseColor = sToVec3(tokens, 1);
     } else if (tokens[0] == "map_Kd") {
       mats[currentMat]->diffuseTex = make_shared<Texture>("assets/images/" + tokens[1]);
+    } else if (tokens[0] == "map_Bump") {
+      mats[currentMat]->bumpTex = make_shared<Texture>("assets/images/" + tokens[1]);
     } else if (tokens[0] == "Ks") {
       mats[currentMat]->matData.specColor = sToVec3(tokens, 1);
     } else if (tokens[0] == "map_Ks") {
@@ -68,7 +70,7 @@ unordered_map<string, shared_ptr<Material>> Mesh::loadMats(const string &fileNam
       // TODO: Not using this yet
       printf("Don't support illum yet in MTL\n");
     } else if (tokens[0] != "#" && !tokens[0].empty()) {
-      printf("Unsupported line in MTL: %s\n", tokens[1].c_str());
+      printf("Unsupported line in MTL: %s\n", tokens[0].c_str());
     }
   }
 

@@ -13,6 +13,7 @@ void Material::Bind() {
   texturesPresent |= setTexture("u_diffuseTex", diffuseTex, 1) << 1;
   texturesPresent |= setTexture("u_specTex", specTex, 2) << 2;
   texturesPresent |= setTexture("u_shinyTex", shininessTex, 3) << 3;
+  texturesPresent |= setTexture("u_bumpTex", bumpTex, 4) << 4;
   glUniform1i(GetUniformLocation("u_texturesPresent"), texturesPresent);
 
   setMaterialData(matData);

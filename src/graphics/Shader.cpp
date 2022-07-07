@@ -84,6 +84,7 @@ void Shader::SetGlobalUniform(const string &name, char *data) {
   auto layout = uniformData.layout;
   uint32_t inOffset = 0;
   uint32_t outOffset = 0;
+  glBindBuffer(GL_UNIFORM_BUFFER, uniformData.id);
   char outBuf[uniformData.size];
   for (auto element: layout.GetElements()) {
     for (int i = 0; i < element.count; i++) {
@@ -91,11 +92,9 @@ void Shader::SetGlobalUniform(const string &name, char *data) {
       uint32_t offset = outOffset - (outOffset / alignment) * alignment;
       if (offset > 0)
         outOffset += alignment - offset;
-      memcpy((void *) (outBuf + outOffset), (void *) (data + inOffset), element.size);
+      glBufferSubData(GL_UNIFORM_BUFFER, outOffset, element.size, (void *) (data + inOffset));
       outOffset += element.size;
       inOffset += element.size;
     }
   }
-  glBindBuffer(GL_UNIFORM_BUFFER, uniformData.id);
-  glBufferSubData(GL_UNIFORM_BUFFER, 0, uniformData.size, outBuf);
 }

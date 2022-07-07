@@ -44,6 +44,7 @@ public:
     std::shared_ptr<Texture> diffuseTex;
     std::shared_ptr<Texture> specTex;
     std::shared_ptr<Texture> shininessTex;
+    std::shared_ptr<Texture> bumpTex;
 
     Material(Shader &s, std::string name) :
             shader(s), name(std::move(name)) {}

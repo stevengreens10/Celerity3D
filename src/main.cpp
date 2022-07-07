@@ -94,7 +94,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
   cube.pos = glm::vec3(0, 0, 0.0f);
   cube.scale = 50;
 
-  Mesh mesh("assets/mesh/corgi.obj", m);
+  Mesh mesh("assets/mesh/bottles.obj", m);
   mesh.pos = glm::vec3(220, -10, 30);
   mesh.scale = 50;
 
@@ -127,7 +127,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     ImGui::SliderFloat3("lightColor", &(lightColor.x), 0.0f, 1.0f);
     ImGui::SliderFloat3("lightIntensity", &(intensities.x), 0, 2);
     ImGui::NewLine();
-    ImGui::SliderFloat("meshScale", &(mesh.scale), 0, 50);
+    ImGui::SliderFloat("meshScale", &(mesh.scale), 25, 500);
     ImGui::SliderFloat3("meshRotate", &(mesh.rot.x), 0, 359);
     ImGui::NewLine();
     for (auto &submesh: mesh.meshes) {
