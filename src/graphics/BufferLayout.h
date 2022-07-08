@@ -11,17 +11,18 @@
 #include <unordered_map>
 #include <cstdio>
 
-struct VertexBufferElement {
+struct BufferElement {
     unsigned int type;
     unsigned int count;
     unsigned int size;
     unsigned int offset;
+    unsigned int alignment;
     bool normalized;
 };
 
 class BufferLayout {
 private:
-    std::vector<VertexBufferElement> elements;
+    std::vector<BufferElement> elements;
     unsigned int stride;
 public:
     static std::unordered_map<std::type_index, unsigned int> glTypeMap;
@@ -35,11 +36,30 @@ public:
         Log::logf("Invalid type for BufferLayout push: %s", (typeid(T)).name());
       }
       auto glType = glTypeMap[type];
-      elements.push_back({glType, count, sizeof(T), stride, false});
+      auto alignment = GetBaseAlignment(glType);
+      elements.push_back({glType, count, sizeof(T), stride, alignment, false});
       stride += sizeof(T) * count;
     }
 
-    [[nodiscard]] inline const std::vector<VertexBufferElement> &GetElements() const { return elements; }
+    // Only layout std430 supported
+    void PushStruct(const BufferLayout &structLayout, unsigned int count) {
+      uint32_t size;
+      uint32_t maxSize;
+      uint32_t alignment;
+      for (auto element: structLayout.elements) {
+        size += element.size;
+        // Todo alignment offseting?
+        if (element.size > maxSize) {
+          maxSize = element.size;
+          alignment = element.alignment;
+        }
+      }
+
+      elements.push_back({0xffff, count, size, stride, alignment, false});
+      stride += size * count;
+    }
+
+    [[nodiscard]] inline const std::vector<BufferElement> &GetElements() const { return elements; }
 
     [[nodiscard]] inline unsigned int GetStride() const { return stride; }
 

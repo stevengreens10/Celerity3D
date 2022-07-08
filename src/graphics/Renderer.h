@@ -11,6 +11,7 @@
 #include "../window.h"
 #include "Renderable.h"
 #include "Cube.h"
+#include "Scene.h"
 
 class Renderer {
 private:
@@ -18,7 +19,7 @@ private:
 public:
     static void Clear();
 
-    void Draw(const Renderable &r) const;
+    void Draw(const Scene &s) const;
 
     void SetProjection(int width, int height);
 
@@ -32,8 +33,6 @@ public:
 
 
     static void Cleanup(Window *win);
-
-    static void DrawRenderableDebug(const std::string &name, Renderable *r);
 
 private:
     static void InitImGui(Window *win);

@@ -36,10 +36,19 @@ public:
 
     static void SetGlobalUniform(const string &name, char *data);
 
+    static unsigned int CreateShaderStorageBuffer(const string &name, BufferLayout layout, int idx);
+
+    static void SetShaderStorageBuffer(const string &name, char *data);
+
 private:
     Shader(const std::string &vertFile, const std::string &fragFile);
 
     static unsigned int CompileShader(char *source, GLenum type);
+
+    static unsigned int CreateBuffer(GLenum type, const string &name, BufferLayout layout, int idx);
+
+    static void SetBuffer(GLenum type, const string &name, char *data);
+
 };
 
 

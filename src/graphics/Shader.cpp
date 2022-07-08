@@ -58,18 +58,17 @@ Shader *Shader::CreateShader(const string &name) {
   return s;
 }
 
-unsigned int Shader::CreateGlobalUniform(const string &name, BufferLayout layout, int idx) {
+unsigned int Shader::CreateBuffer(GLenum type, const string &name, BufferLayout layout, int idx) {
   uint32_t id;
   glGenBuffers(1, &id);
-  glBindBuffer(GL_UNIFORM_BUFFER, id);
+  glBindBuffer(type, id);
 
   uint32_t size = 0;
   for (auto element: layout.GetElements()) {
     for (int i = 0; i < element.count; i++) {
-      uint32_t alignment = BufferLayout::GetBaseAlignment(element.type);
-      uint32_t offset = size - (size / alignment) * alignment;
+      uint32_t offset = size - (size / element.alignment) * element.alignment;
       if (offset > 0)
-        size += alignment - offset;
+        size += element.alignment - offset;
       size += element.size;
     }
   }
@@ -80,22 +79,36 @@ unsigned int Shader::CreateGlobalUniform(const string &name, BufferLayout layout
   return id;
 }
 
-void Shader::SetGlobalUniform(const string &name, char *data) {
+unsigned int Shader::CreateGlobalUniform(const string &name, BufferLayout layout, int idx) {
+  return CreateBuffer(GL_UNIFORM_BUFFER, name, std::move(layout), idx);
+}
+
+unsigned int Shader::CreateShaderStorageBuffer(const string &name, BufferLayout layout, int idx) {
+  return CreateBuffer(GL_SHADER_STORAGE_BUFFER, name, std::move(layout), idx);
+}
+
+void Shader::SetBuffer(GLenum type, const string &name, char *data) {
   auto uniformData = globalUniforms[name];
   auto layout = uniformData.layout;
   uint32_t inOffset = 0;
   uint32_t outOffset = 0;
-  glBindBuffer(GL_UNIFORM_BUFFER, uniformData.id);
-  char outBuf[uniformData.size];
+  glBindBuffer(type, uniformData.id);
   for (auto element: layout.GetElements()) {
     for (int i = 0; i < element.count; i++) {
-      uint32_t alignment = BufferLayout::GetBaseAlignment(element.type);
-      uint32_t offset = outOffset - (outOffset / alignment) * alignment;
+      uint32_t offset = outOffset - (outOffset / element.alignment) * element.alignment;
       if (offset > 0)
-        outOffset += alignment - offset;
-      glBufferSubData(GL_UNIFORM_BUFFER, outOffset, element.size, (void *) (data + inOffset));
+        outOffset += element.alignment - offset;
+      glBufferSubData(type, outOffset, element.size, (void *) (data + inOffset));
       outOffset += element.size;
       inOffset += element.size;
     }
   }
+}
+
+void Shader::SetGlobalUniform(const string &name, char *data) {
+  SetBuffer(GL_UNIFORM_BUFFER, name, data);
+}
+
+void Shader::SetShaderStorageBuffer(const string &name, char *data) {
+  SetBuffer(GL_SHADER_STORAGE_BUFFER, name, data);
 }

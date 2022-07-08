@@ -81,16 +81,18 @@ void Renderer::NewFrame() {
 #endif
 }
 
-void Renderer::Draw(const Renderable &r) const {
+void Renderer::Draw(const Scene &s) const {
   struct __attribute__ ((packed)) TransformationStruct {
       glm::mat4 vp;
       glm::mat4 model;
   };
   TransformationStruct t{};
-  t.model = GetModel(glm::vec3(0.0f), r.scale, r.pos, r.rot);
-  t.vp = proj * Camera::ViewMatrix();
-  Shader::SetGlobalUniform("Transformations", (char *) &t);
-  r.Draw();
+  for (auto object: s.Objects()) {
+    t.model = GetModel(glm::vec3(0.0f), object->scale, object->pos, object->rot);
+    t.vp = proj * Camera::ViewMatrix();
+    Shader::SetGlobalUniform("Transformations", (char *) &t);
+    object->Draw();
+  }
 }
 
 void Renderer::SetProjection(int width, int height) {
