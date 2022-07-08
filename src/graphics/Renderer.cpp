@@ -8,8 +8,9 @@
 #include "GL/wglew.h"
 #include "Cube.h"
 #include "TriangularPrism.h"
+#include "../Camera.h"
 
-void Renderer::Init(ApplicationWindow *win) {
+void Renderer::Init(Window *win) {
   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(&Log::GLDebugMessageCallback, nullptr);
@@ -34,8 +35,6 @@ void Renderer::Init(ApplicationWindow *win) {
 
   SetProjection(win->width, win->height);
 
-  cameraPos = glm::vec3(157.22, 0, -183);
-  RotateCamera(90.0f, 0.0f);
   Cube::InitBuffers();
   TriangularPrism::InitBuffers();
 
@@ -51,7 +50,7 @@ void Renderer::Init(ApplicationWindow *win) {
 #endif
 }
 
-void Renderer::Cleanup(ApplicationWindow *win) {
+void Renderer::Cleanup(Window *win) {
 #ifdef IMGUI
   ImGui_ImplWin32_Shutdown();
   ImGui_ImplOpenGL3_Shutdown();
@@ -60,7 +59,7 @@ void Renderer::Cleanup(ApplicationWindow *win) {
   wglDeleteContext(win->renderContext);
 }
 
-void Renderer::EndFrame(ApplicationWindow *win) {
+void Renderer::EndFrame(Window *win) {
 #ifdef IMGUI
   Renderer::UpdateImGui(win);
 #endif
@@ -89,7 +88,7 @@ void Renderer::Draw(const Renderable &r) const {
   };
   TransformationStruct t{};
   t.model = GetModel(glm::vec3(0.0f), r.scale, r.pos, r.rot);
-  t.vp = proj * view;
+  t.vp = proj * Camera::ViewMatrix();
   Shader::SetGlobalUniform("Transformations", (char *) &t);
   r.Draw();
 }
@@ -97,20 +96,6 @@ void Renderer::Draw(const Renderable &r) const {
 void Renderer::SetProjection(int width, int height) {
   proj = glm::perspective(glm::radians(59.0f), (float) width / (float) height, 10.0f, 1000.0f);
   glViewport(0, 0, width, height);
-}
-
-void Renderer::RotateCamera(float _yaw, float _pitch) {
-  yaw = _yaw;
-  pitch = _pitch;
-  cameraDir.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-  cameraDir.y = sin(glm::radians(pitch));
-  cameraDir.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-  cameraDir = glm::normalize(cameraDir);
-  CalculateView();
-}
-
-void Renderer::CalculateView() {
-  view = glm::lookAt(cameraPos, cameraPos + glm::normalize(cameraDir), glm::vec3(0, 1, 0));
 }
 
 glm::mat4 Renderer::GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelTranslate, glm::vec3 modelRotate) {
@@ -134,7 +119,7 @@ glm::mat4 Renderer::GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelT
   return model;
 }
 
-void Renderer::InitImGui(ApplicationWindow *win) {
+void Renderer::InitImGui(Window *win) {
   IMGUI_CHECKVERSION();
 
   ImGui::CreateContext();
@@ -154,11 +139,11 @@ void Renderer::InitImGui(ApplicationWindow *win) {
     style.Colors[ImGuiCol_WindowBg].w = 1.0f;
   }
 
-  ImGui_ImplWin32_InitForOpenGL(win->window, win->renderContext);
+  ImGui_ImplWin32_InitForOpenGL(win->hWnd, win->renderContext);
   ImGui_ImplOpenGL3_Init("#version 410");
 }
 
-void Renderer::UpdateImGui(ApplicationWindow *win) {
+void Renderer::UpdateImGui(Window *win) {
   // Rendering
   ImGui::Render();
   ImGuiIO &io = ImGui::GetIO();
@@ -169,7 +154,7 @@ void Renderer::UpdateImGui(ApplicationWindow *win) {
   // Update and Render additional Platform Windows
   // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
   if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-    HDC backup_current_context = GetDC(win->window);
+    HDC backup_current_context = GetDC(win->hWnd);
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
     wglMakeCurrent(backup_current_context, win->renderContext);

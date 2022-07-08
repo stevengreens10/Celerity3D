@@ -1,8 +1,6 @@
 #include <windows.h>
 #include <cstdio>
 #include "window.h"
-#include "util.h"
-#include "graphics/VertexArray.h"
 #include "graphics/Shader.h"
 #include "graphics/Renderer.h"
 #include "graphics/Texture.h"
@@ -12,78 +10,26 @@
 #include "graphics/Material.h"
 #include "graphics/Mesh.h"
 #include "log.h"
+#include "Camera.h"
+#include "Application.h"
 
 #define INIT_WIDTH 800
 #define INIT_HEIGHT 600
-
-Shader *shader;
-Renderer *renderer;
-ApplicationWindow *win;
 
 glm::vec4 color(int i, int i1, int i2);
 
 using std::cos, std::sin, std::acos;
 
-void handleEvent(EventType type, unsigned long p1, unsigned long p2) {
-  if (type == KEYDOWN_EVENT) {
-    if (p1 == VK_ESCAPE) {
-      // Lose focus on escape
-      SetFocus(nullptr);
-    }
-
-    float speed = 5.0f;
-
-    glm::vec3 horizontalDir = glm::cross(glm::vec3(0, 1, 0), renderer->cameraDir) * speed;
-    if (p1 == 'A') {
-      renderer->cameraPos += horizontalDir;
-    } else if (p1 == 'D') {
-      renderer->cameraPos -= horizontalDir;
-    }
-    if (p1 == VK_SPACE) {
-      renderer->cameraPos.y += 1 * speed;
-    }
-    if (p1 == VK_SHIFT) {
-      renderer->cameraPos.y -= 1 * speed;
-    }
-    if (p1 == 'W') {
-      renderer->cameraPos += glm::vec3(renderer->cameraDir.x, 0, renderer->cameraDir.z) * speed;
-    } else if (p1 == 'S') {
-      renderer->cameraPos -= glm::vec3(renderer->cameraDir.x, 0, renderer->cameraDir.z) * speed;
-    }
-
-    renderer->CalculateView();
-
-  } else if (type == MOUSEMOVE_EVENT) {
-    auto dx = (int) p1;
-    auto dy = (int) -p2;
-    float sens = 0.1f;
-
-    float yawVal = (float) dx * sens;
-    float pitchVal = (float) dy * sens;
-    if (pitchVal > 89.0f)
-      pitchVal = 89.0f;
-    if (pitchVal < -89.0f)
-      pitchVal = -89.0f;
-    renderer->RotateCamera(renderer->yaw + yawVal, renderer->pitch + pitchVal);
-
-  } else if (type == RESIZE_EVENT) {
-    if (win) {
-      glViewport(0, 0, win->width, win->height);
-      renderer->SetProjection(win->width, win->height);
-    }
-  }
-}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow) {
   {
     ImGui_ImplWin32_EnableDpiAwareness();
-    win = NewWindow(hInstance, &handleEvent, "Test window", INIT_WIDTH, INIT_HEIGHT);
+    Application::window = NewWindow(hInstance, "Test window", INIT_WIDTH, INIT_HEIGHT);
 //    Log::file("log.txt");
     Log::logf("Version: %s", glGetString(GL_VERSION));
     Log::logf("GLSL Version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-    renderer = new Renderer();
-    renderer->Init(win);
+    Application::Init();
 
     Shader *colorShader = Shader::CreateShader("color");
     Shader *lightShader = Shader::CreateShader("light");
@@ -116,9 +62,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     Scene s{};
 
     bool autoRotate = false;
+    const Renderer &renderer = *Application::renderer;
     while (true) {
       HandleWindowMessage();
-      if (!win->running) {
+      Application::Update();
+      if (!Application::running) {
         break;
       }
 
@@ -138,31 +86,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         ImGui::Checkbox(submesh.name.c_str(), &submesh.shouldRender);
       }
       ImGui::NewLine();
-      ImGui::Text("(%f, %f, %f)", renderer->cameraPos.x, renderer->cameraPos.y, renderer->cameraPos.z);
+      ImGui::Text("(%f, %f, %f)", Camera::Pos().x, Camera::Pos().y, Camera::Pos().z);
       ImGui::Text("%.3f ms/frame (%.1f) FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
       ImGui::End();
 #endif
       glm::vec4 lightCol4 = glm::vec4(lightColor, 1.0f);
       lightSource.SetUniform("u_color", U4f, &(lightCol4.x));
-      s.camPos = renderer->cameraPos;
+      s.camPos = Camera::Pos();
       s.lightPos = light.pos;
       s.lightColor = lightColor;
       s.lightIntensities = intensities;
       Shader::SetGlobalUniform("Scene", (char *) &s);
-      renderer->Draw(light);
-      renderer->Draw(cube);
-      renderer->Draw(mesh);
+      renderer.Draw(light);
+      renderer.Draw(cube);
+      renderer.Draw(mesh);
 
       if (autoRotate)
         mesh.rot.y += 1;
       if (mesh.rot.y > 360)
         mesh.rot.y = mesh.rot.y - 360;
 
-      Renderer::EndFrame(win);
+      Renderer::EndFrame(Application::window);
     }
 
     // Cleanup
-    Renderer::Cleanup(win);
+    Renderer::Cleanup(Application::window);
   }
   Log::close();
 

@@ -7,6 +7,8 @@
 
 #include "window.h"
 #include "log.h"
+#include "EventHandler.h"
+#include "Application.h"
 
 static TCHAR szWindowClass[] = TEXT("myWindowClass");
 
@@ -39,8 +41,8 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height)     // Resize And Initialize
 }
 
 
-ApplicationWindow *
-WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, const std::string &title, int width, int height) {
+Window *
+WINAPI NewWindow(HINSTANCE hInstance, const std::string &title, int width, int height) {
   if (!wcex) {
     wcex = std::make_unique<WNDCLASSEX>();
     wcex->cbSize = sizeof(WNDCLASSEX);
@@ -120,8 +122,8 @@ WINAPI NewWindow(HINSTANCE hInstance, WinEventCallback eventCallback, const std:
     exit(1);
   }
 
-  auto appWindow = static_cast<ApplicationWindow *>(malloc(sizeof(ApplicationWindow)));
-  *appWindow = ApplicationWindow{hWnd, hDC, hRC, eventCallback, width, height};
+  auto appWindow = static_cast<Window *>(malloc(sizeof(Window)));
+  *appWindow = Window{hWnd, hDC, hRC, width, height};
   SetLastError(0);
   SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR) appWindow);
 
@@ -156,21 +158,21 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
   if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
     return true;
-  auto *appWin = reinterpret_cast<ApplicationWindow *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+  auto *appWin = reinterpret_cast<Window *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
   switch (message) {
     case WM_SIZE:
       appWin->width = LOWORD(lParam);
       appWin->height = HIWORD(lParam);
-      appWin->eventCallback(RESIZE_EVENT, wParam, lParam);
+      EventHandler::HandleEvent(EventHandler::RESIZE_EVENT, wParam, lParam);
       break;
     case WM_KEYUP:
-      appWin->eventCallback(KEYUP_EVENT, wParam, lParam);
+      EventHandler::HandleEvent(EventHandler::KEYUP_EVENT, wParam, lParam);
       break;
     case WM_KEYDOWN:
-      appWin->eventCallback(KEYDOWN_EVENT, wParam, lParam);
+      EventHandler::HandleEvent(EventHandler::KEYDOWN_EVENT, wParam, lParam);
       break;
     case WM_MOUSEMOVE:
-//      appWin->eventCallback(MOUSEMOVE_EVENT, wParam, lParam);
+//      EventHandler::HandleEvent(EventHandler::MOUSEMOVE_EVENT, wParam, lParam);
       break;
     case WM_KILLFOCUS:
       if (mouseDisabled)
@@ -208,7 +210,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         dy = data->data.mouse.lLastY;
       }
 
-      appWin->eventCallback(MOUSEMOVE_EVENT, dx, dy);
+      EventHandler::HandleEvent(EventHandler::MOUSEMOVE_EVENT, dx, dy);
 
       break;
     }
@@ -224,7 +226,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
       break;
     case WM_CLOSE:
     case WM_DESTROY:
-      appWin->running = false;
+      Application::running = false;
       PostQuitMessage(0);
     default:
       return DefWindowProc(hWnd, message, wParam, lParam);

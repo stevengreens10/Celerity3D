@@ -15,7 +15,6 @@
 class Renderer {
 private:
     glm::mat4 proj;
-    glm::mat4 view;
 public:
     static void Clear();
 
@@ -23,31 +22,23 @@ public:
 
     void SetProjection(int width, int height);
 
-    void CalculateView();
-
     static glm::mat4 GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelTranslate, glm::vec3 modelRotate);
 
     static void NewFrame();
 
-    void Init(ApplicationWindow *win);
+    void Init(Window *win);
 
-    static void EndFrame(ApplicationWindow *win);
+    static void EndFrame(Window *win);
 
 
-    static void Cleanup(ApplicationWindow *win);
+    static void Cleanup(Window *win);
 
     static void DrawRenderableDebug(const std::string &name, Renderable *r);
 
-    void RotateCamera(float _yaw, float pitch);
-
-    glm::vec3 cameraPos;
-    glm::vec3 cameraDir;
-    float yaw;
-    float pitch;
 private:
-    static void InitImGui(ApplicationWindow *win);
+    static void InitImGui(Window *win);
 
-    static void UpdateImGui(ApplicationWindow *win);
+    static void UpdateImGui(Window *win);
 
 };
 
