@@ -5,8 +5,12 @@
 #include "LightSource.h"
 #include "Renderable.h"
 
-class Scene {
+struct __attribute__ ((packed)) SceneData {
+    glm::vec3 camPos;
+    std::vector<LightSource> lightSources;
+};
 
+class Scene {
 private:
     std::vector<LightSource *> lights;
     std::vector<Renderable *> objects;

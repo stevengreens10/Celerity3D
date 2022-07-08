@@ -12,7 +12,7 @@ void Application::Init() {
 void Application::Update() {
   float speed = 1.0f;
 
-  glm::vec3 horizontalDir = glm::cross(glm::vec3(0, 1, 0), Camera::Dir()) * speed;
+  glm::vec3 horizontalDir = glm::normalize(glm::cross(glm::vec3(0, 1, 0), Camera::Dir())) * speed;
   if (Input::IsPressed('A')) {
     Camera::Translate(horizontalDir);
   }
@@ -26,10 +26,10 @@ void Application::Update() {
     Camera::Translate({0, -speed, 0});
   }
   if (Input::IsPressed('W')) {
-    Camera::Translate(glm::vec3(Camera::Dir().x, 0, Camera::Dir().z) * speed);
+    Camera::Translate(glm::normalize(glm::vec3(Camera::Dir().x, 0, Camera::Dir().z)) * speed);
   }
   if (Input::IsPressed('S')) {
-    Camera::Translate(glm::vec3(Camera::Dir().x, 0, Camera::Dir().z) * -speed);
+    Camera::Translate(glm::normalize(glm::vec3(Camera::Dir().x, 0, Camera::Dir().z)) * -speed);
   }
 
 }

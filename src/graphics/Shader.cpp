@@ -73,8 +73,8 @@ unsigned int Shader::CreateBuffer(GLenum type, const string &name, BufferLayout 
     }
   }
 
-  glBufferData(GL_UNIFORM_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
-  glBindBufferBase(GL_UNIFORM_BUFFER, idx, id);
+  glBufferData(type, size, nullptr, GL_DYNAMIC_DRAW);
+  glBindBufferBase(type, idx, id);
   globalUniforms[name] = {id, size, std::move(layout)};
   return id;
 }
@@ -93,14 +93,30 @@ void Shader::SetBuffer(GLenum type, const string &name, char *data) {
   uint32_t inOffset = 0;
   uint32_t outOffset = 0;
   glBindBuffer(type, uniformData.id);
-  for (auto element: layout.GetElements()) {
+  for (const auto &element: layout.GetElements()) {
     for (int i = 0; i < element.count; i++) {
       uint32_t offset = outOffset - (outOffset / element.alignment) * element.alignment;
       if (offset > 0)
         outOffset += element.alignment - offset;
-      glBufferSubData(type, outOffset, element.size, (void *) (data + inOffset));
-      outOffset += element.size;
-      inOffset += element.size;
+
+      // If element is a struct/array
+      // Only support one level ATM
+      if (element.type == LAYOUT_TYPE) {
+        for (const auto &subElement: element.subElements) {
+          for (int j = 0; j < subElement.count; j++) {
+            uint32_t subOffset = outOffset - (outOffset / subElement.alignment) * subElement.alignment;
+            if (subOffset > 0)
+              outOffset += subElement.alignment - subOffset;
+            glBufferSubData(type, outOffset, subElement.size, (void *) (data + inOffset));
+            outOffset += subElement.size;
+            inOffset += subElement.size;
+          }
+        }
+      } else {
+        glBufferSubData(type, outOffset, element.size, (void *) (data + inOffset));
+        outOffset += element.size;
+        inOffset += element.size;
+      }
     }
   }
 }

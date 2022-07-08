@@ -11,6 +11,8 @@
 #include <unordered_map>
 #include <cstdio>
 
+#define LAYOUT_TYPE 0xffff
+
 struct BufferElement {
     unsigned int type;
     unsigned int count;
@@ -18,6 +20,7 @@ struct BufferElement {
     unsigned int offset;
     unsigned int alignment;
     bool normalized;
+    std::vector<BufferElement> subElements;
 };
 
 class BufferLayout {
@@ -43,19 +46,30 @@ public:
 
     // Only layout std430 supported
     void PushStruct(const BufferLayout &structLayout, unsigned int count) {
-      uint32_t size;
-      uint32_t maxSize;
-      uint32_t alignment;
-      for (auto element: structLayout.elements) {
-        size += element.size;
-        // Todo alignment offseting?
-        if (element.size > maxSize) {
-          maxSize = element.size;
-          alignment = element.alignment;
+      uint32_t size = 0;
+      uint32_t maxSize = 0;
+      uint32_t alignment = 0;
+      std::vector<BufferElement> subElements = structLayout.elements;
+      for (auto &element: subElements) {
+        for (int i = 0; i < element.count; i++) {
+          // Structs in std430 use 3 bytes for vec3
+          if (element.type == GL_FLOAT_VEC3) {
+            element.alignment = 3 * sizeof(float);
+          }
+
+          uint32_t offset = size - (size / element.alignment) * element.alignment;
+          if (offset > 0)
+            size += element.alignment - offset;
+          size += element.size;
+          if (element.size > maxSize) {
+            maxSize = element.size;
+            alignment = element.alignment;
+          }
         }
       }
 
-      elements.push_back({0xffff, count, size, stride, alignment, false});
+
+      elements.push_back({LAYOUT_TYPE, count, size, stride, alignment, false, subElements});
       stride += size * count;
     }
 

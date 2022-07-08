@@ -19,13 +19,18 @@ uniform float u_shininess;
 uniform float u_refractionIndex;
 uniform float u_alpha;
 
+struct LightSource {
+    int type;
+    vec3 pos;
+    vec3 dir;
+    vec3 color;
+    vec3 intensities;
+};
+
 // Scene properties
-layout(std140, binding=2) uniform Scene {
+readonly layout(std430, binding=2) buffer Scene {
     vec3 u_cameraPos;
-    vec3 u_lightPos;
-    vec3 u_lightColor;
-    // ambient, diffuse, specular
-    vec3 u_lightIntensities;
+    LightSource lights[];
 };
 
 // Interpolated coords from vertex shader
@@ -57,22 +62,28 @@ void main() {
     float shininess = u_shininess * shinyTex;
 
     vec3 normal = normalize(v_normal);
-    vec3 lightDir = normalize(u_lightPos - v_pos);
 
-    vec3 ambient = u_lightColor * u_lightIntensities[0];
-    vec3 diffuse = max(dot(normal, lightDir), 0) * u_lightColor * u_lightIntensities[1];
+    color = vec4(vec3(gl_FragCoord), u_alpha);
+}
+
+vec3 calculateLight(LightSource light, vec3 normal,
+vec3 ambientColor, vec3 diffuseColor, vec3 specColor, float shininess) {
+    vec3 lightDir = normalize(light.pos - v_pos);
+
+    vec3 ambient = light.color * light.intensities[0];
+    vec3 diffuse = max(dot(normal, light.dir), 0) * light.color * light.intensities[1];
 
     vec3 viewDir = normalize(u_cameraPos-v_pos);
     /* For phong shading
     vec3 reflectionVec = reflect(-lightVec, normal);
     */
-    vec3 halfDir = normalize(lightDir + viewDir);
+    vec3 halfDir = normalize(light.dir + viewDir);
 
     float specAngle = max(dot(halfDir, normal), 0);
-    vec3 specular = pow(specAngle, shininess) * u_lightColor * u_lightIntensities[2];
+    vec3 specular = pow(specAngle, shininess) * light.color * light.intensities[2];
 
     vec3 shading =  (ambient*ambientColor) +
     (diffuse*diffuseColor) +
     (specular*specColor);
-    color = vec4(shading, u_alpha);
+    return shading;
 }

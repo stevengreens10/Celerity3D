@@ -44,10 +44,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     cube.scale = 50;
     scene.AddObject(&cube);
 
-    Mesh mesh("assets/mesh/backpack.obj", m);
-    mesh.pos = glm::vec3(220, -10, 30);
-    mesh.scale = 50;
-    scene.AddObject(&mesh);
+//    Mesh mesh("assets/mesh/backpack.obj", m);
+//    mesh.pos = glm::vec3(220, -10, 30);
+//    mesh.scale = 50;
+//    scene.AddObject(&mesh);
 
     LightSource light{};
     light.type = LIGHT_POINT;
@@ -61,15 +61,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     lightCube.pos = light.pos;
     lightCube.scale = 25;
     scene.AddObject(&lightCube);
-
-    struct __attribute__ ((packed)) SceneData {
-        glm::vec3 camPos;
-        glm::vec3 lightPos;
-        glm::vec3 lightColor;
-        glm::vec3 lightIntensities;
-    };
-
-    SceneData s{};
 
     const Renderer &renderer = *Application::renderer;
     while (true) {
@@ -106,6 +97,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
           name << idx++;
           if (ImGui::TreeNode(name.str().c_str())) {
             ImGui::SliderFloat("Scale", &(sceneObj->scale), 25, 500);
+            ImGui::SliderFloat3("Position", &(sceneObj->pos.x), -500, 500);
             ImGui::SliderFloat3("Rotation", &(sceneObj->rot.x), 0, 359);
             ImGui::NewLine();
             if (typeid(*sceneObj) == typeid(Mesh)) {
@@ -127,11 +119,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       glm::vec4 lightCol4 = glm::vec4(light.color, 1.0f);
       lightSource.SetUniform("u_color", U4f, &(lightCol4.x));
       lightCube.pos = light.pos;
-      s.camPos = Camera::Pos();
-      s.lightPos = light.pos;
-      s.lightColor = light.color;
-      s.lightIntensities = light.intensities;
-      Shader::SetGlobalUniform("Scene", (char *) &s);
+
       renderer.Draw(scene);
 
       Renderer::EndFrame(Application::window);
