@@ -31,7 +31,7 @@ public:
 
     void Init(ApplicationWindow *win);
 
-    static void Update(ApplicationWindow *win);
+    static void EndFrame(ApplicationWindow *win);
 
 
     static void Cleanup(ApplicationWindow *win);

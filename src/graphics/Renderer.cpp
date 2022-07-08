@@ -18,12 +18,9 @@ void Renderer::Init(ApplicationWindow *win) {
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
   glShadeModel(GL_SMOOTH);                            // Enable Smooth Shading
-  glClearColor(0.28f, 0.28f, 0.28f, 1.0f);               // Set Background
   glClearDepth(1.0f);                                 // Depth Buffer Setup
   glEnable(GL_DEPTH_TEST);                            // Enables Depth Testing
-  glDepthFunc(GL_LEQUAL);                             // The Type Of Depth Testing To Do
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);  // Really Nice Perspective Calculations
   //TODO: Proper gamma correction
   //  glEnable(GL_FRAMEBUFFER_SRGB);
@@ -35,7 +32,9 @@ void Renderer::Init(ApplicationWindow *win) {
   //  glEnable(GL_CULL_FACE);
   //  glCullFace(GL_BACK);
 
-  cameraPos = glm::vec3(0.0f, 0.0f, -250.0f);
+  SetProjection(win->width, win->height);
+
+  cameraPos = glm::vec3(157.22, 0, -183);
   RotateCamera(90.0f, 0.0f);
   Cube::InitBuffers();
   TriangularPrism::InitBuffers();
@@ -47,31 +46,40 @@ void Renderer::Init(ApplicationWindow *win) {
   BufferLayout sceneLayout;
   sceneLayout.Push<glm::vec3>(4);
   Shader::CreateGlobalUniform("Scene", sceneLayout, 2);
+#ifdef IMGUI
   Renderer::InitImGui(win);
+#endif
 }
 
 void Renderer::Cleanup(ApplicationWindow *win) {
+#ifdef IMGUI
   ImGui_ImplWin32_Shutdown();
   ImGui_ImplOpenGL3_Shutdown();
   ImGui::DestroyContext();
+#endif
   wglDeleteContext(win->renderContext);
 }
 
-void Renderer::Update(ApplicationWindow *win) {
+void Renderer::EndFrame(ApplicationWindow *win) {
+#ifdef IMGUI
   Renderer::UpdateImGui(win);
+#endif
   SwapBuffers(win->deviceContext);
 }
 
 void Renderer::Clear() {
+  glClearColor(0.28f, 0.28f, 0.28f, 1.0f);               // Set Background
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear Screen And Depth Buffer
 }
 
 void Renderer::NewFrame() {
   Clear();
+#ifdef IMGUI
   // Start the Dear ImGui frame
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplWin32_NewFrame();
   ImGui::NewFrame();
+#endif
 }
 
 void Renderer::Draw(const Renderable &r) const {
@@ -87,8 +95,8 @@ void Renderer::Draw(const Renderable &r) const {
 }
 
 void Renderer::SetProjection(int width, int height) {
-  proj = glm::perspective(glm::radians(59.0f), (float) width / (float) height, 0.1f, 10000.0f);
-
+  proj = glm::perspective(glm::radians(59.0f), (float) width / (float) height, 10.0f, 1000.0f);
+  glViewport(0, 0, width, height);
 }
 
 void Renderer::RotateCamera(float _yaw, float _pitch) {

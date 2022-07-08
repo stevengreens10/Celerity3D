@@ -32,7 +32,7 @@ public:
     void Push(unsigned int count) {
       const std::type_index &type = std::type_index(typeid(T));
       if (!glTypeMap.contains(type)) {
-        Log::logf("Invalid type for BufferLayout push: ", (typeid(T)).name());
+        Log::logf("Invalid type for BufferLayout push: %s", (typeid(T)).name());
       }
       auto glType = glTypeMap[type];
       elements.push_back({glType, count, sizeof(T), stride, false});

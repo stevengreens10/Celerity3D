@@ -56,7 +56,7 @@ void main() {
     vec3 specColor = u_specColor * specTex;
     float shininess = u_shininess * shinyTex;
 
-    vec3 normal = normalize(v_normal) * bumpTex;
+    vec3 normal = normalize(v_normal);
     vec3 lightDir = normalize(u_lightPos - v_pos);
 
     vec3 ambient = u_lightColor * u_lightIntensities[0];

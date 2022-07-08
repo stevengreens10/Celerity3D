@@ -14,7 +14,6 @@ Texture::Texture(const std::string &filePath)
   glGenTextures(1, &rendererId);
   Log::logf("Creating texture: %d", rendererId);
   glBindTexture(GL_TEXTURE_2D, rendererId);
-//  glTexStorage2D(GL_TEXTURE_2D, 11, GL_RGBA8, width, height);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // Distant texture
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Near texture
