@@ -29,7 +29,8 @@ struct LightSource {
 
 // Scene properties
 readonly layout(std430, binding=2) buffer Scene {
-    vec3 u_cameraPos;
+    vec3 cameraPos;
+    int numLights;
     LightSource lights[];
 };
 
@@ -37,6 +38,38 @@ readonly layout(std430, binding=2) buffer Scene {
 in vec3 v_pos;
 in vec2 v_textureUV;
 in vec3 v_normal;
+
+float map(float value, float min1, float max1, float min2, float max2) {
+    return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+}
+
+vec3 calculatePointLight(LightSource light, vec3 normal, vec3 ambientColor, vec3 diffuseColor, vec3 specColor, float shininess) {
+    vec3 lightDir = normalize(light.pos - v_pos);
+
+    vec3 ambient = light.color * light.intensities[0];
+    vec3 diffuse = max(dot(normal, lightDir), 0) * light.color * light.intensities[1];
+
+    vec3 viewDir = normalize(cameraPos-v_pos);
+    /* For phong shading
+    vec3 reflectionVec = reflect(-lightVec, normal);
+    */
+    vec3 halfDir = normalize(lightDir + viewDir);
+
+    float specAngle = max(dot(halfDir, normal), 0);
+    vec3 specular = pow(specAngle, shininess) * light.color * light.intensities[2];
+
+    vec3 shading =  (ambient*ambientColor) +
+    (diffuse*diffuseColor) +
+    (specular*specColor);
+    return shading;
+}
+
+vec3 calculateLight(LightSource light, vec3 normal, vec3 ambientColor, vec3 diffuseColor, vec3 specColor, float shininess) {
+    if(light.type == 0) {
+        return calculatePointLight(light, normal, ambientColor, diffuseColor, specColor, shininess);
+    }
+    return vec3(0.0f);
+}
 
 void main() {
     // Load texture data
@@ -63,27 +96,10 @@ void main() {
 
     vec3 normal = normalize(v_normal);
 
-    color = vec4(vec3(gl_FragCoord), u_alpha);
-}
+    vec3 result = vec3(0.0f);
+    for(int i = 0; i < numLights; i++) {
+        result += calculateLight(lights[i], normal, ambientColor, diffuseColor, specColor, shininess);
+    }
 
-vec3 calculateLight(LightSource light, vec3 normal,
-vec3 ambientColor, vec3 diffuseColor, vec3 specColor, float shininess) {
-    vec3 lightDir = normalize(light.pos - v_pos);
-
-    vec3 ambient = light.color * light.intensities[0];
-    vec3 diffuse = max(dot(normal, light.dir), 0) * light.color * light.intensities[1];
-
-    vec3 viewDir = normalize(u_cameraPos-v_pos);
-    /* For phong shading
-    vec3 reflectionVec = reflect(-lightVec, normal);
-    */
-    vec3 halfDir = normalize(light.dir + viewDir);
-
-    float specAngle = max(dot(halfDir, normal), 0);
-    vec3 specular = pow(specAngle, shininess) * light.color * light.intensities[2];
-
-    vec3 shading =  (ambient*ambientColor) +
-    (diffuse*diffuseColor) +
-    (specular*specColor);
-    return shading;
+    color = vec4(result, u_alpha);
 }

@@ -58,19 +58,26 @@ Shader *Shader::CreateShader(const string &name) {
   return s;
 }
 
+uint32_t getPadding(uint32_t idx, uint32_t alignment) {
+  uint32_t offset = idx - (idx / alignment) * alignment;
+  if (offset > 0)
+    return alignment - offset;
+  return 0;
+}
+
 unsigned int Shader::CreateBuffer(GLenum type, const string &name, BufferLayout layout, int idx) {
   uint32_t id;
   glGenBuffers(1, &id);
   glBindBuffer(type, id);
 
   uint32_t size = 0;
-  for (auto element: layout.GetElements()) {
+  for (const auto &element: layout.GetElements()) {
     for (int i = 0; i < element.count; i++) {
-      uint32_t offset = size - (size / element.alignment) * element.alignment;
-      if (offset > 0)
-        size += element.alignment - offset;
-      size += element.size;
+      size += getPadding(size, element.alignment) + element.size;
     }
+    // Account for padding at end of struct
+    if (element.type == LAYOUT_TYPE)
+      size += getPadding(size, element.alignment);
   }
 
   glBufferData(type, size, nullptr, GL_DYNAMIC_DRAW);
@@ -95,23 +102,26 @@ void Shader::SetBuffer(GLenum type, const string &name, char *data) {
   glBindBuffer(type, uniformData.id);
   for (const auto &element: layout.GetElements()) {
     for (int i = 0; i < element.count; i++) {
-      uint32_t offset = outOffset - (outOffset / element.alignment) * element.alignment;
-      if (offset > 0)
-        outOffset += element.alignment - offset;
+      outOffset += getPadding(outOffset, element.alignment);
 
       // If element is a struct/array
       // Only support one level ATM
       if (element.type == LAYOUT_TYPE) {
         for (const auto &subElement: element.subElements) {
           for (int j = 0; j < subElement.count; j++) {
-            uint32_t subOffset = outOffset - (outOffset / subElement.alignment) * subElement.alignment;
-            if (subOffset > 0)
-              outOffset += subElement.alignment - subOffset;
+            outOffset += getPadding(outOffset, subElement.alignment);
+
             glBufferSubData(type, outOffset, subElement.size, (void *) (data + inOffset));
             outOffset += subElement.size;
             inOffset += subElement.size;
           }
         }
+        uint32_t padSize = getPadding(outOffset, element.alignment);
+        // Just write garbage from the stack
+        char padding[16];
+        glBufferSubData(type, outOffset, padSize, (void *) &padding);
+        outOffset += padSize;
+
       } else {
         glBufferSubData(type, outOffset, element.size, (void *) (data + inOffset));
         outOffset += element.size;

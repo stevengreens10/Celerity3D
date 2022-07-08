@@ -96,6 +96,14 @@ void APIENTRY Log::GLDebugMessageCallback(GLenum
   std::string _type;
   std::string _severity;
 
+  // Suppress some useless warnings
+  switch (id) {
+    case 0x2: // NVIDIA: "shader will be recompiled due to GL state mismatches"
+      return;
+    default:
+      break;
+  }
+
   switch (source) {
     case GL_DEBUG_SOURCE_API:
       _source = "API";

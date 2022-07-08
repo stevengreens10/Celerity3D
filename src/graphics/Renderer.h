@@ -13,6 +13,8 @@
 #include "Cube.h"
 #include "Scene.h"
 
+#define MAX_LIGHTS 100
+
 class Renderer {
 private:
     glm::mat4 proj;

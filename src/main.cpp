@@ -45,7 +45,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     scene.AddObject(&cube);
 
 //    Mesh mesh("assets/mesh/backpack.obj", m);
-//    mesh.pos = glm::vec3(220, -10, 30);
+//    mesh.pos = glm::vec3(0, 0, 0);
 //    mesh.scale = 50;
 //    scene.AddObject(&mesh);
 
@@ -56,11 +56,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     light.color = glm::vec3(1.0f, 1.0f, 1.0f);
     scene.AddLight(&light);
 
+    LightSource light2{};
+    light2.type = LIGHT_POINT;
+    light2.pos = glm::vec3(110.0f, 0.0f, 300.0f);
+    light2.intensities = glm::vec3(0.05f, 1.0f, 1.0f);
+    light2.color = glm::vec3(1.0f, 1.0f, 1.0f);
+    scene.AddLight(&light2);
+
     Material lightSource(*colorShader, "lightMat");
     Cube lightCube(lightSource);
     lightCube.pos = light.pos;
     lightCube.scale = 25;
     scene.AddObject(&lightCube);
+
+    Cube lightCube2(lightSource);
+    lightCube2.pos = light.pos;
+    lightCube2.scale = 25;
+    scene.AddObject(&lightCube2);
 
     const Renderer &renderer = *Application::renderer;
     while (true) {
@@ -119,6 +131,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       glm::vec4 lightCol4 = glm::vec4(light.color, 1.0f);
       lightSource.SetUniform("u_color", U4f, &(lightCol4.x));
       lightCube.pos = light.pos;
+      lightCube2.pos = light2.pos;
 
       renderer.Draw(scene);
 

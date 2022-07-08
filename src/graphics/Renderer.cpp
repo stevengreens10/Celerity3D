@@ -43,13 +43,17 @@ void Renderer::Init(Window *win) {
   Shader::CreateGlobalUniform("Transformations", transformationLayout, 1);
 
   BufferLayout sceneLayout;
+  // Camera Pos
   sceneLayout.Push<glm::vec3>(1);
+  // Num lights
+  sceneLayout.Push<int>(1);
 
+  // LightSource struct
   BufferLayout lightLayout;
   lightLayout.Push<int>(1);
   lightLayout.Push<glm::vec3>(4);
+  sceneLayout.PushStruct(lightLayout, MAX_LIGHTS);
 
-  sceneLayout.PushStruct(lightLayout, 1);
   Shader::CreateShaderStorageBuffer("Scene", sceneLayout, 2);
 #ifdef IMGUI
   Renderer::InitImGui(win);
@@ -93,23 +97,19 @@ void Renderer::Draw(const Scene &s) const {
       glm::mat4 model;
   };
   TransformationData t{};
-  int bufSize = sizeof(glm::vec3) + s.Lights().size() * sizeof(LightSource);
+
+  // Set scene buffer
+  uint64_t bufSize = 16 + s.Lights().size() * sizeof(LightSource);
   char *buf = (char *) malloc(bufSize);
   ((glm::vec3 *) buf)[0] = Camera::Pos();
-//  ((float *) buf)[1] = Camera::Pos().y;
-//  ((float *) buf)[2] = Camera::Pos().z;
-  int idx = 0;
-  for (auto light: s.Lights()) {
-    auto offset = 12 + 52 * idx;
-    ((int *) buf + offset)[0] = light->type;
-    ((glm::vec3 *) buf + offset + 4)[0] = light->pos;
-    ((glm::vec3 *) buf + offset + 16)[0] = light->dir;
-    ((glm::vec3 *) buf + offset + 28)[0] = light->color;
-    ((glm::vec3 *) buf + offset + 40)[0] = light->intensities;
-    idx++;
+  ((int *) (buf + 12))[0] = (int) s.Lights().size();
+  for (int i = 0; i < s.Lights().size(); i++) {
+    auto offset = 16 + sizeof(LightSource) * i;
+    ((LightSource *) (buf + offset))[0] = *s.Lights()[i];
   }
   Shader::SetShaderStorageBuffer("Scene", buf);
   free(buf);
+
   for (auto object: s.Objects()) {
     t.model = GetModel(glm::vec3(0.0f), object->scale, object->pos, object->rot);
     t.vp = proj * Camera::ViewMatrix();

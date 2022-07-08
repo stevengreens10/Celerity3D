@@ -15,7 +15,7 @@ add_subdirectory(vendor/glew/build/cmake)
 add_subdirectory(vendor/glm)
 
 add_definitions(-DGLEW_STATIC)
-add_definitions(-DDEBUG)
+add_definitions(-DDEBUG -DIMGUI)
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC ./vendor/glew/include

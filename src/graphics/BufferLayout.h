@@ -52,10 +52,6 @@ public:
       std::vector<BufferElement> subElements = structLayout.elements;
       for (auto &element: subElements) {
         for (int i = 0; i < element.count; i++) {
-          // Structs in std430 use 3 bytes for vec3
-          if (element.type == GL_FLOAT_VEC3) {
-            element.alignment = 3 * sizeof(float);
-          }
 
           uint32_t offset = size - (size / element.alignment) * element.alignment;
           if (offset > 0)
