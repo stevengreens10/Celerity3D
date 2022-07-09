@@ -18,4 +18,5 @@ This is a personal project for me to learn OpenGL and Win32 programming.
 
 ## Build
 If you have CMake, you should be able to build the project with `./configure.sh && ./build.sh`.
+
 NOTE: You must currently run the executable from the repo root directory (using `./run.sh` for example) in order to load assets properly.
