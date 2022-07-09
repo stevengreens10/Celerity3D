@@ -9,6 +9,7 @@
 #include "log.h"
 #include "EventHandler.h"
 #include "Application.h"
+#include "GL/wglew.h"
 
 static TCHAR szWindowClass[] = TEXT("myWindowClass");
 
@@ -24,22 +25,6 @@ int InitGL(GLvoid)                                      // All Setup For OpenGL 
   }
   return TRUE;                                        // Initialization Went OK
 }
-
-GLvoid ReSizeGLScene(GLsizei width, GLsizei height)     // Resize And Initialize The GL Window
-{
-  glViewport(0, 0, width, height);                       // Reset The Current Viewport
-
-  glMatrixMode(GL_PROJECTION);                        // Select The Projection Matrix
-  glLoadIdentity();                                   // Reset The Projection Matrix
-
-  // Calculate The Aspect Ratio Of The Window
-//  gluPerspective(45.0f,(GLfloat)width/(GLfloat)height,0.1f,100.0f);
-
-
-  glMatrixMode(GL_MODELVIEW);                         // Select The Modelview Matrix
-  glLoadIdentity();                                   // Reset The Modelview Matrix
-}
-
 
 Window *
 WINAPI NewWindow(HINSTANCE hInstance, const std::string &title, int width, int height) {
@@ -111,6 +96,7 @@ WINAPI NewWindow(HINSTANCE hInstance, const std::string &title, int width, int h
     exit(1);
   }
 
+  // Create temporary context
   HGLRC hRC = wglCreateContext(hDC);
   if (!hRC) {
     Log::logf("ERROR: Could not create render context");
@@ -127,16 +113,37 @@ WINAPI NewWindow(HINSTANCE hInstance, const std::string &title, int width, int h
   SetLastError(0);
   SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR) appWindow);
 
-  ShowWindow(hWnd, SW_SHOW);
-  SetForegroundWindow(hWnd);
-  SetFocus(hWnd);
-  UpdateWindow(hWnd);
 
   if (!InitGL()) {
     Log::logf("ERROR: Could not init openGL");
     exit(1);
   }
-  ReSizeGLScene(width, height);
+
+  // Upgrade context to modern version
+  std::vector<int> int_attributes;
+  int_attributes.push_back(WGL_CONTEXT_MAJOR_VERSION_ARB);
+  int_attributes.push_back(4);
+  int_attributes.push_back(WGL_CONTEXT_MINOR_VERSION_ARB);
+  int_attributes.push_back(6);
+
+  hRC = wglCreateContextAttribsARB(hDC, 0, &int_attributes[0]);
+  if (!hRC) {
+    Log::logf("ERROR: Could not create modern render context");
+    exit(1);
+  }
+  Log::logf("Created modern context!");
+  wglMakeCurrent(nullptr, nullptr);
+  if (!wglMakeCurrent(hDC, hRC)) {
+    Log::logf("ERROR: Could not activate modern render context");
+    exit(1);
+  }
+  appWindow->renderContext = hRC;
+
+  ShowWindow(hWnd, SW_SHOW);
+  SetForegroundWindow(hWnd);
+  SetFocus(hWnd);
+  UpdateWindow(hWnd);
+  glViewport(0, 0, width, height);
 
   return appWindow;
 }

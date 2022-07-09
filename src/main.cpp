@@ -38,15 +38,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
     Scene scene;
 
-//    Mesh cube("assets/mesh/cube.obj");
-//    cube.pos = glm::vec3(0, 0, 0.0f);
-//    cube.scale = 1;
-//    scene.AddObject(&cube);
+    Mesh cube("assets/mesh/cube.obj");
+    cube.pos = glm::vec3(0, 0, 0.0f);
+    cube.scale = 1;
+    scene.AddObject(&cube);
 
-    Mesh mesh("assets/mesh/backpack.obj");
-    mesh.pos = glm::vec3(0, 0, 0);
-    mesh.scale = 1;
-    scene.AddObject(&mesh);
+//    Mesh mesh("assets/mesh/backpack.obj");
+//    mesh.pos = glm::vec3(0, 0, 0);
+//    mesh.scale = 1;
+//    scene.AddObject(&mesh);
 
     unordered_map<LightSource *, Object *> lightToObj;
     LightSource light{};

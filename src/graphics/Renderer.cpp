@@ -10,18 +10,19 @@
 #include "../Camera.h"
 
 void Renderer::Init(Window *win) {
+  Log::logf("Initialization");
   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(&Log::GLDebugMessageCallback, nullptr);
 
+  Log::logf("Initialization 1a");
   wglSwapIntervalEXT(1);
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glShadeModel(GL_SMOOTH);                            // Enable Smooth Shading
   glClearDepth(1.0f);                                 // Depth Buffer Setup
   glEnable(GL_DEPTH_TEST);                            // Enables Depth Testing
-  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);  // Really Nice Perspective Calculations
+  Log::logf("Initialization 1b");
   //TODO: Proper gamma correction
   //  glEnable(GL_FRAMEBUFFER_SRGB);
 
@@ -31,7 +32,7 @@ void Renderer::Init(Window *win) {
   // TODO: Fix primitive vertices then re-enable
   //  glEnable(GL_CULL_FACE);
   //  glCullFace(GL_BACK);
-
+  Log::logf("Initialization 2");
   SetProjection(win->width, win->height);
 
   Cube::InitBuffers();
@@ -52,10 +53,12 @@ void Renderer::Init(Window *win) {
   lightLayout.Push<glm::vec3>(5);
   sceneLayout.PushStruct(lightLayout, MAX_LIGHTS);
 
+  Log::logf("Initialization 3");
   Shader::CreateShaderStorageBuffer("Scene", sceneLayout, 2);
 #ifdef IMGUI
   Renderer::InitImGui(win);
 #endif
+  Log::logf("Initialization 4");
 }
 
 void Renderer::Cleanup(Window *win) {

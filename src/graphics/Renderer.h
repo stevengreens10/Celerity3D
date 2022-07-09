@@ -12,7 +12,7 @@
 #include "object/primitive/Cube.h"
 #include "Scene.h"
 
-#define MAX_LIGHTS 1000
+#define MAX_LIGHTS 100
 
 class Renderer {
 private:
