@@ -9,11 +9,10 @@
 #include "IndexBuffer.h"
 #include "Shader.h"
 #include "../window.h"
-#include "Renderable.h"
-#include "Cube.h"
+#include "object/primitive/Cube.h"
 #include "Scene.h"
 
-#define MAX_LIGHTS 100
+#define MAX_LIGHTS 1000
 
 class Renderer {
 private:

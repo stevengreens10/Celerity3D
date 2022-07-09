@@ -25,6 +25,7 @@ struct LightSource {
     vec3 dir;
     vec3 color;
     vec3 intensities;
+    vec3 attenuation;
 };
 
 // Scene properties
@@ -61,7 +62,13 @@ vec3 calculatePointLight(LightSource light, vec3 normal, vec3 ambientColor, vec3
     vec3 shading =  (ambient*ambientColor) +
     (diffuse*diffuseColor) +
     (specular*specColor);
-    return shading;
+
+    float distance = pow(pow(v_pos.x - light.pos.x, 2) + pow(v_pos.y - light.pos.y, 2) + pow(v_pos.z - light.pos.z, 2), 0.5f);
+    // Prevent div/0
+    float attenFactor = max(0.01f, light.attenuation[0] + light.attenuation[1] * distance + light.attenuation[2] * distance * distance);
+    float attenuation = 1.0 / (attenFactor);
+
+    return attenuation * shading;
 }
 
 vec3 calculateLight(LightSource light, vec3 normal, vec3 ambientColor, vec3 diffuseColor, vec3 specColor, float shininess) {

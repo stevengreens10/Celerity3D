@@ -1,22 +1,11 @@
 #ifndef GUI_MATERIAL_H
 #define GUI_MATERIAL_H
 
-// If matrices need to be transposed
-#define TRANSPOSE false
-
 #include <memory>
 #include <utility>
 #include "Texture.h"
 #include "Shader.h"
 
-enum UniformType {
-    U4f, U3f, U4i, UM4f
-};
-
-struct UniformMapping {
-    UniformType type;
-    void *data;
-};
 
 struct MaterialData {
     glm::vec3 ambientColor;
@@ -34,7 +23,6 @@ struct MaterialData {
 class Material {
 private:
     std::unordered_map<std::string, UniformMapping> uniforms;
-    std::unordered_map<std::string, int> uniformCache;
 public:
     Shader &shader;
     MaterialData matData{};

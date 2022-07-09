@@ -1,8 +1,8 @@
 #version 450 core
 
-uniform vec4 u_color;
+uniform vec3 u_diffuseColor;
 layout(location = 0) out vec4 color;
 
 void main() {
-	color = u_color;
+	color = vec4(u_diffuseColor, 1.0f);
 }

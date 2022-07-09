@@ -7,13 +7,13 @@
 #define GLM_ENABLE_EXPERIMENTAL
 
 #include "glm/gtx/hash.hpp"
-#include "../log.h"
+#include "../../log.h"
 
-Mesh::Mesh(const string &fileName, Material &m) : Renderable(reference_wrapper<Material>(m)) {
+Mesh::Mesh(const string &fileName) {
   loadMesh(fileName);
 }
 
-void Mesh::Draw() const {
+void Mesh::Draw() {
   vao->Bind();
   for (auto &mesh: meshes) {
     if (!mesh.shouldRender)
@@ -26,10 +26,10 @@ void Mesh::Draw() const {
   }
 }
 
-unordered_map<string, shared_ptr<Material>> Mesh::loadMats(const string &fileName) {
+unordered_map <string, shared_ptr<Material>> Mesh::loadMats(const string &fileName) {
   Log::logf("Loading materials %s", fileName.c_str());
   ifstream f;
-  unordered_map<string, shared_ptr<Material>> mats;
+  unordered_map <string, shared_ptr<Material>> mats;
   f.open(fileName);
   if (!f) {
     return mats;
@@ -163,7 +163,7 @@ bool Mesh::loadMesh(const string &fileName) {
     }
   }
 
-  vao = new VertexArray();
+  vao = std::make_unique<VertexArray>();
   VertexBuffer vbuf(&vertices[0], vertices.size() * sizeof(MeshVertex));
   BufferLayout layout;
   layout.Push<float>(3); // Pos

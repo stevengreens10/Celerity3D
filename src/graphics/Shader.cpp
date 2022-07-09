@@ -4,6 +4,7 @@
 #include <utility>
 
 Shader::Shader(const std::string &vertFile, const std::string &fragFile) {
+  name = vertFile;
   char *vertSource = readFile(vertFile);
   char *fragSource = readFile(fragFile);
 
@@ -94,7 +95,7 @@ unsigned int Shader::CreateShaderStorageBuffer(const string &name, BufferLayout 
   return CreateBuffer(GL_SHADER_STORAGE_BUFFER, name, std::move(layout), idx);
 }
 
-void Shader::SetBuffer(GLenum type, const string &name, char *data) {
+void Shader::SetBuffer(GLenum type, const string &name, char *data, uint32_t bufSize) {
   auto uniformData = globalUniforms[name];
   auto layout = uniformData.layout;
   uint32_t inOffset = 0;
@@ -111,6 +112,7 @@ void Shader::SetBuffer(GLenum type, const string &name, char *data) {
           for (int j = 0; j < subElement.count; j++) {
             outOffset += getPadding(outOffset, subElement.alignment);
 
+            if (inOffset > bufSize) return;
             glBufferSubData(type, outOffset, subElement.size, (void *) (data + inOffset));
             outOffset += subElement.size;
             inOffset += subElement.size;
@@ -123,6 +125,7 @@ void Shader::SetBuffer(GLenum type, const string &name, char *data) {
         outOffset += padSize;
 
       } else {
+        if (inOffset > bufSize) return;
         glBufferSubData(type, outOffset, element.size, (void *) (data + inOffset));
         outOffset += element.size;
         inOffset += element.size;
@@ -131,10 +134,59 @@ void Shader::SetBuffer(GLenum type, const string &name, char *data) {
   }
 }
 
-void Shader::SetGlobalUniform(const string &name, char *data) {
-  SetBuffer(GL_UNIFORM_BUFFER, name, data);
+void Shader::SetGlobalUniform(const string &name, char *data, uint32_t bufSize) {
+  SetBuffer(GL_UNIFORM_BUFFER, name, data, bufSize);
 }
 
-void Shader::SetShaderStorageBuffer(const string &name, char *data) {
-  SetBuffer(GL_SHADER_STORAGE_BUFFER, name, data);
+void Shader::SetShaderStorageBuffer(const string &name, char *data, uint32_t bufSize) {
+  SetBuffer(GL_SHADER_STORAGE_BUFFER, name, data, bufSize);
+}
+
+void Shader::SetUniform(const std::string &uniName, UniformType type, void *data) {
+  int location = GetUniformLocation(uniName);
+  switch (type) {
+    case U1f: {
+      glUniform1fv(location, 1, (float *) data);
+      break;
+    }
+    case U2f: {
+      glUniform2fv(location, 1, (float *) data);
+      break;
+    }
+    case U3f: {
+      glUniform3fv(location, 1, (float *) data);
+      break;
+    }
+    case U4f: {
+      glUniform4fv(location, 1, (float *) data);
+      break;
+    }
+    case U1i: {
+      glUniform1iv(location, 1, (int *) data);
+    }
+    case U4i: {
+      glUniform1iv(location, 1, (int *) data);
+      break;
+    }
+    case UM4f: {
+      auto *mat = (glm::mat4 *) data;
+      glUniformMatrix4fv(GetUniformLocation(uniName), 1, TRANSPOSE, &((*mat)[0][0]));
+      break;
+    }
+    default:
+      std::cerr << "Unsupported uniform type." << std::endl;
+  }
+}
+
+int Shader::GetUniformLocation(const std::string &uniName) {
+  if (uniformCache.contains(uniName)) return uniformCache[uniName];
+
+  int location = glGetUniformLocation(rendererId, uniName.c_str());
+
+  if (location == -1) {
+    Log::logf("WARN: Uniform %s not found", uniName.c_str());
+  }
+
+  uniformCache[uniName] = location;
+  return location;
 }

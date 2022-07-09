@@ -7,10 +7,24 @@
 #include "BufferLayout.h"
 #include <unordered_map>
 
+// If matrices need to be transposed
+#define TRANSPOSE false
+
 struct GlobalUniformData {
     uint32_t id;
     uint32_t size;
     BufferLayout layout;
+};
+
+enum UniformType {
+    U1f, U2f, U3f, U4f,
+    U1i, U2i, U3i, U4i,
+    UM3f, UM4f
+};
+
+struct UniformMapping {
+    UniformType type;
+    void *data;
 };
 
 class Shader {
@@ -19,6 +33,8 @@ private:
     inline static std::unordered_map<std::string, Shader *> shaders;
     inline static std::unordered_map<std::string, GlobalUniformData> globalUniforms;
     inline static std::string SHADER_PATH = "assets/shaders/";
+    std::unordered_map<std::string, int> uniformCache;
+    std::string name;
 public:
     unsigned int rendererId;
 
@@ -34,11 +50,13 @@ public:
 
     static unsigned int CreateGlobalUniform(const string &name, BufferLayout layout, int idx);
 
-    static void SetGlobalUniform(const string &name, char *data);
+    static void SetGlobalUniform(const string &name, char *data, uint32_t bufSize);
 
     static unsigned int CreateShaderStorageBuffer(const string &name, BufferLayout layout, int idx);
 
-    static void SetShaderStorageBuffer(const string &name, char *data);
+    static void SetShaderStorageBuffer(const string &name, char *data, uint32_t bufSize);
+
+    void SetUniform(const string &uniName, UniformType type, void *data);
 
 private:
     Shader(const std::string &vertFile, const std::string &fragFile);
@@ -47,7 +65,9 @@ private:
 
     static unsigned int CreateBuffer(GLenum type, const string &name, BufferLayout layout, int idx);
 
-    static void SetBuffer(GLenum type, const string &name, char *data);
+    static void SetBuffer(GLenum type, const string &name, char *data, uint32_t bufSize);
+
+    int GetUniformLocation(const string &uniName);
 
 };
 

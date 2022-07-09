@@ -15,7 +15,10 @@ private:
 public:
     static void Translate(glm::vec3 translation);
 
+    static void Target(glm::vec3 target);
+
     static void Rotate(float _yaw, float _pitch);
+
 
     // Updates camera based on mouse displacement in screen coords
     static void Displace(int x, int y);

@@ -2,7 +2,7 @@
 #define GUI_MESH_H
 
 #include <memory>
-#include "Renderable.h"
+#include "Object.h"
 
 using std::string, std::unordered_map, std::unique_ptr, std::shared_ptr, std::vector, std::ifstream;
 using std::reference_wrapper, std::tuple, std::make_unique, std::make_shared;
@@ -19,14 +19,15 @@ struct MeshVertex {
     glm::vec3 normal;
 };
 
-class Mesh : public Renderable {
+class Mesh : public Object {
 private:
 public:
+    std::unique_ptr<VertexArray> vao;
     vector<MeshData> meshes;
 
-    explicit Mesh(const string &fileName, Material &m);
+    explicit Mesh(const string &fileName);
 
-    virtual void Draw() const override;
+    void Draw() override;
 
 private:
     bool loadMesh(const string &fileName);

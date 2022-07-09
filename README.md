@@ -3,6 +3,7 @@
 This is a personal project for me to learn OpenGL and Win32 programming.
 
 ![](assets/images/example.gif)
+![](assets/images/lights.gif)
 
 ## Current features:
 - Render 3D scene with different materials/textures
@@ -13,3 +14,4 @@ This is a personal project for me to learn OpenGL and Win32 programming.
 ## Inputs
 - W/A/S/D + Mouse to move around the scene
 - ESC to regain mouse control
+- Tab to add a new light at the current position

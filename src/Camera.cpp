@@ -21,6 +21,12 @@ void Camera::Translate(glm::vec3 translation) {
   updateViewMatrix();
 }
 
+void Camera::Target(glm::vec3 target) {
+  cameraDir = target - cameraPos;
+  // TODO: Update yaw and pitch
+  updateViewMatrix();
+}
+
 void Camera::Rotate(float _yaw, float _pitch) {
   yaw = _yaw;
   pitch = _pitch;

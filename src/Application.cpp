@@ -4,13 +4,13 @@
 
 void Application::Init() {
   Application::renderer = new Renderer();
-  Camera::Translate(glm::vec3(157.22, 0, -183));
+  Camera::Translate(glm::vec3(0, 0, -5));
   Camera::Rotate(90.0f, 0.0f);
   renderer->Init(window);
 }
 
 void Application::Update() {
-  float speed = 1.0f;
+  float speed = 0.1f;
 
   glm::vec3 horizontalDir = glm::normalize(glm::cross(glm::vec3(0, 1, 0), Camera::Dir())) * speed;
   if (Input::IsPressed('A')) {

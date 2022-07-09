@@ -6,8 +6,7 @@
 #include "Renderer.h"
 #include "../log.h"
 #include "GL/wglew.h"
-#include "Cube.h"
-#include "TriangularPrism.h"
+#include "object/primitive/Cube.h"
 #include "../Camera.h"
 
 void Renderer::Init(Window *win) {
@@ -36,7 +35,6 @@ void Renderer::Init(Window *win) {
   SetProjection(win->width, win->height);
 
   Cube::InitBuffers();
-  TriangularPrism::InitBuffers();
 
   BufferLayout transformationLayout;
   transformationLayout.Push<glm::mat4>(2);
@@ -51,7 +49,7 @@ void Renderer::Init(Window *win) {
   // LightSource struct
   BufferLayout lightLayout;
   lightLayout.Push<int>(1);
-  lightLayout.Push<glm::vec3>(4);
+  lightLayout.Push<glm::vec3>(5);
   sceneLayout.PushStruct(lightLayout, MAX_LIGHTS);
 
   Shader::CreateShaderStorageBuffer("Scene", sceneLayout, 2);
@@ -107,19 +105,19 @@ void Renderer::Draw(const Scene &s) const {
     auto offset = 16 + sizeof(LightSource) * i;
     ((LightSource *) (buf + offset))[0] = *s.Lights()[i];
   }
-  Shader::SetShaderStorageBuffer("Scene", buf);
+  Shader::SetShaderStorageBuffer("Scene", buf, bufSize);
   free(buf);
 
+  t.vp = proj * Camera::ViewMatrix();
   for (auto object: s.Objects()) {
     t.model = GetModel(glm::vec3(0.0f), object->scale, object->pos, object->rot);
-    t.vp = proj * Camera::ViewMatrix();
-    Shader::SetGlobalUniform("Transformations", (char *) &t);
+    Shader::SetGlobalUniform("Transformations", (char *) &t, sizeof(TransformationData));
     object->Draw();
   }
 }
 
 void Renderer::SetProjection(int width, int height) {
-  proj = glm::perspective(glm::radians(59.0f), (float) width / (float) height, 10.0f, 1000.0f);
+  proj = glm::perspective(glm::radians(59.0f), (float) width / (float) height, 0.1f, 1000.0f);
   glViewport(0, 0, width, height);
 }
 

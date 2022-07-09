@@ -1,11 +1,5 @@
 #include "Cube.h"
 
-Cube::Cube(Material &m) : Renderable(std::reference_wrapper<Material>(m)) {
-  vao = CUBE_VAO.get();
-  ibo = CUBE_IBO.get();
-}
-
-
 std::shared_ptr<VertexArray> Cube::CreateVertexBuffer() {
   float size = 1;
   float x = -0.5, y = -0.5, z = -0.5;
@@ -23,16 +17,16 @@ std::shared_ptr<VertexArray> Cube::CreateVertexBuffer() {
   };
 
 
-  auto vao = std::make_shared<VertexArray>();
-  vao->Bind();
+  auto vertexArray = std::make_shared<VertexArray>();
+  vertexArray->Bind();
   VertexBuffer vertBuf(vertices, sizeof(vertices));
 
   BufferLayout layout = BufferLayout();
   layout.Push<float>(3);
   layout.Push<float>(2);
-  vao->AddBuffer(vertBuf, layout);
+  vertexArray->AddBuffer(vertBuf, layout);
 
-  return vao;
+  return vertexArray;
 }
 
 std::shared_ptr<IndexBuffer> Cube::CreateIndexBuffer() {
@@ -57,11 +51,11 @@ std::shared_ptr<IndexBuffer> Cube::CreateIndexBuffer() {
           0, 1, 5,
           5, 4, 0,
   };
-  auto ibo = std::make_shared<IndexBuffer>(indices, sizeof(indices) / sizeof(uint32_t));
-  return ibo;
+  auto idxBuffer = std::make_shared<IndexBuffer>(indices, sizeof(indices) / sizeof(uint32_t));
+  return idxBuffer;
 }
 
 void Cube::InitBuffers() {
-  CUBE_VAO = CreateVertexBuffer();
-  CUBE_IBO = CreateIndexBuffer();
+  vao = CreateVertexBuffer();
+  ibo = CreateIndexBuffer();
 }

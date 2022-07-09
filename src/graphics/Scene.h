@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "LightSource.h"
-#include "Renderable.h"
+#include "object/Object.h"
 
 struct __attribute__ ((packed)) SceneData {
     glm::vec3 camPos;
@@ -13,17 +13,17 @@ struct __attribute__ ((packed)) SceneData {
 class Scene {
 private:
     std::vector<LightSource *> lights;
-    std::vector<Renderable *> objects;
+    std::vector<Object *> objects;
 public:
-    void AddObject(Renderable *object);
+    void AddObject(Object *object);
 
-    void RemoveObject(Renderable *object);
+    void RemoveObject(Object *object);
 
     void AddLight(LightSource *light);
 
     inline const vector<LightSource *> &Lights() const { return lights; }
 
-    inline const vector<Renderable *> &Objects() const { return objects; }
+    inline const vector<Object *> &Objects() const { return objects; }
 };
 
 
