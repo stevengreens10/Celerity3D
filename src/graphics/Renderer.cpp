@@ -10,19 +10,16 @@
 #include "../Camera.h"
 
 void Renderer::Init(Window *win) {
-  Log::logf("Initialization");
   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
   glEnable(GL_DEBUG_OUTPUT);
   glDebugMessageCallback(&Log::GLDebugMessageCallback, nullptr);
 
-  Log::logf("Initialization 1a");
   wglSwapIntervalEXT(1);
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glClearDepth(1.0f);                                 // Depth Buffer Setup
   glEnable(GL_DEPTH_TEST);                            // Enables Depth Testing
-  Log::logf("Initialization 1b");
   //TODO: Proper gamma correction
   //  glEnable(GL_FRAMEBUFFER_SRGB);
 
@@ -32,7 +29,6 @@ void Renderer::Init(Window *win) {
   // TODO: Fix primitive vertices then re-enable
   //  glEnable(GL_CULL_FACE);
   //  glCullFace(GL_BACK);
-  Log::logf("Initialization 2");
   SetProjection(win->width, win->height);
 
   Cube::InitBuffers();
@@ -53,7 +49,6 @@ void Renderer::Init(Window *win) {
   lightLayout.Push<glm::vec3>(5);
   sceneLayout.PushStruct(lightLayout, MAX_LIGHTS);
 
-  Log::logf("Initialization 3");
   Shader::CreateShaderStorageBuffer("Scene", sceneLayout, 2);
 #ifdef IMGUI
   Renderer::InitImGui(win);
@@ -93,11 +88,13 @@ void Renderer::NewFrame() {
 }
 
 void Renderer::Draw(const Scene &s) const {
-  struct __attribute__ ((packed)) TransformationData {
+#pragma pack(push, 1)
+  struct TransformationData {
       glm::mat4 vp;
       glm::mat4 model;
   };
   TransformationData t{};
+#pragma pack(pop)
 
   // Set scene buffer
   uint64_t bufSize = 16 + s.Lights().size() * sizeof(LightSource);

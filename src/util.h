@@ -2,6 +2,7 @@
 #define GUI_UTIL_H
 
 #include <fstream>
+#include <string>
 #include <vector>
 #include "glm/vec3.hpp"
 #include "glm/vec2.hpp"

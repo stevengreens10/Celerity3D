@@ -5,10 +5,12 @@
 #include "LightSource.h"
 #include "object/Object.h"
 
-struct __attribute__ ((packed)) SceneData {
+#pragma pack(push, 1)
+struct SceneData {
     glm::vec3 camPos;
     std::vector<LightSource> lightSources;
 };
+#pragma pack(pop)
 
 class Scene {
 private:

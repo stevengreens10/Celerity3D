@@ -51,7 +51,7 @@ glm::vec3 sToVec3(vector<string> s, int startIdx) {
   float *f = &vec.x;
   for (int i = 0; i < 3; i++) {
     try {
-      f[i] = stof(s[i + startIdx]);
+      f[i] = std::stof(s[i + startIdx]);
     } catch (std::exception &e) {
       f[i] = 0.0f;
     }
@@ -64,7 +64,7 @@ glm::vec2 sToVec2(vector<string> s, int startIdx) {
   float *f = &vec.x;
   for (int i = 0; i < 2; i++) {
     try {
-      f[i] = stof(s[i + startIdx]);
+      f[i] = std::stof(s[i + startIdx]);
     } catch (int e) {
       f[i] = 0.0f;
     }

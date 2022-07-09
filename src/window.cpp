@@ -1,6 +1,4 @@
-#include <tchar.h>
 #include <iostream>
-#include <bits/stdc++.h>
 
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -11,7 +9,7 @@
 #include "Application.h"
 #include "GL/wglew.h"
 
-static TCHAR szWindowClass[] = TEXT("myWindowClass");
+static char szWindowClass[] = "myWindowClass";
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -44,13 +42,13 @@ WINAPI NewWindow(HINSTANCE hInstance, const std::string &title, int width, int h
     wcex->hIconSm = LoadIcon(hInstance, IDI_APPLICATION);
   }
 
-  if (!RegisterClassEx(wcex.get())) {
+  if (!RegisterClassExA(wcex.get())) {
     Log::logf("ERROR: Could not register class");
     exit(1);
   }
 
-  auto hWnd = CreateWindow(szWindowClass, TEXT(title.c_str()), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-                           width, height, nullptr, nullptr, hInstance, nullptr);
+  auto hWnd = CreateWindowA(szWindowClass, title.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+                            width, height, nullptr, nullptr, hInstance, nullptr);
 
   if (!hWnd) {
     Log::logf("ERROR: Could not create window %s", title.c_str());

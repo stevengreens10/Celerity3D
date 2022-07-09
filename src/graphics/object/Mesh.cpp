@@ -26,10 +26,10 @@ void Mesh::Draw() {
   }
 }
 
-unordered_map <string, shared_ptr<Material>> Mesh::loadMats(const string &fileName) {
+unordered_map<string, shared_ptr<Material>> Mesh::loadMats(const string &fileName) {
   Log::logf("Loading materials %s", fileName.c_str());
   ifstream f;
-  unordered_map <string, shared_ptr<Material>> mats;
+  unordered_map<string, shared_ptr<Material>> mats;
   f.open(fileName);
   if (!f) {
     return mats;
@@ -43,7 +43,7 @@ unordered_map <string, shared_ptr<Material>> Mesh::loadMats(const string &fileNa
       currentMat = tokens[1];
       mats[currentMat] = make_shared<Material>(*Shader::LoadShader("light"), tokens[1]);
     } else if (tokens[0] == "Ns") {
-      mats[currentMat]->matData.shininess = stof(tokens[1]);
+      mats[currentMat]->matData.shininess = std::stof(tokens[1]);
     } else if (tokens[0] == "map_Ns") {
       mats[currentMat]->shininessTex = make_shared<Texture>("assets/images/" + tokens[1]);
     } else if (tokens[0] == "Ka") {
@@ -64,9 +64,9 @@ unordered_map <string, shared_ptr<Material>> Mesh::loadMats(const string &fileNa
       // TODO: Not using this yet
       Log::debugf("Don't support Ke yet in MTL");
     } else if (tokens[0] == "Ni") {
-      mats[currentMat]->matData.refractionIndex = stof(tokens[1]);
+      mats[currentMat]->matData.refractionIndex = std::stof(tokens[1]);
     } else if (tokens[0] == "d") {
-      mats[currentMat]->matData.alpha = stof(tokens[1]);
+      mats[currentMat]->matData.alpha = std::stof(tokens[1]);
     } else if (tokens[0] == "illum") {
       // TODO: Not using this yet
       Log::debugf("Don't support illum yet in MTL");

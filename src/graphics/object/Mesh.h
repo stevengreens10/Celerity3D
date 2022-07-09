@@ -3,6 +3,7 @@
 
 #include <memory>
 #include "Object.h"
+#include <string>
 
 using std::string, std::unordered_map, std::unique_ptr, std::shared_ptr, std::vector, std::ifstream;
 using std::reference_wrapper, std::tuple, std::make_unique, std::make_shared;
