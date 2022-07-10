@@ -10,9 +10,10 @@
 
 using std::ostream, std::ofstream, std::string;
 
+#define MAX_LOG_SIZE 512
+
 class Log {
 private:
-    inline static int MAX_LOG_SIZE = 512;
     inline static auto out = &std::cout;
 public:
     static void APIENTRY GLDebugMessageCallback(GLenum

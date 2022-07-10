@@ -172,11 +172,11 @@ bool Mesh::loadMesh(const string &fileName) {
   vao->AddBuffer(vbuf, layout);
   for (int n = 0; n < meshes.size(); n++) {
     auto &meshData = meshes[n];
-    for (auto &it: meshData.matToIBO) {
+    for (const auto &it: meshData.matToIBO) {
       // Tris specific to this material
       auto matTris = triIndices[n][it.first];
       uint32_t numIndices = matTris.size() * 3;
-      uint32_t indices[numIndices];
+      std::vector<uint32_t> indices(numIndices);
 
       // For each triangle
       for (int i = 0; i < matTris.size(); i++) {
@@ -189,8 +189,8 @@ bool Mesh::loadMesh(const string &fileName) {
         indices[idx + 1] = triVertexMap[get<1>(t)];
         indices[idx + 2] = triVertexMap[get<2>(t)];
       }
-      meshData.matToIBO[it.first] = std::make_unique<IndexBuffer>(
-              &indices[0], sizeof(indices) / sizeof(uint32_t));
+      meshData.matToIBO[it.first] = std::make_shared<IndexBuffer>(
+              &indices[0], numIndices);
     }
   }
 

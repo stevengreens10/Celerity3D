@@ -1,4 +1,7 @@
 cmake-build-debug/
+.vs/
+out/
 imgui.ini
 log.txt
+CMakeSettings.json
 *.trace

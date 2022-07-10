@@ -10,7 +10,7 @@ using std::reference_wrapper, std::tuple, std::make_unique, std::make_shared;
 
 struct MeshData {
     string name;
-    unordered_map<shared_ptr<Material>, unique_ptr<IndexBuffer>> matToIBO;
+    unordered_map<shared_ptr<Material>, shared_ptr<IndexBuffer>> matToIBO;
     bool shouldRender = true;
 };
 

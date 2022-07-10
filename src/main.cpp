@@ -29,7 +29,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     ImGui_ImplWin32_EnableDpiAwareness();
     Application::window = NewWindow(hInstance, "Test window", INIT_WIDTH, INIT_HEIGHT);
     Application::Init();
-//    Log::file("log.txt");
+    Log::file("log.txt");
     Log::logf("Version: %s", glGetString(GL_VERSION));
     Log::logf("GLSL Version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
