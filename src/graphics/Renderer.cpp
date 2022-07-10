@@ -53,7 +53,6 @@ void Renderer::Init(Window *win) {
 #ifdef IMGUI
   Renderer::InitImGui(win);
 #endif
-  Log::logf("Initialization 4");
 }
 
 void Renderer::Cleanup(Window *win) {

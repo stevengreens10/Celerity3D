@@ -15,6 +15,7 @@
 #include "Input.h"
 #include "Application.h"
 #include "graphics/Scene.h"
+#include "graphics/Framebuffer.h"
 
 #define INIT_WIDTH 800
 #define INIT_HEIGHT 600
@@ -26,14 +27,15 @@ using std::cos, std::sin, std::acos;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow) {
   {
+    Log::file("log.txt");
     ImGui_ImplWin32_EnableDpiAwareness();
     Application::window = NewWindow(hInstance, "Test window", INIT_WIDTH, INIT_HEIGHT);
     Application::Init();
-    Log::file("log.txt");
     Log::logf("Version: %s", glGetString(GL_VERSION));
     Log::logf("GLSL Version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
     Shader *colorShader = Shader::CreateShader("color");
+    Shader *screenShader = Shader::CreateShader("screen");
     Shader::CreateShader("light");
 
     Scene scene;
@@ -69,6 +71,42 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     float radius = 7.5;
     int framesSinceAdd = 30;
 
+    float quadVertices[] = {
+            -1, -1, 0, 0,
+            1, -1, 1, 0,
+            1, 1, 1, 1,
+            -1, 1, 0, 1
+    };
+
+    uint32_t quadIndices[] = {
+            0, 1, 2,
+            2, 3, 0
+    };
+    VertexArray quadVAO;
+    quadVAO.Bind();
+
+    VertexBuffer buf(quadVertices, sizeof(quadVertices));
+    BufferLayout quadLayout;
+    quadLayout.Push<float>(2);
+    quadLayout.Push<float>(2);
+
+    quadVAO.AddBuffer(buf, quadLayout);
+    IndexBuffer idxBuf(quadIndices, 6);
+    idxBuf.Bind();
+    quadVAO.Unbind();
+    idxBuf.Unbind();
+
+    Application::frameBuf = new Framebuffer();
+    auto &frameBuf = *Application::frameBuf;
+    frameBuf.AddTextureAttachment(GL_DEPTH_STENCIL_ATTACHMENT, Application::window->width, Application::window->height);
+    frameBuf.AddTextureAttachment(GL_COLOR_ATTACHMENT0, Application::window->width, Application::window->height);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+      Log::logf("ERROR: Unable to set up framebuffer");
+    }
+
+    frameBuf.Unbind();
+    // --- MAIN LOOP
     while (true) {
       framesSinceAdd++;
       HandleWindowMessage();
@@ -77,6 +115,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         break;
       }
 
+      frameBuf.Bind();
+      glEnable(GL_DEPTH_TEST);
       Renderer::NewFrame();
 
 #ifdef IMGUI
@@ -88,10 +128,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
           std::stringstream name;
           name << idx++;
           if (ImGui::TreeNode(name.str().c_str())) {
-            ImGui::SliderFloat3("Position", &(sceneLight->pos.x), -20, 20);
-            ImGui::SliderFloat3("Color", &(sceneLight->color.x), 0.0f, 1.0f);
-            ImGui::SliderFloat3("Intensity", &(sceneLight->intensities.x), 0, 2);
-            ImGui::SliderFloat("attenConst", &(sceneLight->attenuation.x), 0, 2);
+            ImGui::SliderFloat3("Position", &(sceneLight->pos.texSlot), -20, 20);
+            ImGui::SliderFloat3("Color", &(sceneLight->color.texSlot), 0.0f, 1.0f);
+            ImGui::SliderFloat3("Intensity", &(sceneLight->intensities.texSlot), 0, 2);
+            ImGui::SliderFloat("attenConst", &(sceneLight->attenuation.texSlot), 0, 2);
             ImGui::SliderFloat("attenLinear", &(sceneLight->attenuation.y), 0, 0.2);
             ImGui::SliderFloat("attenQuadratic", &(sceneLight->attenuation.z), 0, 0.05);
             ImGui::TreePop();
@@ -107,8 +147,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
           name << idx++;
           if (ImGui::TreeNode(name.str().c_str())) {
             ImGui::SliderFloat("Scale", &(sceneObj->scale), 0, 10);
-            ImGui::SliderFloat3("Position", &(sceneObj->pos.x), -20, 20);
-            ImGui::SliderFloat3("Rotation", &(sceneObj->rot.x), 0, 359);
+            ImGui::SliderFloat3("Position", &(sceneObj->pos.texSlot), -20, 20);
+            ImGui::SliderFloat3("Rotation", &(sceneObj->rot.texSlot), 0, 359);
             ImGui::NewLine();
             if (typeid(*sceneObj) == typeid(Mesh)) {
               auto sceneMesh = (Mesh *) sceneObj;
@@ -122,15 +162,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         ImGui::TreePop();
       }
       ImGui::NewLine();
-      ImGui::Text("(%f, %f, %f)", Camera::Pos().x, Camera::Pos().y, Camera::Pos().z);
+      ImGui::Text("(%f, %f, %f)", Camera::Pos().texSlot, Camera::Pos().y, Camera::Pos().z);
       ImGui::Text("%.3f ms/frame (%.1f) FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
       ImGui::End();
 #endif
+
       // Make lights move around and map cube pos and color to light source
       angle += 0.75f;
       for (auto l: scene.Lights()) {
-        l->pos.x += radius * std::cos(glm::radians(angle)) * 0.01;
-        l->pos.z += radius * std::sin(glm::radians(angle)) * 0.01;
+//        l->pos.texSlot += radius * std::cos(glm::radians(angle)) * 0.01;
+//        l->pos.z += radius * std::sin(glm::radians(angle)) * 0.01;
         auto o = (Primitive *) lightToObj[l];
         if (o) {
           o->pos = l->pos;
@@ -143,7 +184,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         framesSinceAdd = 0;
         auto l = new LightSource();
         l->type = LIGHT_POINT;
-        l->pos = Camera::Pos();
+        l->pos = Camera::Pos() + glm::vec3(0, 0.5f, 0);
         l->color = color(std::rand() % 255, std::rand() % 255, std::rand() % 255, 255);
         l->intensities = {0.01, 1.0, 1.0};
         scene.AddLight(l);
@@ -158,6 +199,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       }
 
       renderer.Draw(scene);
+
+      // Render scene framebuffer to screen
+      frameBuf.Unbind();
+      screenShader->Bind();
+      glBindTexture(GL_TEXTURE_2D, frameBuf.GetTexture(GL_COLOR_ATTACHMENT0));
+      int texSlot = 0;
+      screenShader->SetUniform("u_screenTexture", U1i, &texSlot);
+      screenShader->SetUniform("width", U1i, &Application::window->width);
+      screenShader->SetUniform("height", U1i, &Application::window->height);
+      glDisable(GL_DEPTH_TEST);
+      quadVAO.Bind();
+      glDrawElements(GL_TRIANGLES, (int) 6, GL_UNSIGNED_INT, nullptr);
 
       Renderer::EndFrame(Application::window);
     }

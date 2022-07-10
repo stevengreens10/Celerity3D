@@ -4,7 +4,7 @@
 
 void Application::Init() {
   Application::renderer = new Renderer();
-  Camera::Translate(glm::vec3(0, 0, -5));
+  Camera::Translate(glm::vec3(0, 0, -4));
   Camera::Rotate(90.0f, 0.0f);
   renderer->Init(window);
 }

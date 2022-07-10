@@ -24,11 +24,17 @@ void EventHandler::HandleEvent(EventType type, unsigned long p1, unsigned long p
 //        Input::HandleMouseMoveEvent(mousePos->x, mousePos->y);
       Camera::Displace((int) p1, (int) p2);
       break;
-    case RESIZE_EVENT:
-      if (Application::window && p1 > 0 && p2 > 0) {
-        Application::renderer->SetProjection(Application::window->width, Application::window->height);
+    case RESIZE_EVENT: {
+      int width = LOWORD(p2);
+      int height = HIWORD(p2);
+      if (Application::window) {
+        Application::window->width = width;
+        Application::window->height = height;
+        Application::frameBuf->Resize(width, height);
+        Application::renderer->SetProjection(width, height);
       }
       break;
+    }
     case QUIT_EVENT:
       Application::running = false;
       break;

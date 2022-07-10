@@ -3,11 +3,13 @@
 
 #include "window.h"
 #include "graphics/Renderer.h"
+#include "graphics/Framebuffer.h"
 
 class Application {
 public:
     inline static Window *window;
     inline static Renderer *renderer;
+    inline static Framebuffer *frameBuf;
     inline static bool running = true;
 
     static void Init();

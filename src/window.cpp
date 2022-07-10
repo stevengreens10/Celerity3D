@@ -117,6 +117,10 @@ WINAPI NewWindow(HINSTANCE hInstance, const std::string &title, int width, int h
     exit(1);
   }
 
+  if (!wglewIsSupported("WGL_ARB_create_context")) {
+    Log::logf("Not supported!");
+  }
+
   // Upgrade context to modern version
   std::vector<int> int_attributes;
   int_attributes.push_back(WGL_CONTEXT_MAJOR_VERSION_ARB);
@@ -126,6 +130,7 @@ WINAPI NewWindow(HINSTANCE hInstance, const std::string &title, int width, int h
 
   auto modernContext = wglCreateContextAttribsARB(hDC, 0, &int_attributes[0]);
   if (!modernContext) {
+    Log::logf("Error: %d", glGetError());
     Log::logf("ERROR: Could not create modern render context");
   } else {
     hRC = modernContext;
@@ -166,8 +171,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
   auto *appWin = reinterpret_cast<Window *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
   switch (message) {
     case WM_SIZE:
-      appWin->width = LOWORD(lParam);
-      appWin->height = HIWORD(lParam);
       EventHandler::HandleEvent(EventHandler::RESIZE_EVENT, wParam, lParam);
       break;
     case WM_KEYUP:
