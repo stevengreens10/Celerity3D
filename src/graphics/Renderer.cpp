@@ -109,7 +109,7 @@ void Renderer::Draw(const Scene &s) const {
 
   t.vp = proj * Camera::ViewMatrix();
   for (auto object: s.Objects()) {
-    t.model = GetModel(glm::vec3(0.0f), object->scale, object->pos, object->rot);
+    t.model = object->Model();
     Shader::SetGlobalUniform("Transformations", (char *) &t, sizeof(TransformationData));
     object->Draw();
   }
@@ -118,27 +118,6 @@ void Renderer::Draw(const Scene &s) const {
 void Renderer::SetProjection(int width, int height) {
   proj = glm::perspective(glm::radians(59.0f), (float) width / (float) height, 0.1f, 1000.0f);
   glViewport(0, 0, width, height);
-}
-
-glm::mat4 Renderer::GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelTranslate, glm::vec3 modelRotate) {
-// translate "pivot" to origin
-  glm::mat4 ref2originM = glm::translate(glm::mat4(1.0f), -pivot);
-
-// scale
-  glm::mat4 scaleM = glm::scale(glm::mat4(1.0), glm::vec3(modelScale, modelScale, modelScale));
-
-// rotate
-  glm::mat4 rotationM(1.0);
-  rotationM = glm::rotate(rotationM, glm::radians(modelRotate.x), glm::vec3(1.0, 0.0, 0.0));
-  rotationM = glm::rotate(rotationM, glm::radians(modelRotate.y), glm::vec3(0.0, 1.0, 0.0));
-  rotationM = glm::rotate(rotationM, glm::radians(modelRotate.z), glm::vec3(0.0, 0.0, 1.0));
-
-// translate to "pos"
-  glm::mat4 origin2posM = glm::translate(glm::mat4(1.0), modelTranslate);
-
-// concatenate matrices
-  glm::mat4 model = origin2posM * rotationM * scaleM * ref2originM;
-  return model;
 }
 
 void Renderer::InitImGui(Window *win) {

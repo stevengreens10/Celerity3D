@@ -41,8 +41,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     Scene scene;
 
     Mesh cube("assets/mesh/cube.obj");
-    cube.pos = glm::vec3(0, 0, 0.0f);
-    cube.scale = 1;
+    cube.SetPos(glm::vec3(0, 0, 0.0f));
+    cube.SetScale(1);
     scene.AddObject(&cube);
 
 //    Mesh mesh("assets/mesh/backpack.obj");
@@ -60,8 +60,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
     Material lightSource(*colorShader, "lightMat");
     Cube lightCube(lightSource);
-    lightCube.pos = light.pos;
-    lightCube.scale = 0.3;
+    lightCube.SetPos(light.pos);
+    lightCube.SetScale(0.3);
     scene.AddObject(&lightCube);
     lightToObj[&light] = &lightCube;
 
@@ -105,7 +105,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       Log::logf("ERROR: Unable to set up framebuffer");
     }
 
-    frameBuf.Unbind();
+    bool postProcess = false;
     // --- MAIN LOOP
     while (true) {
       framesSinceAdd++;
@@ -120,49 +120,57 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       Renderer::NewFrame();
 
 #ifdef IMGUI
-      ImGui::ShowDemoWindow();
       ImGui::Begin("Debug");
-      if (ImGui::TreeNode("Lights")) {
-        int idx = 0;
-        for (auto sceneLight: scene.Lights()) {
-          std::stringstream name;
-          name << idx++;
-          if (ImGui::TreeNode(name.str().c_str())) {
-            ImGui::SliderFloat3("Position", &(sceneLight->pos.texSlot), -20, 20);
-            ImGui::SliderFloat3("Color", &(sceneLight->color.texSlot), 0.0f, 1.0f);
-            ImGui::SliderFloat3("Intensity", &(sceneLight->intensities.texSlot), 0, 2);
-            ImGui::SliderFloat("attenConst", &(sceneLight->attenuation.texSlot), 0, 2);
-            ImGui::SliderFloat("attenLinear", &(sceneLight->attenuation.y), 0, 0.2);
-            ImGui::SliderFloat("attenQuadratic", &(sceneLight->attenuation.z), 0, 0.05);
-            ImGui::TreePop();
-          }
-        }
-        ImGui::TreePop();
-      }
-      ImGui::NewLine();
-      if (ImGui::TreeNode("Meshes")) {
-        int idx = 0;
-        for (auto sceneObj: scene.Objects()) {
-          std::stringstream name;
-          name << idx++;
-          if (ImGui::TreeNode(name.str().c_str())) {
-            ImGui::SliderFloat("Scale", &(sceneObj->scale), 0, 10);
-            ImGui::SliderFloat3("Position", &(sceneObj->pos.texSlot), -20, 20);
-            ImGui::SliderFloat3("Rotation", &(sceneObj->rot.texSlot), 0, 359);
-            ImGui::NewLine();
-            if (typeid(*sceneObj) == typeid(Mesh)) {
-              auto sceneMesh = (Mesh *) sceneObj;
-              for (auto &submesh: sceneMesh->meshes) {
-                ImGui::Checkbox(submesh.name.c_str(), &submesh.shouldRender);
-              }
+      ImGui::Checkbox("Postprocess", &postProcess);
+      if (ImGui::TreeNode("Scene")) {
+        if (ImGui::TreeNode("Lights")) {
+          int idx = 0;
+          for (auto sceneLight: scene.Lights()) {
+            std::stringstream name;
+            name << idx++;
+            if (ImGui::TreeNode(name.str().c_str())) {
+              ImGui::SliderFloat3("Position", &(sceneLight->pos.x), -20, 20);
+              ImGui::SliderFloat3("Color", &(sceneLight->color.x), 0.0f, 1.0f);
+              ImGui::SliderFloat3("Intensity", &(sceneLight->intensities.x), 0, 2);
+              ImGui::SliderFloat("attenConst", &(sceneLight->attenuation.x), 0, 2);
+              ImGui::SliderFloat("attenLinear", &(sceneLight->attenuation.y), 0, 0.2);
+              ImGui::SliderFloat("attenQuadratic", &(sceneLight->attenuation.z), 0, 0.05);
+              ImGui::TreePop();
             }
-            ImGui::TreePop();
           }
+          ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("Meshes")) {
+          int idx = 0;
+          for (auto sceneObj: scene.Objects()) {
+            std::stringstream name;
+            name << idx++;
+            if (ImGui::TreeNode(name.str().c_str())) {
+              glm::vec3 s = sceneObj->Scale();
+              glm::vec3 p = sceneObj->Pos();
+              glm::vec3 r = sceneObj->Rot();
+              if (ImGui::SliderFloat3("Scale", &(s.x), 0, 10))
+                sceneObj->SetScale(s);
+              if (ImGui::SliderFloat3("Position", &(p.x), -20, 20))
+                sceneObj->SetPos(p);
+              if (ImGui::SliderFloat3("Rotation", &(r.x), 0, 359))
+                sceneObj->SetRot(r);
+              ImGui::NewLine();
+              if (typeid(*sceneObj) == typeid(Mesh)) {
+                auto sceneMesh = (Mesh *) sceneObj;
+                for (auto &submesh: sceneMesh->meshes) {
+                  ImGui::Checkbox(submesh.name.c_str(), &submesh.shouldRender);
+                }
+              }
+              ImGui::TreePop();
+            }
+          }
+          ImGui::TreePop();
         }
         ImGui::TreePop();
       }
       ImGui::NewLine();
-      ImGui::Text("(%f, %f, %f)", Camera::Pos().texSlot, Camera::Pos().y, Camera::Pos().z);
+      ImGui::Text("(%f, %f, %f)", Camera::Pos().x, Camera::Pos().y, Camera::Pos().z);
       ImGui::Text("%.3f ms/frame (%.1f) FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
       ImGui::End();
 #endif
@@ -170,11 +178,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       // Make lights move around and map cube pos and color to light source
       angle += 0.75f;
       for (auto l: scene.Lights()) {
-//        l->pos.texSlot += radius * std::cos(glm::radians(angle)) * 0.01;
+//        l->pos.x += radius * std::cos(glm::radians(angle)) * 0.01;
 //        l->pos.z += radius * std::sin(glm::radians(angle)) * 0.01;
         auto o = (Primitive *) lightToObj[l];
         if (o) {
-          o->pos = l->pos;
+          o->SetPos(l->pos);
           o->material.get().matData.diffuseColor = l->color;
         }
       }
@@ -191,8 +199,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         Log::logf("Adding light. Now there are %d!", scene.Lights().size());
         auto *cMat = new Material(*colorShader, "cube");
         auto c = new Cube(*cMat);
-        c->pos = Camera::Pos();
-        c->scale = 0.3f;
+        c->SetPos(Camera::Pos());
+        c->SetScale(0.3f);
         scene.AddObject(c);
         lightToObj[l] = c;
         Log::logf("Adding object. Now there are %d!", scene.Objects().size());
@@ -208,6 +216,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       screenShader->SetUniform("u_screenTexture", U1i, &texSlot);
       screenShader->SetUniform("width", U1i, &Application::window->width);
       screenShader->SetUniform("height", U1i, &Application::window->height);
+      int pp = (int) postProcess;
+      screenShader->SetUniform("postProcess", U1i, &pp);
       glDisable(GL_DEPTH_TEST);
       quadVAO.Bind();
       glDrawElements(GL_TRIANGLES, (int) 6, GL_UNSIGNED_INT, nullptr);

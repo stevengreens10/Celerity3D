@@ -4,6 +4,7 @@ layout(location = 0) out vec4 FragColor;
 uniform sampler2D u_screenTexture;
 uniform int width;
 uniform int height;
+uniform bool postProcess;
 in vec2 texCoord;
 
 float kernel[] = {
@@ -14,7 +15,7 @@ float kernel[] = {
 
 void main() {
     vec3 color = vec3(texture(u_screenTexture, texCoord));
-    if(texCoord.x > 0.5f) {
+    if(postProcess) {
         color = vec3(0.0f);
         for (int y = -1; y <= 1; y++) {
             for (int x = -1; x <= 1; x++) {
