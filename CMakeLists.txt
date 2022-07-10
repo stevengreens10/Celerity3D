@@ -7,7 +7,7 @@ FILE(GLOB_RECURSE MainSources src/*.cpp)
 FILE(GLOB IMGUI_SOURCES vendor/imgui/*.cpp)
 list(APPEND IMGUI_SOURCES vendor/imgui/backends/imgui_impl_win32.cpp vendor/imgui/backends/imgui_impl_opengl3.cpp)
 
-add_executable(${PROJECT_NAME} WIN32 ${MainSources} ${IMGUI_SOURCES})
+add_executable(${PROJECT_NAME} WIN32 ${MainSources} ${IMGUI_SOURCES} ./vendor/glew/src/glew.c src/graphics/object/primitive/Square.cpp src/graphics/object/primitive/Square.h)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 

@@ -1,29 +1,34 @@
 #include "Object.h"
 
 
-void Object::SetPos(glm::vec3 p) {
+Object *Object::SetPos(glm::vec3 p) {
   pos = p;
   UpdateModel();
+  return this;
 }
 
-void Object::Translate(glm::vec3 p) {
+Object *Object::Translate(glm::vec3 p) {
   pos += p;
   UpdateModel();
+  return this;
 }
 
-void Object::SetScale(float s) {
+Object *Object::SetScale(float s) {
   scale = glm::vec3(s, s, s);
   UpdateModel();
+  return this;
 }
 
-void Object::SetScale(glm::vec3 s) {
+Object *Object::SetScale(glm::vec3 s) {
   scale = s;
   UpdateModel();
+  return this;
 }
 
-void Object::SetRot(glm::vec3 r) {
+Object *Object::SetRot(glm::vec3 r) {
   rot = r;
   UpdateModel();
+  return this;
 }
 
 void Object::UpdateModel() {

@@ -32,6 +32,7 @@ void Renderer::Init(Window *win) {
   SetProjection(win->width, win->height);
 
   Cube::InitBuffers();
+  Square::InitBuffers();
 
   BufferLayout transformationLayout;
   transformationLayout.Push<glm::mat4>(2);

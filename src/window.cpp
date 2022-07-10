@@ -142,7 +142,7 @@ WINAPI NewWindow(HINSTANCE hInstance, const std::string &title, int width, int h
   }
   appWindow->renderContext = hRC;
 
-  ShowWindow(hWnd, SW_SHOW);
+  ShowWindow(hWnd, SW_MAXIMIZE);
   SetForegroundWindow(hWnd);
   SetFocus(hWnd);
   UpdateWindow(hWnd);
@@ -171,6 +171,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
   auto *appWin = reinterpret_cast<Window *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
   switch (message) {
     case WM_SIZE:
+      appWin->width = LOWORD(lParam);
+      appWin->height = HIWORD(lParam);
       EventHandler::HandleEvent(EventHandler::RESIZE_EVENT, wParam, lParam);
       break;
     case WM_KEYUP:

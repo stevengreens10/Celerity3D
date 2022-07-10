@@ -1,7 +1,6 @@
 #ifndef GUI_PRIMITIVE_H
 #define GUI_PRIMITIVE_H
 
-#include "Cube.h"
 #include "../Object.h"
 
 class Primitive : public Object {

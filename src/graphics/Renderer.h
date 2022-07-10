@@ -10,6 +10,7 @@
 #include "Shader.h"
 #include "../window.h"
 #include "object/primitive/Cube.h"
+#include "object/primitive/Square.h"
 #include "Scene.h"
 
 #define MAX_LIGHTS 100

@@ -23,19 +23,19 @@ public:
 
     inline const glm::vec3 &Pos() const { return pos; }
 
-    void SetPos(glm::vec3 p);
+    Object *SetPos(glm::vec3 p);
 
-    void Translate(glm::vec3 p);
+    Object *Translate(glm::vec3 p);
 
-    void SetScale(float s);
+    Object *SetScale(float s);
 
-    void SetScale(glm::vec3 s);
+    Object *SetScale(glm::vec3 s);
 
     inline const glm::vec3 &Scale() const { return scale; }
 
     inline const glm::vec3 &Rot() const { return rot; }
 
-    void SetRot(glm::vec3 r);
+    Object *SetRot(glm::vec3 r);
 
     inline const glm::mat4 &Model() const { return model; }
 

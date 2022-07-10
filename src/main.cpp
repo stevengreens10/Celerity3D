@@ -41,8 +41,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     Scene scene;
 
     Mesh cube("assets/mesh/cube.obj");
-    cube.SetPos(glm::vec3(0, 0, 0.0f));
-    cube.SetScale(1);
+    cube.SetPos(glm::vec3(0, 0, 0.0f))
+            ->SetScale(1);
     scene.AddObject(&cube);
 
 //    Mesh mesh("assets/mesh/backpack.obj");
@@ -60,43 +60,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
     Material lightSource(*colorShader, "lightMat");
     Cube lightCube(lightSource);
-    lightCube.SetPos(light.pos);
-    lightCube.SetScale(0.3);
+    lightCube.SetPos(light.pos)
+            ->SetScale(0.3);
     scene.AddObject(&lightCube);
     lightToObj[&light] = &lightCube;
 
     const Renderer &renderer = *Application::renderer;
 
     float angle = 0;
-    float radius = 7.5;
     int framesSinceAdd = 30;
 
-    float quadVertices[] = {
-            -1, -1, 0, 0,
-            1, -1, 1, 0,
-            1, 1, 1, 1,
-            -1, 1, 0, 1
-    };
+    Material screenMat(*screenShader, "ScreenMat");
+    Square screen(screenMat);
 
-    uint32_t quadIndices[] = {
-            0, 1, 2,
-            2, 3, 0
-    };
-    VertexArray quadVAO;
-    quadVAO.Bind();
-
-    VertexBuffer buf(quadVertices, sizeof(quadVertices));
-    BufferLayout quadLayout;
-    quadLayout.Push<float>(2);
-    quadLayout.Push<float>(2);
-
-    quadVAO.AddBuffer(buf, quadLayout);
-    IndexBuffer idxBuf(quadIndices, 6);
-    idxBuf.Bind();
-    quadVAO.Unbind();
-    idxBuf.Unbind();
-
-    Application::frameBuf = new Framebuffer();
+    Application::frameBuf = new Framebuffer(4);
     auto &frameBuf = *Application::frameBuf;
     frameBuf.AddTextureAttachment(GL_DEPTH_STENCIL_ATTACHMENT, Application::window->width, Application::window->height);
     frameBuf.AddTextureAttachment(GL_COLOR_ATTACHMENT0, Application::window->width, Application::window->height);
@@ -175,11 +152,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       ImGui::End();
 #endif
 
-      // Make lights move around and map cube pos and color to light source
+      // Map cube pos and color to light source
       angle += 0.75f;
       for (auto l: scene.Lights()) {
-//        l->pos.x += radius * std::cos(glm::radians(angle)) * 0.01;
-//        l->pos.z += radius * std::sin(glm::radians(angle)) * 0.01;
         auto o = (Primitive *) lightToObj[l];
         if (o) {
           o->SetPos(l->pos);
@@ -193,7 +168,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         auto l = new LightSource();
         l->type = LIGHT_POINT;
         l->pos = Camera::Pos() + glm::vec3(0, 0.5f, 0);
-        l->color = color(std::rand() % 255, std::rand() % 255, std::rand() % 255, 255);
+        l->color = color(rand() % 255, rand() % 255, rand() % 255, 255);
         l->intensities = {0.01, 1.0, 1.0};
         scene.AddLight(l);
         Log::logf("Adding light. Now there are %d!", scene.Lights().size());
@@ -211,16 +186,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       // Render scene framebuffer to screen
       frameBuf.Unbind();
       screenShader->Bind();
-      glBindTexture(GL_TEXTURE_2D, frameBuf.GetTexture(GL_COLOR_ATTACHMENT0));
+      glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, frameBuf.GetTexture(GL_COLOR_ATTACHMENT0));
       int texSlot = 0;
       screenShader->SetUniform("u_screenTexture", U1i, &texSlot);
       screenShader->SetUniform("width", U1i, &Application::window->width);
       screenShader->SetUniform("height", U1i, &Application::window->height);
       int pp = (int) postProcess;
       screenShader->SetUniform("postProcess", U1i, &pp);
+      screenShader->SetUniform("samples", U1i, &frameBuf.samples);
       glDisable(GL_DEPTH_TEST);
-      quadVAO.Bind();
-      glDrawElements(GL_TRIANGLES, (int) 6, GL_UNSIGNED_INT, nullptr);
+      screen.Draw();
 
       Renderer::EndFrame(Application::window);
     }

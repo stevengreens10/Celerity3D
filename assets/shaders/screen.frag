@@ -1,10 +1,11 @@
 #version 450 core
 
 layout(location = 0) out vec4 FragColor;
-uniform sampler2D u_screenTexture;
+uniform sampler2DMS u_screenTexture;
 uniform int width;
 uniform int height;
 uniform bool postProcess;
+uniform int samples;
 in vec2 texCoord;
 
 float kernel[] = {
@@ -13,8 +14,17 @@ float kernel[] = {
     1, 1, 1
 };
 
+vec3 getTexColor(vec2 uv) {
+    vec3 avgColor = vec3(0.0f);
+    ivec2 texCoordMS = ivec2(uv.x * width, uv.y * height);
+    for(int i = 0; i < samples; i++) {
+        avgColor += vec3(texelFetch(u_screenTexture, texCoordMS, i));
+    }
+    return avgColor / float(samples);
+}
+
 void main() {
-    vec3 color = vec3(texture(u_screenTexture, texCoord));
+    vec3 color = getTexColor(texCoord);
     if(postProcess) {
         color = vec3(0.0f);
         for (int y = -1; y <= 1; y++) {
@@ -25,7 +35,7 @@ void main() {
                 float uvOffY = y * (1.0f / height);
 
                 vec2 kernelUV = vec2(texCoord.x + uvOffX, texCoord.y + uvOffY);
-                color += vec3(texture(u_screenTexture, kernelUV) * kernel[kernelIdx]);
+                color += getTexColor(kernelUV) * kernel[kernelIdx];
             }
         }
     }

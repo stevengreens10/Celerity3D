@@ -9,7 +9,9 @@ private:
     unsigned int id = -1;
     std::unordered_map<GLenum, unsigned int> textureIDs;
 public:
-    explicit Framebuffer();
+    int samples;
+
+    explicit Framebuffer(int numSamples);
 
     ~Framebuffer();
 
