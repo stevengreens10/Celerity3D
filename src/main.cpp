@@ -16,6 +16,7 @@
 #include "Application.h"
 #include "graphics/Scene.h"
 #include "graphics/Framebuffer.h"
+#include "graphics/CubeTexture.h"
 
 #define INIT_WIDTH 800
 #define INIT_HEIGHT 600
@@ -42,7 +43,7 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
 
   auto dirLight = new LightSource();
   dirLight->type = LIGHT_DIR;
-  dirLight->pos = glm::vec3(1, 1, 1);
+  dirLight->pos = glm::vec3(-1, 1, -1);
   dirLight->pos *= 10;
   dirLight->dir = glm::normalize(-dirLight->pos);
   dirLight->intensities = glm::vec3(0.12f, 0.3f, 0.3f);
@@ -78,6 +79,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     Shader::CreateShader("light");
     Shader::CreateShader("shadow");
     Shader *screenShader = Shader::CreateShader("screen");
+    Shader *skyShader = Shader::CreateShader("skybox");
+
+    CubeTexture skyboxTex("assets/images/skybox/", {"right.jpg", "left.jpg", "top.jpg",
+                                                    "bottom.jpg", "front.jpg", "back.jpg"});
+    Cube skyCube(Material::DEFAULT);
+    skyCube.SetScale(100);
 
     Scene scene;
     unordered_map<LightSource *, Object *> lightToObj;
@@ -116,9 +123,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         break;
       }
 
-//      scene.Lights()[0]->pos = Camera::Pos();
-//      scene.Lights()[0]->dir = glm::normalize(-Camera::Pos());
-
+      // SHADOW MAP
       glEnable(GL_DEPTH_TEST);
       glEnable(GL_CULL_FACE);
       glCullFace(GL_FRONT);
@@ -137,13 +142,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
       shadowMap.BindTexture(GL_DEPTH_ATTACHMENT);
 
-#pragma pack(push, 1)
-      struct TransformationData {
-          glm::mat4 vp;
-          glm::mat4 model;
-      };
       TransformationData t{};
-#pragma pack(pop)
       t.vp = glm::mat4(1.0f);
 
       for (auto object: scene.Objects()) {
@@ -152,7 +151,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         object->Draw(*shadowShader);
       }
 
-
+      // MAIN RENDER
       // Set lightTransform in lighting shader for render
       Shader::LoadShader("light")->SetUniform("u_lightTransform", UM4f, &lightSpaceTransform);
       int depthTexSlot = 31;
@@ -162,6 +161,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       frameBuf.Bind();
       glViewport(0, 0, Application::window->width, Application::window->height);
       Renderer::NewFrame();
+
+      // SKYBOX
+      glDisable(GL_CULL_FACE);
+      glDepthMask(GL_FALSE);
+      skyShader->Bind();
+      TransformationData skyTransforms{};
+      auto view = glm::mat4(glm::mat3(Camera::ViewMatrix()));
+      skyTransforms.vp = renderer.proj * view;
+      skyTransforms.model = glm::mat4(1.0f); // Identity
+      Shader::SetGlobalUniform("Transformations", (char *) &skyTransforms, sizeof(TransformationData));
+      int skyTexSlot = 18;
+      skyboxTex.Bind(skyTexSlot);
+      skyShader->SetUniform("u_cubeTex", U1i, &skyTexSlot);
+      skyCube.Draw(*skyShader);
+      glDepthMask(GL_TRUE);
+      glEnable(GL_CULL_FACE);
 
 #ifdef IMGUI
       ImGui::Begin("Debug");
@@ -184,7 +199,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
           }
           ImGui::TreePop();
         }
-        if (ImGui::TreeNode("Meshes")) {
+        if (ImGui::TreeNode("Objects")) {
           int idx = 0;
           for (auto sceneObj: scene.Objects()) {
             std::stringstream name;
@@ -243,8 +258,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         Log::logf("Adding light. Now there are %d!", scene.Lights().size());
         auto *cMat = new Material("lightcube");
         auto c = new Cube(*cMat);
-        c->SetPos(Camera::Pos());
-        c->SetScale(0.3f);
+        c->SetPos(Camera::Pos())
+                ->SetScale(0.3f)
+                ->useLighting = false;
         scene.AddObject(c);
         lightToObj[l] = c;
         Log::logf("Adding object. Now there are %d!", scene.Objects().size());
@@ -252,6 +268,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
       renderer.Draw(scene);
 
+      // SCREEN DRAW
       // Render scene framebuffer to screen
       frameBuf.Unbind();
       screenShader->Bind();

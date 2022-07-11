@@ -24,6 +24,7 @@ class Material {
 private:
     std::unordered_map<std::string, UniformMapping> uniforms;
 public:
+    static Material DEFAULT;
     MaterialData matData{};
 
     std::string name;

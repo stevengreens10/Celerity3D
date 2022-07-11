@@ -16,8 +16,6 @@
 #define MAX_LIGHTS 100
 
 class Renderer {
-private:
-    glm::mat4 proj;
 public:
     static void Clear();
 
@@ -36,6 +34,7 @@ public:
 
     static void Cleanup(Window *win);
 
+    glm::mat4 proj;
 private:
     static void InitImGui(Window *win);
 

@@ -2,6 +2,8 @@
 #include "Material.h"
 #include "../log.h"
 
+Material Material::DEFAULT("defaultMat");
+
 Material::Material(std::string name) :
         name(std::move(name)) {
   // Default material properties

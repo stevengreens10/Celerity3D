@@ -16,6 +16,7 @@ private:
     glm::mat4 model;
     float texScale = 1.0f;
 public:
+    bool useLighting = true;
 
 
     explicit Object() {

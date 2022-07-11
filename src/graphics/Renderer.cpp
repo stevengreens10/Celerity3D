@@ -106,13 +106,17 @@ void Renderer::Draw(const Scene &s) const {
 
   t.vp = proj * Camera::ViewMatrix();
   Shader *lightShader = Shader::LoadShader("light");
+  Shader *colorShader = Shader::LoadShader("color");
   lightShader->Bind();
   for (auto object: s.Objects()) {
     t.model = object->Model();
     Shader::SetGlobalUniform("Transformations", (char *) &t, sizeof(TransformationData));
     float texScale = object->TexScale();
     lightShader->SetUniform("u_texScale", U1f, &texScale);
-    object->Draw(*lightShader);
+    if (object->useLighting)
+      object->Draw(*lightShader);
+    else
+      object->Draw(*colorShader);
   }
 }
 

@@ -7,6 +7,7 @@
 #include "glm/vec3.hpp"
 #include "glm/vec2.hpp"
 #include "glm/vec4.hpp"
+#include "glm/detail/type_mat4x4.hpp"
 
 using std::vector, std::string;
 
@@ -21,6 +22,11 @@ typedef struct {
     glm::vec2 pos;
     glm::vec2 uv;
 } Vertex2D;
+
+struct TransformationData {
+    glm::mat4 vp;
+    glm::mat4 model;
+};
 #pragma pack(pop)
 
 char *readFile(const string &path);

@@ -4,7 +4,7 @@
 #include "../log.h"
 
 Texture::Texture(const std::string &filePath)
-        : rendererId(0), width(0), height(0), BPP(0) {
+        : rendererId(-1), width(0), height(0), BPP(0) {
 
   // Flips upside down
   stbi_set_flip_vertically_on_load(1);
