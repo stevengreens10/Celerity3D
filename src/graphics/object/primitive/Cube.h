@@ -10,7 +10,7 @@
 class Cube : public Primitive {
 private:
     inline static std::shared_ptr<VertexArray> vao;
-    inline static std::shared_ptr<IndexBuffer> ibo;
+    inline static int numVertices;
 public:
     explicit Cube(std::reference_wrapper<Material> m) : Primitive(m) {}
 
@@ -19,15 +19,14 @@ public:
 private:
     static std::shared_ptr<VertexArray> CreateVertexBuffer();
 
-    static std::shared_ptr<IndexBuffer> CreateIndexBuffer();
-
     inline VertexArray *getVertexBuffer() override {
       return vao.get();
     }
 
-    IndexBuffer *getIndexBuffer() override {
-      return ibo.get();
+    inline int getNumVertices() override {
+      return numVertices;
     }
+
 };
 
 

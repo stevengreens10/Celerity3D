@@ -14,7 +14,10 @@ private:
     glm::vec3 scale{};
     glm::vec3 rot{};
     glm::mat4 model;
+    float texScale = 1.0f;
 public:
+
+
     explicit Object() {
       pos = glm::vec3(0.0f);
       scale = glm::vec3(1.0f);
@@ -37,11 +40,15 @@ public:
 
     Object *SetRot(glm::vec3 r);
 
+    inline float TexScale() const { return texScale; }
+
+    Object *SetTexScale(float texScale);
+
     inline const glm::mat4 &Model() const { return model; }
 
     void UpdateModel();
 
-    virtual void Draw() = 0;
+    virtual void Draw(Shader &shader) = 0;
 
 };
 

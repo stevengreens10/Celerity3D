@@ -10,11 +10,18 @@
 
 using std::vector, std::string;
 
+#pragma pack(push, 1)
 typedef struct {
     glm::vec3 pos;
+    glm::vec3 normal;
     glm::vec2 uv;
-//    glm::vec3 normal;
 } Vertex;
+
+typedef struct {
+    glm::vec2 pos;
+    glm::vec2 uv;
+} Vertex2D;
+#pragma pack(pop)
 
 char *readFile(const string &path);
 

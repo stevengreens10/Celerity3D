@@ -14,12 +14,6 @@ struct MeshData {
     bool shouldRender = true;
 };
 
-struct MeshVertex {
-    glm::vec3 pos;
-    glm::vec2 uv;
-    glm::vec3 normal;
-};
-
 class Mesh : public Object {
 private:
 public:
@@ -28,7 +22,7 @@ public:
 
     explicit Mesh(const string &fileName);
 
-    void Draw() override;
+    void Draw(Shader &shader) override;
 
 private:
     bool loadMesh(const string &fileName);

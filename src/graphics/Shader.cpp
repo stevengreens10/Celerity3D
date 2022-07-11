@@ -1,5 +1,6 @@
 #include "Shader.h"
 #include "../log.h"
+#include <glm/gtc/type_ptr.hpp>
 
 #include <utility>
 
@@ -143,6 +144,7 @@ void Shader::SetShaderStorageBuffer(const string &name, char *data, uint32_t buf
 }
 
 void Shader::SetUniform(const std::string &uniName, UniformType type, void *data) {
+  Bind();
   int location = GetUniformLocation(uniName);
   switch (type) {
     case U1f: {
@@ -170,7 +172,7 @@ void Shader::SetUniform(const std::string &uniName, UniformType type, void *data
     }
     case UM4f: {
       auto *mat = (glm::mat4 *) data;
-      glUniformMatrix4fv(GetUniformLocation(uniName), 1, TRANSPOSE, &((*mat)[0][0]));
+      glUniformMatrix4fv(location, 1, TRANSPOSE, glm::value_ptr(*mat));
       break;
     }
     default:

@@ -47,3 +47,8 @@ void Object::UpdateModel() {
   // concatenate matrices
   model = origin2posM * rotationM * scaleM;
 }
+
+Object *Object::SetTexScale(float t) {
+  texScale = t;
+  return this;
+}

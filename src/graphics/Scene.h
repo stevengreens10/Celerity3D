@@ -17,6 +17,9 @@ private:
     std::vector<LightSource *> lights;
     std::vector<Object *> objects;
 public:
+
+    ~Scene();
+
     void AddObject(Object *object);
 
     void RemoveObject(Object *object);

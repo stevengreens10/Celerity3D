@@ -9,17 +9,16 @@ public:
 
     explicit Primitive(std::reference_wrapper<Material> material) : material(material) {}
 
-    virtual void Draw() override {
+    void Draw(Shader &shader) override {
       getVertexBuffer()->Bind();
-      getIndexBuffer()->Bind();
-      material.get().Bind();
-      glDrawElements(GL_TRIANGLES, (int) getIndexBuffer()->getCount(), GL_UNSIGNED_INT, nullptr);
+      material.get().Bind(shader);
+      glDrawArrays(GL_TRIANGLES, 0, getNumVertices());
     }
 
 private:
     virtual VertexArray *getVertexBuffer() = 0;
 
-    virtual IndexBuffer *getIndexBuffer() = 0;
+    virtual int getNumVertices() = 0;
 };
 
 #endif //GUI_PRIMITIVE_H

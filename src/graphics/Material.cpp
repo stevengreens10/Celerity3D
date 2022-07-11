@@ -2,18 +2,28 @@
 #include "Material.h"
 #include "../log.h"
 
-void Material::Bind() {
+Material::Material(std::string name) :
+        name(std::move(name)) {
+  // Default material properties
+  matData.ambientColor = glm::vec3(1.0f);
+  matData.diffuseColor = glm::vec3(1.0f);
+  matData.specColor = glm::vec3(1.0f);
+  matData.alpha = 1.0f;
+  matData.shininess = 551.19f;
+}
+
+void Material::Bind(Shader &shader) {
   shader.Bind();
   // Bitmap for textures present
   int texturesPresent = 0;
-  texturesPresent |= setTexture("u_ambientTex", ambientTex, 0);
-  texturesPresent |= setTexture("u_diffuseTex", diffuseTex, 1) << 1;
-  texturesPresent |= setTexture("u_specTex", specTex, 2) << 2;
-  texturesPresent |= setTexture("u_shinyTex", shininessTex, 3) << 3;
-  texturesPresent |= setTexture("u_bumpTex", bumpTex, 4) << 4;
+  texturesPresent |= setTexture(shader, "u_ambientTex", ambientTex, 0);
+  texturesPresent |= setTexture(shader, "u_diffuseTex", diffuseTex, 1) << 1;
+  texturesPresent |= setTexture(shader, "u_specTex", specTex, 2) << 2;
+  texturesPresent |= setTexture(shader, "u_shinyTex", shininessTex, 3) << 3;
+  texturesPresent |= setTexture(shader, "u_bumpTex", bumpTex, 4) << 4;
   shader.SetUniform("u_texturesPresent", U1i, &texturesPresent);
 
-  setMaterialData(matData);
+  setMaterialData(shader, matData);
 
   for (const auto &uMapping: uniforms) {
     auto uName = uMapping.first;
@@ -24,7 +34,8 @@ void Material::Bind() {
   }
 }
 
-int Material::setTexture(const std::string &texName, const std::shared_ptr<Texture> &texture, int slot) {
+int
+Material::setTexture(Shader &shader, const std::string &texName, const std::shared_ptr<Texture> &texture, int slot) {
   if (texture) {
     texture->Bind(slot);
     shader.SetUniform(texName, U1i, &slot);
@@ -33,7 +44,7 @@ int Material::setTexture(const std::string &texName, const std::shared_ptr<Textu
   return 0;
 }
 
-void Material::setMaterialData(MaterialData data) {
+void Material::setMaterialData(Shader &shader, MaterialData data) {
   shader.SetUniform("u_ambientColor", U3f, &(data.ambientColor.x));
   shader.SetUniform("u_diffuseColor", U3f, &(data.diffuseColor.x));
   shader.SetUniform("u_specColor", U3f, &(data.specColor.x));

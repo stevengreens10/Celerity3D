@@ -10,23 +10,23 @@
 class Square : public Primitive {
 private:
     inline static std::shared_ptr<VertexArray> vao;
-    inline static std::shared_ptr<IndexBuffer> ibo;
+    inline static int numVertices;
 public:
     explicit Square(std::reference_wrapper<Material> m) : Primitive(m) {}
 
     static void InitBuffers();
 
+    void Draw(Shader &shader) override;
+
 private:
     static std::shared_ptr<VertexArray> CreateVertexBuffer();
-
-    static std::shared_ptr<IndexBuffer> CreateIndexBuffer();
 
     inline VertexArray *getVertexBuffer() override {
       return vao.get();
     }
 
-    IndexBuffer *getIndexBuffer() override {
-      return ibo.get();
+    inline int getNumVertices() override {
+      return numVertices;
     }
 };
 

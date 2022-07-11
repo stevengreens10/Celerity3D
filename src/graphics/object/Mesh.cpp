@@ -13,14 +13,14 @@ Mesh::Mesh(const string &fileName) {
   loadMesh(fileName);
 }
 
-void Mesh::Draw() {
+void Mesh::Draw(Shader &shader) {
   vao->Bind();
   for (auto &mesh: meshes) {
     if (!mesh.shouldRender)
       continue;
     for (auto &it: mesh.matToIBO) {
       it.second->Bind();
-      it.first->Bind();
+      it.first->Bind(shader);
       glDrawElements(GL_TRIANGLES, (int) it.second->getCount(), GL_UNSIGNED_INT, nullptr);
     }
   }
@@ -41,7 +41,7 @@ unordered_map<string, shared_ptr<Material>> Mesh::loadMats(const string &fileNam
     auto tokens = split(line, " ");
     if (tokens[0] == "newmtl") {
       currentMat = tokens[1];
-      mats[currentMat] = make_shared<Material>(*Shader::LoadShader("light"), tokens[1]);
+      mats[currentMat] = make_shared<Material>(tokens[1]);
     } else if (tokens[0] == "Ns") {
       mats[currentMat]->matData.shininess = std::stof(tokens[1]);
     } else if (tokens[0] == "map_Ns") {
@@ -96,7 +96,7 @@ bool Mesh::loadMesh(const string &fileName) {
   typedef tuple<TriIdxVals, TriIdxVals, TriIdxVals> TriTriplet;
 
   // Used to build vertex buffer
-  vector<MeshVertex> vertices;
+  vector<Vertex> vertices;
   // Maps position/uv/normal triplet to vertices index
   unordered_map<TriIdxVals, uint32_t> triVertexMap{};
 
@@ -147,7 +147,7 @@ bool Mesh::loadMesh(const string &fileName) {
           if (normals.size() > (int) idxVals.z - 1)
             normal = normals[(int) idxVals.z - 1];
 
-          vertices.push_back({pos, uv, normal});
+          vertices.push_back({pos, normal, uv});
         }
 
       }
@@ -164,11 +164,11 @@ bool Mesh::loadMesh(const string &fileName) {
   }
 
   vao = std::make_unique<VertexArray>();
-  VertexBuffer vbuf(&vertices[0], vertices.size() * sizeof(MeshVertex));
+  VertexBuffer vbuf(&vertices[0], vertices.size() * sizeof(Vertex));
   BufferLayout layout;
   layout.Push<float>(3); // Pos
-  layout.Push<float>(2); // UV
   layout.Push<float>(3); // Normal
+  layout.Push<float>(2); // UV
   vao->AddBuffer(vbuf, layout);
   for (int n = 0; n < meshes.size(); n++) {
     auto &meshData = meshes[n];

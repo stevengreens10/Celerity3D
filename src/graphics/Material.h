@@ -24,7 +24,6 @@ class Material {
 private:
     std::unordered_map<std::string, UniformMapping> uniforms;
 public:
-    Shader &shader;
     MaterialData matData{};
 
     std::string name;
@@ -34,22 +33,20 @@ public:
     std::shared_ptr<Texture> shininessTex;
     std::shared_ptr<Texture> bumpTex;
 
-    Material(Shader &s, std::string name) :
-            shader(s), name(std::move(name)) {}
+    explicit Material(std::string name);
 
 
     void SetUniform(const std::string &uName, UniformType type, void *data);
 
-    void Bind();
+    void Bind(Shader &shader);
 
     void Unbind();
 
-    int GetUniformLocation(const std::string &uniName);
-
 private:
-    int setTexture(const std::string &texName, const std::shared_ptr<Texture> &texture, int slot);
+    static int
+    setTexture(Shader &shader, const std::string &texName, const std::shared_ptr<Texture> &texture, int slot);
 
-    void setMaterialData(MaterialData data);
+    static void setMaterialData(Shader &shader, MaterialData data);
 };
 
 #endif //GUI_MATERIAL_H

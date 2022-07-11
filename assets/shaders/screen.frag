@@ -2,6 +2,7 @@
 
 layout(location = 0) out vec4 FragColor;
 uniform sampler2DMS u_screenTexture;
+//uniform sampler2D u_screenTexture;
 uniform int width;
 uniform int height;
 uniform bool postProcess;
@@ -25,6 +26,7 @@ vec3 getTexColor(vec2 uv) {
 
 void main() {
     vec3 color = getTexColor(texCoord);
+//    vec3 color = vec3(texture(u_screenTexture, texCoord).r);
     if(postProcess) {
         color = vec3(0.0f);
         for (int y = -1; y <= 1; y++) {

@@ -2,6 +2,10 @@
 #include "Renderer.h"
 #include <algorithm>
 
+Scene::~Scene() {
+  // TODO: Clean up lights and objects
+}
+
 void Scene::AddObject(Object *object) {
   objects.push_back(object);
 }

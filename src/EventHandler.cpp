@@ -28,7 +28,9 @@ void EventHandler::HandleEvent(EventType type, unsigned long p1, unsigned long p
       int width = LOWORD(p2);
       int height = HIWORD(p2);
       if (Application::window) {
-        Application::frameBuf->Resize(width, height);
+        for (auto frameBuf: Application::frameBuf) {
+          frameBuf->Resize(width, height);
+        }
         Application::renderer->SetProjection(width, height);
       }
       break;

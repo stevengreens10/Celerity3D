@@ -6,10 +6,14 @@
 
 class Framebuffer {
 private:
+
     unsigned int id = -1;
     std::unordered_map<GLenum, unsigned int> textureIDs;
 public:
     int samples;
+    bool resizeToScreen = true;
+
+    Framebuffer();
 
     explicit Framebuffer(int numSamples);
 
@@ -23,8 +27,13 @@ public:
 
     void Bind() const;
 
+    void BindTexture(GLenum type);
+
     void Unbind() const;
 
+    void UnbindTexture(GLenum type) const;
+
+    void DisableColor();
 };
 
 #endif //GUI_FRAMEBUFFER_H
