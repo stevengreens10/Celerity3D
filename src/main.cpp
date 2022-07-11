@@ -32,11 +32,11 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
   Cube *ground = new Cube(*m);
   ground->SetPos(glm::vec3(0, -2, 0.0f))
           ->SetScale(glm::vec3(200, 0.1, 200))
-          ->SetTexScale(20.0f);
+          ->SetTexScale(100.0f);
   scene.AddObject(ground);
 
   Mesh *cube = new Mesh("assets/mesh/cube.obj");
-  cube->SetPos(glm::vec3(0, -0.9, 0))
+  cube->SetPos(glm::vec3(0, -0.5, 0))
           ->SetScale(1);
   scene.AddObject(cube);
 
@@ -160,7 +160,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       shadowMap.BindTexture(GL_DEPTH_ATTACHMENT);
       Shader::LoadShader("light")->SetUniform("u_lightDepthMap", U1i, &depthTexSlot);
       frameBuf.Bind();
-      glDisable(GL_CULL_FACE);
       glViewport(0, 0, Application::window->width, Application::window->height);
       Renderer::NewFrame();
 

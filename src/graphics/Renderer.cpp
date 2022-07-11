@@ -23,12 +23,6 @@ void Renderer::Init(Window *win) {
   //TODO: Proper gamma correction
   //  glEnable(GL_FRAMEBUFFER_SRGB);
 
-  // TODO: Render to framebuffer with multisample
-  //  glEnable(GL_MULTISAMPLE);
-
-  // TODO: Fix primitive vertices then re-enable
-  //  glEnable(GL_CULL_FACE);
-  //  glCullFace(GL_BACK);
   SetProjection(win->width, win->height);
 
   Cube::InitBuffers();
@@ -79,6 +73,8 @@ void Renderer::Clear() {
 
 void Renderer::NewFrame() {
   Clear();
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
 #ifdef IMGUI
   // Start the Dear ImGui frame
   ImGui_ImplOpenGL3_NewFrame();

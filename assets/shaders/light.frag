@@ -132,21 +132,23 @@ vec3 calculateLight(LightSource light, vec3 normal, vec3 ambientColor, vec3 diff
 
 void main() {
     // Load texture data
+    vec2 scaledUV = v_textureUV * u_texScale;
+
     vec3 ambientTex = vec3(1.0f);
     vec3 diffuseTex = vec3(1.0f);
     vec3 specTex = vec3(1.0f);
     float shinyTex = 1.0f;
     vec3 bumpTex = vec3(1.0f);
     if ((u_texturesPresent & 1) >= 1)
-        ambientTex = vec3(texture(u_ambientTex, v_textureUV*u_texScale));
+        ambientTex = vec3(texture(u_ambientTex, scaledUV));
     if ((u_texturesPresent & 2) >= 1)
-        diffuseTex = vec3(texture(u_diffuseTex, v_textureUV*u_texScale));
+        diffuseTex = vec3(texture(u_diffuseTex, scaledUV));
     if ((u_texturesPresent & 4) >= 1)
-        specTex    = vec3(texture(u_specTex, v_textureUV*u_texScale));
+        specTex    = vec3(texture(u_specTex, scaledUV));
     if ((u_texturesPresent & 8) >= 1)
-        shinyTex   = float(texture(u_shinyTex, v_textureUV*u_texScale));
+        shinyTex   = float(texture(u_shinyTex, scaledUV));
     if ((u_texturesPresent & 16) >= 1)
-        bumpTex    = vec3(texture(u_bumpTex, v_textureUV*u_texScale));
+        bumpTex    = vec3(texture(u_bumpTex, scaledUV));
 
     vec3 ambientColor = u_ambientColor * ambientTex;
     vec3 diffuseColor = u_diffuseColor * diffuseTex;
