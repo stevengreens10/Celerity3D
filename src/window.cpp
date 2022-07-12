@@ -142,7 +142,7 @@ WINAPI NewWindow(HINSTANCE hInstance, const std::string &title, int width, int h
   }
   appWindow->renderContext = hRC;
 
-  ShowWindow(hWnd, SW_MAXIMIZE);
+  ShowWindow(hWnd, SW_SHOW);
   SetForegroundWindow(hWnd);
   SetFocus(hWnd);
   UpdateWindow(hWnd);

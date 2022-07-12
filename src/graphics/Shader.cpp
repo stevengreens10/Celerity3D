@@ -4,6 +4,7 @@
 
 #include <utility>
 
+// For vertex / frag shaders
 Shader::Shader(const std::string &vertFile, const std::string &fragFile) {
   name = vertFile;
   char *vertSource = readFile(vertFile);
@@ -14,13 +15,13 @@ Shader::Shader(const std::string &vertFile, const std::string &fragFile) {
     exit(1);
   }
 
-  rendererId = glCreateProgram();
+  id = glCreateProgram();
   uint32_t vertId = CompileShader(vertSource, GL_VERTEX_SHADER);
   uint32_t fragId = CompileShader(fragSource, GL_FRAGMENT_SHADER);
-  glAttachShader(rendererId, vertId);
-  glAttachShader(rendererId, fragId);
-  glLinkProgram(rendererId);
-  glValidateProgram(rendererId);
+  glAttachShader(id, vertId);
+  glAttachShader(id, fragId);
+  glLinkProgram(id);
+  glValidateProgram(id);
 
   // Delete intermediates
   glDeleteShader(vertId);
@@ -29,12 +30,33 @@ Shader::Shader(const std::string &vertFile, const std::string &fragFile) {
   free(fragSource);
 }
 
+// For compute shaders
+Shader::Shader(const std::string &compFile) {
+  name = compFile;
+  char *compSource = readFile(compFile);
+
+  if (compSource == nullptr) {
+    Log::logf("ERR: Sources are null");
+    exit(1);
+  }
+
+  id = glCreateProgram();
+  uint32_t compId = CompileShader(compSource, GL_COMPUTE_SHADER);
+  glAttachShader(id, compId);
+  glLinkProgram(id);
+  glValidateProgram(id);
+
+  // Delete intermediate
+  glDeleteShader(compId);
+  free(compSource);
+}
+
 Shader::~Shader() {
-  glDeleteProgram(rendererId);
+  glDeleteProgram(id);
 }
 
 void Shader::Bind() const {
-  glUseProgram(rendererId);
+  glUseProgram(id);
 }
 
 void Shader::Unbind() {
@@ -56,6 +78,12 @@ Shader *Shader::LoadShader(const std::string &name) {
 
 Shader *Shader::CreateShader(const string &name) {
   auto s = new Shader(SHADER_PATH + name + ".vert", SHADER_PATH + name + ".frag");
+  shaders[name] = s;
+  return s;
+}
+
+Shader *Shader::CreateComputeShader(const string &name) {
+  auto s = new Shader(SHADER_PATH + name + ".comp");
   shaders[name] = s;
   return s;
 }
@@ -183,7 +211,7 @@ void Shader::SetUniform(const std::string &uniName, UniformType type, void *data
 int Shader::GetUniformLocation(const std::string &uniName) {
   if (uniformCache.contains(uniName)) return uniformCache[uniName];
 
-  int location = glGetUniformLocation(rendererId, uniName.c_str());
+  int location = glGetUniformLocation(id, uniName.c_str());
 
   if (location == -1) {
     Log::logf("WARN: Uniform %s not found", uniName.c_str());

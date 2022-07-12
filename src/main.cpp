@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <cstdio>
 #include <sstream>
+#include <unistd.h>
 #include "window.h"
 #include "graphics/Shader.h"
 #include "graphics/Renderer.h"
@@ -80,9 +81,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     Shader::CreateShader("shadow");
     Shader *screenShader = Shader::CreateShader("screen");
     Shader *skyShader = Shader::CreateShader("skybox");
+    Shader *compShader = Shader::CreateComputeShader("ascii");
 
     CubeTexture skyboxTex("assets/images/skybox/", {"right.jpg", "left.jpg", "top.jpg",
                                                     "bottom.jpg", "front.jpg", "back.jpg"});
+
+    BufferLayout asciiLayout;
+    uint32_t numInts = (172 * 42);
+    asciiLayout.Push<int>(numInts);
+    uint32_t asciiBuf = Shader::CreateShaderStorageBuffer("ASCII", asciiLayout, 3);
+    int *chars = (int *) glMapNamedBuffer(asciiBuf, GL_READ_ONLY);
+
     Cube skyCube(Material::DEFAULT);
     skyCube.SetScale(100);
 
@@ -98,7 +107,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     Material screenMat("ScreenMat");
     Square screen(screenMat);
 
-    Application::frameBuf.push_back(new Framebuffer(4));
+    Application::frameBuf.push_back(new Framebuffer(1));
     auto &frameBuf = *Application::frameBuf[Application::frameBuf.size() - 1];
     frameBuf.AddTextureAttachment(GL_DEPTH_ATTACHMENT, Application::window->width, Application::window->height);
     frameBuf.AddTextureAttachment(GL_COLOR_ATTACHMENT0, Application::window->width, Application::window->height);
@@ -115,6 +124,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
     bool postProcess = false;
     // --- MAIN LOOP
+    float angle = 1;
     while (true) {
       framesSinceAdd++;
       HandleWindowMessage();
@@ -246,6 +256,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         }
       }
 
+      if (angle > 360)
+        angle -= 360;
+      scene.Objects()[1]->SetRot({0, angle, 0});
+      angle += 0.75;
+
       // Add lights dynamically
       if (Input::IsPressed(VK_TAB) && framesSinceAdd >= 30) {
         framesSinceAdd = 0;
@@ -268,14 +283,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
       renderer.Draw(scene);
 
-      // SCREEN DRAW
-      // Render scene framebuffer to screen
       frameBuf.Unbind();
-      screenShader->Bind();
       renderer.Clear();
-      glActiveTexture(GL_TEXTURE9);
+
+      // ASCII Compute Shader
+      int imageSlot = 0;
+      compShader->Bind();
+      glActiveTexture(GL_TEXTURE0);
       frameBuf.BindTexture(GL_COLOR_ATTACHMENT0);
-      int texSlot = 9;
+      glBindImageTexture(imageSlot, frameBuf.GetTexture(GL_COLOR_ATTACHMENT0), 0,
+                         GL_FALSE, 0, GL_READ_ONLY, GL_RGBA8);
+      glDispatchCompute(Application::window->width / 8, Application::window->height / 8, 1);
+
+      // -- TERMINAL OUTPUT --
+      // make sure writing to image has finished before read
+      glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+      for (int i = 0; i < (172 * 42); i++) {
+        putc((char) chars[i], stdout);
+      }
+      printf("\033[H");
+      fflush(stdout);
+
+      // SCREEN DRAW
+      int texSlot = 0;
+      screenShader->Bind();
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
       screenShader->SetUniform("u_screenTexture", U1i, &texSlot);
       screenShader->SetUniform("width", U1i, &Application::window->width);
       screenShader->SetUniform("height", U1i, &Application::window->height);

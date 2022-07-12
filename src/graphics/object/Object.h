@@ -12,6 +12,7 @@ class Object {
 private:
     glm::vec3 pos{};
     glm::vec3 scale{};
+    // In degrees
     glm::vec3 rot{};
     glm::mat4 model;
     float texScale = 1.0f;

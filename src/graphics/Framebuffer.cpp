@@ -29,8 +29,8 @@ TextureFormats getTexFormats(GLenum attachType) {
   GLenum texType;
 
   if (attachType >= GL_COLOR_ATTACHMENT0 && attachType <= GL_COLOR_ATTACHMENT15) {
-    internalTexFormat = GL_RGB;
-    texFormat = GL_RGB;
+    internalTexFormat = GL_RGBA;
+    texFormat = GL_RGBA;
     texType = GL_UNSIGNED_BYTE;
   } else if (attachType == GL_DEPTH_ATTACHMENT) {
     internalTexFormat = GL_DEPTH_COMPONENT;

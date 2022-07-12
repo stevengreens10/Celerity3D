@@ -36,7 +36,7 @@ private:
     std::unordered_map<std::string, int> uniformCache;
     std::string name;
 public:
-    unsigned int rendererId;
+    unsigned int id;
 
     ~Shader();
 
@@ -48,6 +48,8 @@ public:
 
     static Shader *CreateShader(const std::string &name);
 
+    static Shader *CreateComputeShader(const string &name);
+
     static unsigned int CreateGlobalUniform(const string &name, BufferLayout layout, int idx);
 
     static void SetGlobalUniform(const string &name, char *data, uint32_t bufSize);
@@ -58,8 +60,11 @@ public:
 
     void SetUniform(const string &uniName, UniformType type, void *data);
 
+
 private:
     Shader(const std::string &vertFile, const std::string &fragFile);
+
+    Shader(const std::string &compFile);
 
     static unsigned int CompileShader(char *source, GLenum type);
 
