@@ -29,11 +29,9 @@
 
 glm::vec4 color(int i, int i1, int i2);
 
-using std::cos, std::sin, std::acos;
-
 void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &lightToObj) {
   auto m = new Material("Ground");
-  m->diffuseTex = make_shared<Texture>("assets/images/ground.jpg");
+  m->diffuseTex = Texture::Load("assets/images/ground.jpg", true);
   m->matData.diffuseColor = glm::vec3(1.0f);
   m->matData.specColor = glm::vec3(0.0f);
   Cube *ground = new Cube(*m);
@@ -73,8 +71,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     Shader *screenShader = Shader::CreateShader("screen");
     Shader *skyShader = Shader::CreateShader("skybox");
 
-    CubeTexture skyboxTex("assets/images/skybox/", {"right.jpg", "left.jpg", "top.jpg",
-                                                    "bottom.jpg", "front.jpg", "back.jpg"});
+    std::unique_ptr<CubeTexture> skyboxTex(CubeTexture::Load("assets/images/skybox/",
+                                                             {"right.jpg", "left.jpg", "top.jpg",
+                                                              "bottom.jpg", "front.jpg", "back.jpg"}));
 
 #if ASCII == true
     Shader *compShader = Shader::CreateComputeShader("ascii");
@@ -102,8 +101,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
     Application::frameBuf.push_back(new Framebuffer(1));
     auto &frameBuf = *Application::frameBuf[Application::frameBuf.size() - 1];
-    frameBuf.AddTextureAttachment(GL_DEPTH_ATTACHMENT, Application::window->width, Application::window->height);
-    frameBuf.AddTextureAttachment(GL_COLOR_ATTACHMENT0, Application::window->width, Application::window->height);
+    frameBuf.CreateTextureAttachment(GL_DEPTH_ATTACHMENT, Application::window->width, Application::window->height);
+    frameBuf.CreateTextureAttachment(GL_COLOR_ATTACHMENT0, Application::window->width, Application::window->height);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
       Log::logf("ERROR: Unable to set up framebuffer");
@@ -111,7 +110,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
     Application::frameBuf.push_back(new Framebuffer());
     auto &shadowMap = *Application::frameBuf[Application::frameBuf.size() - 1];
-    shadowMap.AddTextureAttachment(GL_DEPTH_ATTACHMENT, 1024, 1024);
+    shadowMap.CreateTextureAttachment(GL_DEPTH_ATTACHMENT, 1024, 1024);
     shadowMap.resizeToScreen = false;
     shadowMap.DisableColor();
 
@@ -143,7 +142,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       Shader *shadowShader = Shader::LoadShader("shadow");
       shadowShader->SetUniform("lightTransform", UM4f, &lightSpaceTransform);
 
-      shadowMap.BindTexture(GL_DEPTH_ATTACHMENT);
+      shadowMap.BindTexture(GL_DEPTH_ATTACHMENT, 0);
 
       TransformationData t{};
       t.vp = glm::mat4(1.0f);
@@ -158,8 +157,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       // Set lightTransform in lighting shader for render
       Shader::LoadShader("light")->SetUniform("u_lightTransform", UM4f, &lightSpaceTransform);
       int depthTexSlot = 31;
-      glActiveTexture(GL_TEXTURE0 + depthTexSlot);
-      shadowMap.BindTexture(GL_DEPTH_ATTACHMENT);
+      shadowMap.BindTexture(GL_DEPTH_ATTACHMENT, depthTexSlot);
       Shader::LoadShader("light")->SetUniform("u_lightDepthMap", U1i, &depthTexSlot);
       frameBuf.Bind();
       glViewport(0, 0, Application::window->width, Application::window->height);
@@ -175,7 +173,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       skyTransforms.model = glm::mat4(1.0f); // Identity
       Shader::SetGlobalUniform("Transformations", (char *) &skyTransforms, sizeof(TransformationData));
       int skyTexSlot = 18;
-      skyboxTex.Bind(skyTexSlot);
+      skyboxTex->Bind(skyTexSlot);
       skyShader->SetUniform("u_cubeTex", U1i, &skyTexSlot);
       skyCube.Draw(*skyShader);
       glDepthMask(GL_TRUE);
@@ -277,10 +275,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       renderer.Draw(scene);
 
       frameBuf.Unbind();
-      renderer.Clear();
+      Renderer::Clear();
 
-      glActiveTexture(GL_TEXTURE0);
-      frameBuf.BindTexture(GL_COLOR_ATTACHMENT0);
+      int texSlot = 0;
+      frameBuf.BindTexture(GL_COLOR_ATTACHMENT0, texSlot);
 #if ASCII == true
       // ASCII Compute Shader
       int imageSlot = 0;
@@ -304,10 +302,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         putc((char) (chars[i] & 0xff), stdout);
       }
       fflush(stdout);
-//      exit(0);
 #else
       // SCREEN DRAW
-      int texSlot = 0;
       screenShader->Bind();
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

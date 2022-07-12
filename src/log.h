@@ -41,7 +41,7 @@ public:
 
       snprintf(buf, MAX_LOG_SIZE, newFmt.c_str(), timestamp.c_str(), args...);
       *out << buf;
-//      printf(buf);
+      printf(buf);
       out->flush();
     }
 

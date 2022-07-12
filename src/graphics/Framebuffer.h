@@ -2,13 +2,18 @@
 #define GUI_FRAMEBUFFER_H
 
 #include "GL/glew.h"
+#include "Texture.h"
 #include <unordered_map>
+
+struct FramebufTexture {
+    bool owned;
+    Texture *tex;
+};
 
 class Framebuffer {
 private:
-
     unsigned int id = -1;
-    std::unordered_map<GLenum, unsigned int> textureIDs;
+    std::unordered_map<GLenum, FramebufTexture> textureIDs{};
 public:
     int samples;
     bool resizeToScreen = true;
@@ -19,21 +24,24 @@ public:
 
     ~Framebuffer();
 
-    void AddTextureAttachment(GLenum type, int width, int height);
+    void CreateTextureAttachment(GLenum type, int width, int height);
+
+    void SetTextureAttachment(GLenum type, Texture *tex);
 
     void Resize(int width, int height);
 
-    unsigned int GetTexture(GLenum type);
+    Texture *GetTexture(GLenum type);
 
     void Bind() const;
 
-    void BindTexture(GLenum type);
+    void BindTexture(GLenum type, int slot = 0);
 
     void Unbind() const;
 
-    void UnbindTexture(GLenum type) const;
+    void UnbindTexture(GLenum type);
 
-    void DisableColor();
+    void DisableColor() const;
+
 };
 
 #endif //GUI_FRAMEBUFFER_H

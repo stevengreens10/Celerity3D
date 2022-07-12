@@ -37,7 +37,7 @@ void Material::Bind(Shader &shader) {
 }
 
 int
-Material::setTexture(Shader &shader, const std::string &texName, const std::shared_ptr<Texture> &texture, int slot) {
+Material::setTexture(Shader &shader, const std::string &texName, const Texture *texture, int slot) {
   if (texture) {
     texture->Bind(slot);
     shader.SetUniform(texName, U1i, &slot);

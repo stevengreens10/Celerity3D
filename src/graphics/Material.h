@@ -28,11 +28,11 @@ public:
     MaterialData matData{};
 
     std::string name;
-    std::shared_ptr<Texture> ambientTex;
-    std::shared_ptr<Texture> diffuseTex;
-    std::shared_ptr<Texture> specTex;
-    std::shared_ptr<Texture> shininessTex;
-    std::shared_ptr<Texture> bumpTex;
+    Texture *ambientTex = nullptr;
+    Texture *diffuseTex = nullptr;
+    Texture *specTex = nullptr;
+    Texture *shininessTex = nullptr;
+    Texture *bumpTex = nullptr;
 
     explicit Material(std::string name);
 
@@ -45,7 +45,7 @@ public:
 
 private:
     static int
-    setTexture(Shader &shader, const std::string &texName, const std::shared_ptr<Texture> &texture, int slot);
+    setTexture(Shader &shader, const std::string &texName, const Texture *texture, int slot);
 
     static void setMaterialData(Shader &shader, MaterialData data);
 };

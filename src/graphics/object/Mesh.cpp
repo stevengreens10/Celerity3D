@@ -45,21 +45,21 @@ unordered_map<string, shared_ptr<Material>> Mesh::loadMats(const string &fileNam
     } else if (tokens[0] == "Ns") {
       mats[currentMat]->matData.shininess = std::stof(tokens[1]);
     } else if (tokens[0] == "map_Ns") {
-      mats[currentMat]->shininessTex = make_shared<Texture>("assets/images/" + tokens[1]);
+      mats[currentMat]->shininessTex = Texture::Load("assets/images/" + tokens[1], true);
     } else if (tokens[0] == "Ka") {
       mats[currentMat]->matData.ambientColor = sToVec3(tokens, 1);
     } else if (tokens[0] == "map_Ka") {
-      mats[currentMat]->ambientTex = make_shared<Texture>("assets/images/" + tokens[1]);
+      mats[currentMat]->ambientTex = Texture::Load("assets/images/" + tokens[1], true);
     } else if (tokens[0] == "Kd") {
       mats[currentMat]->matData.diffuseColor = sToVec3(tokens, 1);
     } else if (tokens[0] == "map_Kd") {
-      mats[currentMat]->diffuseTex = make_shared<Texture>("assets/images/" + tokens[1]);
+      mats[currentMat]->diffuseTex = Texture::Load("assets/images/" + tokens[1], true);
     } else if (tokens[0] == "map_Bump") {
-      mats[currentMat]->bumpTex = make_shared<Texture>("assets/images/" + tokens[1]);
+      mats[currentMat]->bumpTex = Texture::Load("assets/images/" + tokens[1], true);
     } else if (tokens[0] == "Ks") {
       mats[currentMat]->matData.specColor = sToVec3(tokens, 1);
     } else if (tokens[0] == "map_Ks") {
-      mats[currentMat]->specTex = make_shared<Texture>("assets/images/" + tokens[1]);
+      mats[currentMat]->specTex = Texture::Load("assets/images/" + tokens[1], true);
     } else if (tokens[0] == "Ke") {
       // TODO: Not using this yet
       Log::debugf("Don't support Ke yet in MTL");
