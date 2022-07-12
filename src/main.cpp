@@ -1,7 +1,6 @@
 #include <windows.h>
 #include <cstdio>
 #include <sstream>
-#include <unistd.h>
 #include "window.h"
 #include "graphics/Shader.h"
 #include "graphics/Renderer.h"
@@ -21,6 +20,12 @@
 
 #define INIT_WIDTH 800
 #define INIT_HEIGHT 600
+
+// Render to ASCII stdout instead of screen
+#define ASCII false
+// Terminal character resolution for ASCII rendering
+#define CHAR_WIDTH 172
+#define CHAR_HEIGHT 43
 
 glm::vec4 color(int i, int i1, int i2);
 
@@ -47,23 +52,9 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
   dirLight->pos = glm::vec3(-1, 1, -1);
   dirLight->pos *= 10;
   dirLight->dir = glm::normalize(-dirLight->pos);
-  dirLight->intensities = glm::vec3(0.12f, 0.3f, 0.3f);
-  dirLight->color = glm::vec3(1.0f, 1.0f, 1.0f);
+  dirLight->intensities = glm::vec3(0.12f, 0.8f, 0.3f);
+  dirLight->color = glm::vec3(1.0f, 1.3f, 1.0f);
   scene.AddLight(dirLight);
-
-//  auto pointLight = new LightSource();
-//  pointLight->type = LIGHT_POINT;
-//  pointLight->pos = glm::vec3(0.0f, 3.0f, -5.0f);
-//  pointLight->intensities = glm::vec3(0.01f, 0.8f, 1.0f);
-//  pointLight->color = glm::vec3(0.8f, 1.0f, 0.8f);
-//  scene.AddLight(pointLight);
-//
-//  auto flatColor = new Material("flatColor");
-//  auto lightCube = new Cube(*flatColor);
-//  lightCube->SetPos(pointLight->pos)
-//          ->SetScale(0.3);
-//  scene.AddObject(lightCube);
-//  lightToObj[pointLight] = lightCube;
 
 }
 
@@ -81,16 +72,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     Shader::CreateShader("shadow");
     Shader *screenShader = Shader::CreateShader("screen");
     Shader *skyShader = Shader::CreateShader("skybox");
-    Shader *compShader = Shader::CreateComputeShader("ascii");
 
     CubeTexture skyboxTex("assets/images/skybox/", {"right.jpg", "left.jpg", "top.jpg",
                                                     "bottom.jpg", "front.jpg", "back.jpg"});
 
+#if ASCII == true
+    Shader *compShader = Shader::CreateComputeShader("ascii");
     BufferLayout asciiLayout;
-    uint32_t numInts = (172 * 42);
+    uint32_t numInts = (CHAR_WIDTH * CHAR_HEIGHT);
     asciiLayout.Push<int>(numInts);
     uint32_t asciiBuf = Shader::CreateShaderStorageBuffer("ASCII", asciiLayout, 3);
-    int *chars = (int *) glMapNamedBuffer(asciiBuf, GL_READ_ONLY);
+    uint32_t *chars = (uint32_t *) glMapNamedBuffer(asciiBuf, GL_READ_ONLY);
+#endif
 
     Cube skyCube(Material::DEFAULT);
     skyCube.SetScale(100);
@@ -286,25 +279,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       frameBuf.Unbind();
       renderer.Clear();
 
+      glActiveTexture(GL_TEXTURE0);
+      frameBuf.BindTexture(GL_COLOR_ATTACHMENT0);
+#if ASCII == true
       // ASCII Compute Shader
       int imageSlot = 0;
       compShader->Bind();
-      glActiveTexture(GL_TEXTURE0);
-      frameBuf.BindTexture(GL_COLOR_ATTACHMENT0);
       glBindImageTexture(imageSlot, frameBuf.GetTexture(GL_COLOR_ATTACHMENT0), 0,
                          GL_FALSE, 0, GL_READ_ONLY, GL_RGBA8);
-      glDispatchCompute(Application::window->width / 8, Application::window->height / 8, 1);
+      glDispatchCompute(CHAR_WIDTH, CHAR_HEIGHT, 1);
 
       // -- TERMINAL OUTPUT --
       // make sure writing to image has finished before read
-      glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+      glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-      for (int i = 0; i < (172 * 42); i++) {
-        putc((char) chars[i], stdout);
-      }
       printf("\033[H");
+      char lastColor = 0;
+      for (int i = 0; i < (CHAR_WIDTH * CHAR_HEIGHT); i++) {
+        char color = (chars[i] & 0xff00) >> 8;
+        if (lastColor != color) {
+          printf("\033[38;5;%dm", color);
+          lastColor = color;
+        }
+        putc((char) (chars[i] & 0xff), stdout);
+      }
       fflush(stdout);
-
+//      exit(0);
+#else
       // SCREEN DRAW
       int texSlot = 0;
       screenShader->Bind();
@@ -318,10 +319,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       screenShader->SetUniform("samples", U1i, &frameBuf.samples);
       glDisable(GL_DEPTH_TEST);
       screen.Draw(*screenShader);
-
+#endif
       Renderer::EndFrame(Application::window);
     }
-
     // Cleanup
     Renderer::Cleanup(Application::window);
   }

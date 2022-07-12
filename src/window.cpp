@@ -236,6 +236,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
       break;
     case WM_CLOSE:
     case WM_DESTROY:
+      Log::logf("Closing application");
       Application::running = false;
       PostQuitMessage(0);
     default:
