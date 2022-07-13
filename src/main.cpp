@@ -35,7 +35,7 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
   m->matData.diffuseColor = glm::vec3(1.0f);
   m->matData.specColor = glm::vec3(0.0f);
   Cube *ground = new Cube(*m);
-  ground->SetPos(glm::vec3(0, -2, 0.0f))
+  ground->SetPos(glm::vec3(0, -20, 0.0f))
           ->SetScale(glm::vec3(200, 0.1, 200))
           ->SetTexScale(100.0f);
   scene.AddObject(ground);
@@ -45,14 +45,51 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
           ->SetScale(1);
   scene.AddObject(cube);
 
-  auto dirLight = new LightSource();
-  dirLight->type = LIGHT_DIR;
-  dirLight->pos = glm::vec3(-1, 1, -1);
-  dirLight->pos *= 10;
-  dirLight->dir = glm::normalize(-dirLight->pos);
-  dirLight->intensities = glm::vec3(0.12f, 0.8f, 0.3f);
-  dirLight->color = glm::vec3(1.0f, 1.3f, 1.0f);
-  scene.AddLight(dirLight);
+  auto wallMat = new Material("Wall");
+  wallMat->matData.diffuseColor = glm::vec3(color(84, 157, 235, 255));
+  wallMat->matData.specColor = glm::vec3(1.0f);
+
+  float roomSize = 7.0f;
+
+  scene.AddObject((new Cube(*wallMat))
+                          ->SetPos({roomSize, 0, 0})
+                          ->SetScale({0.1, roomSize, roomSize}));
+
+  scene.AddObject((new Cube(*wallMat))
+                          ->SetPos({-roomSize, 0, 0})
+                          ->SetScale({0.1, roomSize, roomSize}));
+
+  scene.AddObject((new Cube(*wallMat))
+                          ->SetPos({0, 0, roomSize})
+                          ->SetScale({roomSize, roomSize, 0}));
+
+  scene.AddObject((new Cube(*wallMat))
+                          ->SetPos({0, 0, -roomSize})
+                          ->SetScale({roomSize, roomSize, 0}));
+
+  scene.AddObject((new Cube(*wallMat))
+                          ->SetPos({0, roomSize, 0})
+                          ->SetScale({roomSize, 0, roomSize}));
+
+  scene.AddObject((new Cube(*wallMat))
+                          ->SetPos({0, -roomSize, 0})
+                          ->SetScale({roomSize, 0, roomSize}));
+
+  auto l = new LightSource();
+  l->type = LIGHT_POINT;
+  l->pos = glm::vec3(3, 0, 0);
+  l->dir = glm::normalize(-l->pos);
+  l->intensities = glm::vec3(0.12f, 1.0f, 0.3f);
+  l->color = glm::vec3(1.0f, 1.0f, 1.0f);
+  scene.AddLight(l);
+
+  auto *cMat = new Material("lightcube");
+  auto c = new Cube(*cMat);
+  c->SetPos(Camera::Pos())
+          ->SetScale(0.2f)
+          ->useLighting = false;
+  scene.AddObject(c);
+  lightToObj[l] = c;
 
 }
 
@@ -67,7 +104,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
     Shader::CreateShader("color");
     Shader::CreateShader("light");
-    Shader::CreateShader("shadow");
+    Shader *shadowShader = Shader::CreateShader("shadow");
     Shader *screenShader = Shader::CreateShader("screen");
     Shader *skyShader = Shader::CreateShader("skybox");
 
@@ -110,13 +147,29 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
     Application::frameBuf.push_back(new Framebuffer());
     auto &shadowMap = *Application::frameBuf[Application::frameBuf.size() - 1];
-    shadowMap.CreateTextureAttachment(GL_DEPTH_ATTACHMENT, 1024, 1024);
+//    shadowMap.CreateTextureAttachment(GL_DEPTH_ATTACHMENT, 1024, 1024);
     shadowMap.resizeToScreen = false;
+
+    int SHADOW_WIDTH = 1024;
+    int SHADOW_HEIGHT = 1024;
+
+    auto depthCubeMap = new CubeTexture(SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT);
+    depthCubeMap->Bind();
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    shadowMap.SetTextureAttachment(GL_DEPTH_ATTACHMENT, depthCubeMap);
     shadowMap.DisableColor();
+
+    float lnear = 1.0f, lfar = 25.0f;
+    float aspect = (float) SHADOW_WIDTH / (float) SHADOW_HEIGHT;
+    glm::mat4 lightProj = glm::perspective(glm::radians(90.0f), aspect, lnear, lfar);
+    shadowShader->SetUniform("u_farPlane", U1f, &lfar);
 
     bool postProcess = false;
     // --- MAIN LOOP
-    float angle = 1;
     while (true) {
       framesSinceAdd++;
       HandleWindowMessage();
@@ -125,22 +178,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         break;
       }
 
-      // SHADOW MAP
+      // ---SHADOW MAP---
       glEnable(GL_DEPTH_TEST);
       glEnable(GL_CULL_FACE);
       glCullFace(GL_FRONT);
-      glViewport(0, 0, 1024, 1024);
+      glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
       glActiveTexture(GL_TEXTURE0);
       shadowMap.Bind();
       glClear(GL_DEPTH_BUFFER_BIT);
-      float near_plane = 1.0f, far_plane = 30.0f;
-      glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-      glm::mat4 lightView = glm::lookAt(glm::vec3(scene.Lights()[0]->pos),
-                                        glm::vec3(0, 0, 0),
-                                        glm::vec3(0.0f, 1.0f, 0.0f));
-      glm::mat4 lightSpaceTransform = lightProjection * lightView;
-      Shader *shadowShader = Shader::LoadShader("shadow");
-      shadowShader->SetUniform("lightTransform", UM4f, &lightSpaceTransform);
+
+      auto light = scene.Lights()[0];
+      std::vector<glm::mat4> lightTransforms = {
+              lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(1, 0, 0), {0, -1, 0}),
+              lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(-1, 0, 0), {0, -1, 0}),
+              lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 1, 0), {0, 0, 1}),
+              lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, -1, 0), {0, 0, -1}),
+              lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, 1), {0, -1, 0}),
+              lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, -1), {0, -1, 0})
+      };
+
+      shadowShader->SetUniform("u_lightTransforms", UM4f, &lightTransforms[0], 6);
+      shadowShader->SetUniform("u_lightPos", U3f, &(light->pos.x));
 
       shadowMap.BindTexture(GL_DEPTH_ATTACHMENT, 0);
 
@@ -153,17 +211,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         object->Draw(*shadowShader);
       }
 
-      // MAIN RENDER
       // Set lightTransform in lighting shader for render
-      Shader::LoadShader("light")->SetUniform("u_lightTransform", UM4f, &lightSpaceTransform);
       int depthTexSlot = 31;
       shadowMap.BindTexture(GL_DEPTH_ATTACHMENT, depthTexSlot);
       Shader::LoadShader("light")->SetUniform("u_lightDepthMap", U1i, &depthTexSlot);
+      Shader::LoadShader("light")->SetUniform("u_lightFarPlane", U1f, &lfar);
       frameBuf.Bind();
       glViewport(0, 0, Application::window->width, Application::window->height);
       Renderer::NewFrame();
 
-      // SKYBOX
+      // ---SKYBOX---
       glDisable(GL_CULL_FACE);
       glDepthMask(GL_FALSE);
       skyShader->Bind();
@@ -179,6 +236,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       glDepthMask(GL_TRUE);
       glEnable(GL_CULL_FACE);
 
+      // ---MAIN RENDER---
 #ifdef IMGUI
       ImGui::Begin("Debug");
       ImGui::Checkbox("Postprocess", &postProcess);
@@ -247,11 +305,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         }
       }
 
-      if (angle > 360)
-        angle -= 360;
-      scene.Objects()[1]->SetRot({0, angle, 0});
-      angle += 0.75;
-
       // Add lights dynamically
       if (Input::IsPressed(VK_TAB) && framesSinceAdd >= 30) {
         framesSinceAdd = 0;
@@ -280,10 +333,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       int texSlot = 0;
       frameBuf.BindTexture(GL_COLOR_ATTACHMENT0, texSlot);
 #if ASCII == true
-      // ASCII Compute Shader
+      // ---ASCII Compute Shader---
       int imageSlot = 0;
       compShader->Bind();
-      glBindImageTexture(imageSlot, frameBuf.GetTexture(GL_COLOR_ATTACHMENT0), 0,
+      glBindImageTexture(imageSlot, frameBuf.GetTexture(GL_COLOR_ATTACHMENT0)->id, 0,
                          GL_FALSE, 0, GL_READ_ONLY, GL_RGBA8);
       glDispatchCompute(CHAR_WIDTH, CHAR_HEIGHT, 1);
 
@@ -303,7 +356,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       }
       fflush(stdout);
 #else
-      // SCREEN DRAW
+      // ---SCREEN DRAW---
       screenShader->Bind();
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

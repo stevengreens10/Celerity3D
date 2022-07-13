@@ -4,51 +4,48 @@
 
 #include <utility>
 
+const std::string extensions[] = {"vert", "geom", "frag"};
+const GLenum types[] = {GL_VERTEX_SHADER, GL_GEOMETRY_SHADER, GL_FRAGMENT_SHADER};
+
 // For vertex / frag shaders
-Shader::Shader(const std::string &vertFile, const std::string &fragFile) {
-  name = vertFile;
-  char *vertSource = readFile(vertFile);
-  char *fragSource = readFile(fragFile);
-
-  if (vertSource == nullptr || fragSource == nullptr) {
-    Log::logf("ERR: Sources are null");
-    exit(1);
-  }
-
+Shader::Shader(const std::string &baseName, bool compute) {
+  name = baseName;
   id = glCreateProgram();
-  uint32_t vertId = CompileShader(vertSource, GL_VERTEX_SHADER);
-  uint32_t fragId = CompileShader(fragSource, GL_FRAGMENT_SHADER);
-  glAttachShader(id, vertId);
-  glAttachShader(id, fragId);
+  uint32_t idsToDelete[3] = {0, 0, 0};
+  if (!compute) {
+    for (int i = 0; i < 3; i++) {
+
+      char *source = readFile(baseName + "." + extensions[i]);
+
+      if (!source) {
+        continue;
+      }
+
+      uint32_t shaderId = CompileShader(source, types[i]);
+      glAttachShader(id, shaderId);
+      idsToDelete[i] = shaderId;
+      free(source);
+    }
+  } else {
+    char *source = readFile(baseName + ".comp");
+
+    if (!source) {
+      Log::logf("ERR: Sources are null");
+      exit(1);
+    }
+
+    uint32_t shaderId = CompileShader(source, GL_COMPUTE_SHADER);
+    glAttachShader(id, shaderId);
+    idsToDelete[0] = shaderId;
+    free(source);
+  }
   glLinkProgram(id);
   glValidateProgram(id);
-
-  // Delete intermediates
-  glDeleteShader(vertId);
-  glDeleteShader(fragId);
-  free(vertSource);
-  free(fragSource);
-}
-
-// For compute shaders
-Shader::Shader(const std::string &compFile) {
-  name = compFile;
-  char *compSource = readFile(compFile);
-
-  if (compSource == nullptr) {
-    Log::logf("ERR: Sources are null");
-    exit(1);
+  for (unsigned int i: idsToDelete) {
+    // Delete intermediates
+    if (i)
+      glDeleteShader(i);
   }
-
-  id = glCreateProgram();
-  uint32_t compId = CompileShader(compSource, GL_COMPUTE_SHADER);
-  glAttachShader(id, compId);
-  glLinkProgram(id);
-  glValidateProgram(id);
-
-  // Delete intermediate
-  glDeleteShader(compId);
-  free(compSource);
 }
 
 Shader::~Shader() {
@@ -77,13 +74,13 @@ Shader *Shader::LoadShader(const std::string &name) {
 }
 
 Shader *Shader::CreateShader(const string &name) {
-  auto s = new Shader(SHADER_PATH + name + ".vert", SHADER_PATH + name + ".frag");
+  auto s = new Shader(SHADER_PATH + name);
   shaders[name] = s;
   return s;
 }
 
 Shader *Shader::CreateComputeShader(const string &name) {
-  auto s = new Shader(SHADER_PATH + name + ".comp");
+  auto s = new Shader(SHADER_PATH + name, true);
   shaders[name] = s;
   return s;
 }
@@ -171,36 +168,36 @@ void Shader::SetShaderStorageBuffer(const string &name, char *data, uint32_t buf
   SetBuffer(GL_SHADER_STORAGE_BUFFER, name, data, bufSize);
 }
 
-void Shader::SetUniform(const std::string &uniName, UniformType type, void *data) {
+void Shader::SetUniform(const std::string &uniName, UniformType type, void *data, int count /* = 1 */) {
   Bind();
   int location = GetUniformLocation(uniName);
   switch (type) {
     case U1f: {
-      glUniform1fv(location, 1, (float *) data);
+      glUniform1fv(location, count, (float *) data);
       break;
     }
     case U2f: {
-      glUniform2fv(location, 1, (float *) data);
+      glUniform2fv(location, count, (float *) data);
       break;
     }
     case U3f: {
-      glUniform3fv(location, 1, (float *) data);
+      glUniform3fv(location, count, (float *) data);
       break;
     }
     case U4f: {
-      glUniform4fv(location, 1, (float *) data);
+      glUniform4fv(location, count, (float *) data);
       break;
     }
     case U1i: {
-      glUniform1iv(location, 1, (int *) data);
+      glUniform1iv(location, count, (int *) data);
     }
     case U4i: {
-      glUniform1iv(location, 1, (int *) data);
+      glUniform1iv(location, count, (int *) data);
       break;
     }
     case UM4f: {
       auto *mat = (glm::mat4 *) data;
-      glUniformMatrix4fv(location, 1, TRANSPOSE, glm::value_ptr(*mat));
+      glUniformMatrix4fv(location, count, TRANSPOSE, glm::value_ptr(*mat));
       break;
     }
     default:

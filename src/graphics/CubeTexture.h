@@ -3,16 +3,16 @@
 
 #include <string>
 #include <vector>
+#include "Texture.h"
+#include "../log.h"
 
 using std::string, std::vector;
 
-class CubeTexture {
-private:
-    CubeTexture();
-
+class CubeTexture : public Texture {
 public:
-    unsigned int id = -1;
+    CubeTexture(int width, int height);
 
+    CubeTexture(int width, int height, GLenum internalFmt, GLenum fmt, GLenum type);
 
     ~CubeTexture();
 
@@ -22,11 +22,14 @@ public:
      */
     static CubeTexture *Load(const string &basePath, const vector<string> &names);
 
-    static CubeTexture *Create(int width, int height);
+    void SetPixels(unsigned char *pixels) const override {
+      Log::logf("ERROR: SetPixels not implemented for CubeTexture");
+    };
 
-    void Bind(unsigned int slot = 0) const;
+    void Resize(int w, int h) override {
+      Log::logf("ERROR: Resize not implemented for CubeTexture");
+    };
 
-    static void Unbind();
 };
 
 

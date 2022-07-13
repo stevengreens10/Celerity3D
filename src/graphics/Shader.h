@@ -58,13 +58,11 @@ public:
 
     static void SetShaderStorageBuffer(const string &name, char *data, uint32_t bufSize);
 
-    void SetUniform(const string &uniName, UniformType type, void *data);
+    void SetUniform(const string &uniName, UniformType type, void *data, int count = 1);
 
 
 private:
-    Shader(const std::string &vertFile, const std::string &fragFile);
-
-    Shader(const std::string &compFile);
+    explicit Shader(const std::string &baseName, bool compute = false);
 
     static unsigned int CompileShader(char *source, GLenum type);
 

@@ -43,8 +43,8 @@ in vec3 v_pos;
 in vec2 v_textureUV;
 in vec3 v_normal;
 
-in vec4 v_posLightSpace;
-uniform sampler2D u_lightDepthMap;
+uniform samplerCube u_lightDepthMap;
+uniform float u_lightFarPlane;
 
 float map(float value, float min1, float max1, float min2, float max2) {
     return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
@@ -56,18 +56,20 @@ vec3 mapVec(vec3 value, float min1, float max1, float min2, float max2) {
                 map(value.z, min1, max1, min2, max2));
 }
 
-float shadowMultiplier(vec3 normal, vec3 lightDir) {
-    // Perspective divide (does nothing with ortho perspective)
-    vec3 projCoords = v_posLightSpace.xyz / v_posLightSpace.w;
-    // Map coords from [-1, 1] to [0, 1]
-    projCoords = mapVec(projCoords, -1, 1, 0, 1);
-    float closestDepth = texture(u_lightDepthMap, projCoords.xy).r;
-    float fragDepth = projCoords.z;
-    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+float shadowMultiplier(vec3 normal, LightSource light) {
+    vec3 fragPosToLight = v_pos - light.pos;
+    float closestDepth = texture(u_lightDepthMap, fragPosToLight).r;
+    // [0,1] -> [0, farPlane] (closest distance in world space from the light)
+    closestDepth *= u_lightFarPlane;
 
-    if(projCoords.z > 1.0) {
-        return 1.0f;
-    }
+    // Distance from frag to light
+    float fragDepth = length(fragPosToLight);
+//    float bias = max(0.05 * (1.0 - dot(normal, light.dir)), 0.005);
+    float bias = 0.05;
+
+//    if(projCoords.z > 1.0) {
+//        return 1.0f;
+//    }
 
     if(fragDepth - bias > closestDepth) {
         // In shadow, return 0
@@ -88,9 +90,12 @@ vec3 calculatePointLight(LightSource light, vec3 normal, vec3 ambientColor, vec3
     float specAngle = max(dot(halfDir, normal), 0);
     vec3 specular = pow(specAngle, shininess) * light.color * light.intensities[2];
 
+    float shadow = shadowMultiplier(normal, light);
+
     vec3 shading =  (ambient*diffuseColor) +
-    (diffuse*diffuseColor) +
-    (specular*specColor);
+    shadow * ((diffuse*diffuseColor) +
+    (specular*specColor));
+
 
     float distance = pow(pow(v_pos.x - light.pos.x, 2) + pow(v_pos.y - light.pos.y, 2) + pow(v_pos.z - light.pos.z, 2), 0.5f);
     // Prevent div/0
@@ -112,7 +117,7 @@ vec3 calculateDirectionalLight(LightSource light, vec3 normal, vec3 ambientColor
     float specAngle = max(dot(halfDir, normal), 0);
     vec3 specular = pow(specAngle, shininess) * light.color * light.intensities[2];
 
-    float shadow = shadowMultiplier(normal, lightDir);
+    float shadow = shadowMultiplier(normal, light);
 
     vec3 shading =  (ambient*diffuseColor) +
     shadow * ((diffuse*diffuseColor) +
@@ -162,5 +167,6 @@ void main() {
         result += calculateLight(lights[i], normal, ambientColor, diffuseColor, specColor, shininess);
     }
 
-    color = vec4(result, u_alpha);
+    color = vec4(vec3(texture(u_lightDepthMap, v_pos - lights[0].pos).r), 1);
+//    color = vec4(result, u_alpha);
 }

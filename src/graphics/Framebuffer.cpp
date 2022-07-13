@@ -65,7 +65,10 @@ void Framebuffer::CreateTextureAttachment(GLenum type, int width, int height) {
 void Framebuffer::SetTextureAttachment(GLenum type, Texture *tex) {
   Bind();
   textureIDs[type] = {false, tex};
-  glFramebufferTexture2D(GL_FRAMEBUFFER, type, tex->texType, tex->id, 0);
+  if (tex->texType == GL_TEXTURE_CUBE_MAP)
+    glFramebufferTexture(GL_FRAMEBUFFER, type, tex->id, 0);
+  else
+    glFramebufferTexture2D(GL_FRAMEBUFFER, type, tex->texType, tex->id, 0);
 }
 
 void Framebuffer::DisableColor() const {
