@@ -30,15 +30,15 @@
 glm::vec4 color(int i, int i1, int i2);
 
 void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &lightToObj) {
-  auto m = new Material("Ground");
-  m->diffuseTex = Texture::Load("assets/images/ground.jpg", true);
-  m->matData.diffuseColor = glm::vec3(1.0f);
-  m->matData.specColor = glm::vec3(0.0f);
-  Cube *ground = new Cube(*m);
-  ground->SetPos(glm::vec3(0, -20, 0.0f))
-          ->SetScale(glm::vec3(200, 0.1, 200))
-          ->SetTexScale(100.0f);
-  scene.AddObject(ground);
+//  auto m = new Material("Ground");
+//  m->diffuseTex = Texture::Load("assets/images/ground.jpg", true);
+//  m->matData.diffuseColor = glm::vec3(1.0f);
+//  m->matData.specColor = glm::vec3(0.0f);
+//  Cube *ground = new Cube(*m);
+//  ground->SetPos(glm::vec3(0, -20, 0.0f))
+//          ->SetScale(glm::vec3(200, 0.1, 200))
+//          ->SetTexScale(100.0f);
+//  scene.AddObject(ground);
 
   Mesh *cube = new Mesh("assets/mesh/cube.obj");
   cube->SetPos(glm::vec3(0, -0.5, 0))
@@ -49,7 +49,7 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
   wallMat->matData.diffuseColor = glm::vec3(color(84, 157, 235, 255));
   wallMat->matData.specColor = glm::vec3(1.0f);
 
-  float roomSize = 7.0f;
+  float roomSize = 10.0f;
 
   scene.AddObject((new Cube(*wallMat))
                           ->SetPos({roomSize, 0, 0})
@@ -61,35 +61,35 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
 
   scene.AddObject((new Cube(*wallMat))
                           ->SetPos({0, 0, roomSize})
-                          ->SetScale({roomSize, roomSize, 0}));
+                          ->SetScale({roomSize, roomSize, 0.1}));
 
   scene.AddObject((new Cube(*wallMat))
                           ->SetPos({0, 0, -roomSize})
-                          ->SetScale({roomSize, roomSize, 0}));
+                          ->SetScale({roomSize, roomSize, 0.1}));
 
   scene.AddObject((new Cube(*wallMat))
                           ->SetPos({0, roomSize, 0})
-                          ->SetScale({roomSize, 0, roomSize}));
+                          ->SetScale({roomSize, 0.1, roomSize}));
 
   scene.AddObject((new Cube(*wallMat))
                           ->SetPos({0, -roomSize, 0})
-                          ->SetScale({roomSize, 0, roomSize}));
+                          ->SetScale({roomSize, 0.1, roomSize}));
 
-  auto l = new LightSource();
-  l->type = LIGHT_POINT;
-  l->pos = glm::vec3(3, 0, 0);
-  l->dir = glm::normalize(-l->pos);
-  l->intensities = glm::vec3(0.12f, 1.0f, 0.3f);
-  l->color = glm::vec3(1.0f, 1.0f, 1.0f);
-  scene.AddLight(l);
-
-  auto *cMat = new Material("lightcube");
-  auto c = new Cube(*cMat);
-  c->SetPos(Camera::Pos())
-          ->SetScale(0.2f)
-          ->useLighting = false;
-  scene.AddObject(c);
-  lightToObj[l] = c;
+//  auto l = new LightSource();
+//  l->type = LIGHT_POINT;
+//  l->pos = glm::vec3(3, 0, 0);
+//  l->dir = glm::normalize(-l->pos);
+//  l->intensities = glm::vec3(0.12f, 1.0f, 0.3f);
+//  l->color = glm::vec3(1.0f, 1.0f, 1.0f);
+//  scene.AddLight(l);
+//
+//  auto *cMat = new Material("lightcube");
+//  auto c = new Cube(*cMat);
+//  c->SetPos(Camera::Pos())
+//          ->SetScale(0.2f)
+//          ->useLighting = false;
+//  scene.AddObject(c);
+//  lightToObj[l] = c;
 
 }
 
@@ -147,21 +147,29 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
     Application::frameBuf.push_back(new Framebuffer());
     auto &shadowMap = *Application::frameBuf[Application::frameBuf.size() - 1];
-//    shadowMap.CreateTextureAttachment(GL_DEPTH_ATTACHMENT, 1024, 1024);
+//    shadowMap.CreateTextureAttachment(GL_COLOR_ATTACHMENT0, 1024, 1024);
+    shadowMap.CreateTextureAttachment(GL_DEPTH_ATTACHMENT, 1024, 1024);
     shadowMap.resizeToScreen = false;
 
     int SHADOW_WIDTH = 1024;
     int SHADOW_HEIGHT = 1024;
 
-    auto depthCubeMap = new CubeTexture(SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT);
-    depthCubeMap->Bind();
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    shadowMap.SetTextureAttachment(GL_DEPTH_ATTACHMENT, depthCubeMap);
-    shadowMap.DisableColor();
+    std::unordered_map<LightSource *, CubeTexture *> depthTextures;
+
+//    auto depthCubeMap1 = new CubeTexture(SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT);
+//    depthCubeMap1->Bind();
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+//    depthTextures[scene.Lights()[0]] = depthCubeMap1;
+//
+//    scene.Lights()[0]->depthMap = glGetTextureHandleARB(depthCubeMap1->id);
+//    glMakeTextureHandleResidentARB(scene.Lights()[0]->depthMap);
+
+//    shadowMap.CreateTextureAttachment(GL_COLOR_ATTACHMENT1, 1, 1);
+//    shadowMap.DisableColor();
 
     float lnear = 1.0f, lfar = 25.0f;
     float aspect = (float) SHADOW_WIDTH / (float) SHADOW_HEIGHT;
@@ -184,38 +192,36 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       glCullFace(GL_FRONT);
       glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
       glActiveTexture(GL_TEXTURE0);
-      shadowMap.Bind();
-      glClear(GL_DEPTH_BUFFER_BIT);
 
-      auto light = scene.Lights()[0];
-      std::vector<glm::mat4> lightTransforms = {
-              lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(1, 0, 0), {0, -1, 0}),
-              lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(-1, 0, 0), {0, -1, 0}),
-              lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 1, 0), {0, 0, 1}),
-              lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, -1, 0), {0, 0, -1}),
-              lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, 1), {0, -1, 0}),
-              lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, -1), {0, -1, 0})
-      };
+      for (auto light: scene.Lights()) {
+        std::vector<glm::mat4> lightTransforms = {
+                lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(1, 0, 0), {0, -1, 0}),
+                lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(-1, 0, 0), {0, -1, 0}),
+                lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 1, 0), {0, 0, 1}),
+                lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, -1, 0), {0, 0, -1}),
+                lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, 1), {0, -1, 0}),
+                lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, -1), {0, -1, 0})
+        };
 
-      shadowShader->SetUniform("u_lightTransforms", UM4f, &lightTransforms[0], 6);
-      shadowShader->SetUniform("u_lightPos", U3f, &(light->pos.x));
+        shadowShader->SetUniform("u_lightTransforms", UM4f, &lightTransforms[0], 6);
+        shadowShader->SetUniform("u_lightPos", U3f, &(light->pos.x));
 
-      shadowMap.BindTexture(GL_DEPTH_ATTACHMENT, 0);
+        auto depthCubeMap = depthTextures[light];
+        shadowMap.SetTextureAttachment(GL_DEPTH_ATTACHMENT, depthCubeMap);
+        shadowMap.BindTexture(GL_DEPTH_ATTACHMENT, 0);
 
-      TransformationData t{};
-      t.vp = glm::mat4(1.0f);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        TransformationData t{};
+        t.vp = glm::mat4(1.0f);
 
-      for (auto object: scene.Objects()) {
-        t.model = object->Model();
-        Shader::SetGlobalUniform("Transformations", (char *) &t, sizeof(TransformationData));
-        object->Draw(*shadowShader);
+        for (auto object: scene.Objects()) {
+          t.model = object->Model();
+          Shader::SetGlobalUniform("Transformations", (char *) &t, sizeof(TransformationData));
+          object->Draw(*shadowShader);
+        }
       }
 
       // Set lightTransform in lighting shader for render
-      int depthTexSlot = 31;
-      shadowMap.BindTexture(GL_DEPTH_ATTACHMENT, depthTexSlot);
-      Shader::LoadShader("light")->SetUniform("u_lightDepthMap", U1i, &depthTexSlot);
-      Shader::LoadShader("light")->SetUniform("u_lightFarPlane", U1f, &lfar);
       frameBuf.Bind();
       glViewport(0, 0, Application::window->width, Application::window->height);
       Renderer::NewFrame();
@@ -306,7 +312,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       }
 
       // Add lights dynamically
-      if (Input::IsPressed(VK_TAB) && framesSinceAdd >= 30) {
+      if (scene.Lights().empty() || (Input::IsPressed(VK_TAB) && framesSinceAdd >= 30)) {
         framesSinceAdd = 0;
         auto l = new LightSource();
         l->type = LIGHT_POINT;
@@ -314,15 +320,36 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         l->color = color(rand() % 255, rand() % 255, rand() % 255, 255);
         l->intensities = {0.01, 1.0, 1.0};
         scene.AddLight(l);
+
+        auto depthTex = new CubeTexture(SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT);
+        depthTex->Bind();
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        depthTextures[l] = depthTex;
+
+        l->depthMap = glGetTextureHandleARB(depthTex->id);
+        glMakeTextureHandleResidentARB(l->depthMap);
+
         Log::logf("Adding light. Now there are %d!", scene.Lights().size());
         auto *cMat = new Material("lightcube");
         auto c = new Cube(*cMat);
         c->SetPos(Camera::Pos())
                 ->SetScale(0.3f)
                 ->useLighting = false;
+
         scene.AddObject(c);
         lightToObj[l] = c;
         Log::logf("Adding object. Now there are %d!", scene.Objects().size());
+      } else if (Input::IsPressed(VK_BACK) && framesSinceAdd >= 30) {
+        auto *cMat = new Material("cubemat");
+        cMat->matData.diffuseColor = color(rand() % 255, rand() % 255, rand() % 255, 255);
+        auto c = new Cube(*cMat);
+        c->SetPos(Camera::Pos() - glm::vec3(0, 0.5, 0))
+                ->SetScale(1.0f);
+        scene.AddObject(c);
       }
 
       renderer.Draw(scene);

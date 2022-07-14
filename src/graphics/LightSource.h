@@ -11,6 +11,8 @@ const LightType LIGHT_SPOT = 2;
 #pragma pack(push, 1)
 struct LightSource {
     LightType type;
+    float farPlane = 25.0f;
+    int64_t depthMap;
     glm::vec3 pos;
     glm::vec3 dir;
     glm::vec3 color;

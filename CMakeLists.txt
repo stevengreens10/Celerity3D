@@ -14,7 +14,7 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 add_subdirectory(vendor/glm)
 
 add_definitions(-DGLEW_STATIC)
-add_definitions(-DDEBUG -DIMGUI)
+add_definitions(-DDEBUG)
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC ./vendor/glew/include

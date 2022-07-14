@@ -19,7 +19,7 @@ struct GlobalUniformData {
 enum UniformType {
     U1f, U2f, U3f, U4f,
     U1i, U2i, U3i, U4i,
-    UM3f, UM4f
+    UM3f, UM4f, UHandle
 };
 
 struct UniformMapping {

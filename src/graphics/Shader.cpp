@@ -190,14 +190,19 @@ void Shader::SetUniform(const std::string &uniName, UniformType type, void *data
     }
     case U1i: {
       glUniform1iv(location, count, (int *) data);
+      break;
     }
     case U4i: {
-      glUniform1iv(location, count, (int *) data);
+      glUniform4iv(location, count, (int *) data);
       break;
     }
     case UM4f: {
       auto *mat = (glm::mat4 *) data;
       glUniformMatrix4fv(location, count, TRANSPOSE, glm::value_ptr(*mat));
+      break;
+    }
+    case UHandle: {
+      glUniformHandleui64vARB(location, count, (GLuint64 *) data);
       break;
     }
     default:

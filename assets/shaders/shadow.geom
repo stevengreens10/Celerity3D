@@ -17,5 +17,6 @@ void main() {
             gl_Position = u_lightTransforms[face] * FragPos;
             EmitVertex();
         }
+        EndPrimitive();
     }
 }

@@ -1,4 +1,5 @@
 #version 450 core
+#extension GL_ARB_bindless_texture : require
 
 layout(location = 0) out vec4 color;
 
@@ -24,6 +25,8 @@ uniform float u_alpha;
 
 struct LightSource {
     int type;
+    float farPlane;
+    uvec2 depthMap;
     vec3 pos;
     vec3 dir;
     vec3 color;
@@ -52,26 +55,26 @@ float map(float value, float min1, float max1, float min2, float max2) {
 
 vec3 mapVec(vec3 value, float min1, float max1, float min2, float max2) {
     return vec3(map(value.x, min1, max1, min2, max2),
-                map(value.y, min1, max1, min2, max2),
-                map(value.z, min1, max1, min2, max2));
+    map(value.y, min1, max1, min2, max2),
+    map(value.z, min1, max1, min2, max2));
 }
 
 float shadowMultiplier(vec3 normal, LightSource light) {
     vec3 fragPosToLight = v_pos - light.pos;
-    float closestDepth = texture(u_lightDepthMap, fragPosToLight).r;
+    float closestDepth = texture(samplerCube(light.depthMap), fragPosToLight).r;
     // [0,1] -> [0, farPlane] (closest distance in world space from the light)
-    closestDepth *= u_lightFarPlane;
+    closestDepth *= light.farPlane;
 
     // Distance from frag to light
     float fragDepth = length(fragPosToLight);
-//    float bias = max(0.05 * (1.0 - dot(normal, light.dir)), 0.005);
+    //    float bias = max(0.05 * (1.0 - dot(normal, light.dir)), 0.005);
     float bias = 0.05;
 
-//    if(projCoords.z > 1.0) {
-//        return 1.0f;
-//    }
+    //    if(projCoords.z > 1.0) {
+    //        return 1.0f;
+    //    }
 
-    if(fragDepth - bias > closestDepth) {
+    if (fragDepth - bias > closestDepth) {
         // In shadow, return 0
         return 0;
     }
@@ -127,9 +130,9 @@ vec3 calculateDirectionalLight(LightSource light, vec3 normal, vec3 ambientColor
 }
 
 vec3 calculateLight(LightSource light, vec3 normal, vec3 ambientColor, vec3 diffuseColor, vec3 specColor, float shininess) {
-    if(light.type == 0) {
+    if (light.type == 0) {
         return calculatePointLight(light, normal, ambientColor, diffuseColor, specColor, shininess);
-    } else if(light.type == 1) {
+    } else if (light.type == 1) {
         return calculateDirectionalLight(light, normal, ambientColor, diffuseColor, specColor, shininess);
     }
     return vec3(0.0f);
@@ -145,15 +148,15 @@ void main() {
     float shinyTex = 1.0f;
     vec3 bumpTex = vec3(1.0f);
     if ((u_texturesPresent & 1) >= 1)
-        ambientTex = vec3(texture(u_ambientTex, scaledUV));
+    ambientTex = vec3(texture(u_ambientTex, scaledUV));
     if ((u_texturesPresent & 2) >= 1)
-        diffuseTex = vec3(texture(u_diffuseTex, scaledUV));
+    diffuseTex = vec3(texture(u_diffuseTex, scaledUV));
     if ((u_texturesPresent & 4) >= 1)
-        specTex    = vec3(texture(u_specTex, scaledUV));
+    specTex    = vec3(texture(u_specTex, scaledUV));
     if ((u_texturesPresent & 8) >= 1)
-        shinyTex   = float(texture(u_shinyTex, scaledUV));
+    shinyTex   = float(texture(u_shinyTex, scaledUV));
     if ((u_texturesPresent & 16) >= 1)
-        bumpTex    = vec3(texture(u_bumpTex, scaledUV));
+    bumpTex    = vec3(texture(u_bumpTex, scaledUV));
 
     vec3 ambientColor = u_ambientColor * ambientTex;
     vec3 diffuseColor = u_diffuseColor * diffuseTex;
@@ -163,10 +166,10 @@ void main() {
     vec3 normal = normalize(v_normal);
 
     vec3 result = vec3(0.0f);
-    for(int i = 0; i < numLights; i++) {
+    for (int i = 0; i < numLights; i++) {
         result += calculateLight(lights[i], normal, ambientColor, diffuseColor, specColor, shininess);
     }
 
-    color = vec4(vec3(texture(u_lightDepthMap, v_pos - lights[0].pos).r), 1);
-//    color = vec4(result, u_alpha);
+    //    color = vec4(vec3(texture(u_lightDepthMap, v_pos - lights[0].pos).r), 1);
+    color = vec4(result, u_alpha);
 }
