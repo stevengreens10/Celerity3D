@@ -171,16 +171,9 @@ void APIENTRY Log::GLDebugMessageCallback(GLenum
       break;
 
     case GL_DEBUG_SEVERITY_MEDIUM:
-      _severity = "MEDIUM";
-      break;
-
     case GL_DEBUG_SEVERITY_LOW:
-      _severity = "LOW";
-      break;
-
     case GL_DEBUG_SEVERITY_NOTIFICATION:
-      _severity = "NOTIFICATION";
-      break;
+      return;
 
     default:
       _severity = "UNKNOWN";

@@ -2,8 +2,6 @@
 
 in vec4 FragPos;
 
-layout(location = 0) vec4 color;
-
 uniform vec3 u_lightPos;
 uniform float u_farPlane;
 
@@ -14,5 +12,4 @@ void main() {
     lightDistance /= u_farPlane;
 
     gl_FragDepth = lightDistance;
-    color = vec4(1.0, 0, 0, 1);
 }

@@ -344,6 +344,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         lightToObj[l] = c;
         Log::logf("Adding object. Now there are %d!", scene.Objects().size());
       } else if (Input::IsPressed(VK_BACK) && framesSinceAdd >= 30) {
+        framesSinceAdd = 0;
         auto *cMat = new Material("cubemat");
         cMat->matData.diffuseColor = color(rand() % 255, rand() % 255, rand() % 255, 255);
         auto c = new Cube(*cMat);
