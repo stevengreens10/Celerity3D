@@ -11,6 +11,7 @@ const LightType LIGHT_SPOT = 2;
 #pragma pack(push, 1)
 struct LightSource {
     LightType type;
+    uint64_t shadow;
     glm::vec3 pos;
     glm::vec3 dir;
     glm::vec3 color;

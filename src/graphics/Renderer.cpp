@@ -41,6 +41,7 @@ void Renderer::Init(Window *win) {
   // LightSource struct
   BufferLayout lightLayout;
   lightLayout.Push<int>(1);
+  lightLayout.Push<uint64_t>(1);
   lightLayout.Push<glm::vec3>(5);
   sceneLayout.PushStruct(lightLayout, MAX_LIGHTS);
 

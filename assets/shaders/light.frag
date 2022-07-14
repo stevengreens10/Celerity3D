@@ -1,4 +1,5 @@
 #version 450 core
+#extension GL_ARB_bindless_texture : require
 
 layout(location = 0) out vec4 color;
 
@@ -24,6 +25,7 @@ uniform float u_alpha;
 
 struct LightSource {
     int type;
+    uvec2 tex;
     vec3 pos;
     vec3 dir;
     vec3 color;
@@ -58,7 +60,7 @@ vec3 mapVec(vec3 value, float min1, float max1, float min2, float max2) {
 
 float shadowMultiplier(vec3 normal, LightSource light) {
     vec3 fragPosToLight = v_pos - light.pos;
-    float closestDepth = texture(u_lightDepthMap, fragPosToLight).r;
+    float closestDepth = texture(samplerCube(light.tex), fragPosToLight).r;
     // [0,1] -> [0, farPlane] (closest distance in world space from the light)
     closestDepth *= u_lightFarPlane;
 
@@ -167,6 +169,6 @@ void main() {
         result += calculateLight(lights[i], normal, ambientColor, diffuseColor, specColor, shininess);
     }
 
-    color = vec4(vec3(texture(u_lightDepthMap, v_pos - lights[0].pos).r), 1);
-//    color = vec4(result, u_alpha);
+    //color = vec4(vec3(texture(u_lightDepthMap, v_pos - lights[0].pos).r), 1);
+    color = vec4(result, u_alpha);
 }

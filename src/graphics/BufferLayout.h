@@ -80,6 +80,7 @@ public:
         case GL_UNSIGNED_BYTE:
           return 4;
         case GL_FLOAT_VEC2:
+        case GL_INT_VEC2:
           return 8;
         case GL_FLOAT_VEC3:
         case GL_FLOAT_VEC4:
@@ -100,6 +101,7 @@ private:
       m[typeid(glm::mat4)] = GL_FLOAT_MAT4;
       m[typeid(unsigned int)] = GL_UNSIGNED_INT;
       m[typeid(int)] = GL_INT;
+      m[typeid(uint64_t)] = GL_INT_VEC2;
       m[typeid(unsigned char)] = GL_UNSIGNED_BYTE;
       return m;
     }
