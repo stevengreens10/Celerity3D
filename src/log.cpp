@@ -193,7 +193,9 @@ void APIENTRY Log::GLDebugMessageCallback(GLenum
 
   string trace = stack_trace();
   logf("TRACE: %s", trace.c_str());
+#ifdef DEBUG
   __debugbreak();
+#endif
 }
 
 void Log::file(const string &filename) {

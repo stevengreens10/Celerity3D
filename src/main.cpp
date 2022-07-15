@@ -30,15 +30,15 @@
 glm::vec4 color(int i, int i1, int i2);
 
 void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &lightToObj) {
-//  auto m = new Material("Ground");
-//  m->diffuseTex = Texture::Load("assets/images/ground.jpg", true);
-//  m->matData.diffuseColor = glm::vec3(1.0f);
-//  m->matData.specColor = glm::vec3(0.0f);
-//  Cube *ground = new Cube(*m);
-//  ground->SetPos(glm::vec3(0, -20, 0.0f))
-//          ->SetScale(glm::vec3(200, 0.1, 200))
-//          ->SetTexScale(100.0f);
-//  scene.AddObject(ground);
+  auto m = new Material("Ground");
+  m->diffuseTex = Texture::Load("assets/images/ground.jpg", true);
+  m->matData.diffuseColor = glm::vec3(1.0f);
+  m->matData.specColor = glm::vec3(0.0f);
+  Cube *ground = new Cube(*m);
+  ground->SetPos(glm::vec3(0, -2, 0.0f))
+          ->SetScale(glm::vec3(200, 0.1, 200))
+          ->SetTexScale(100.0f);
+  scene.AddObject(ground);
 
   Mesh *cube = new Mesh("assets/mesh/cube.obj");
   cube->SetPos(glm::vec3(0, -0.5, 0))
@@ -49,7 +49,7 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
   wallMat->matData.diffuseColor = glm::vec3(color(84, 157, 235, 255));
   wallMat->matData.specColor = glm::vec3(1.0f);
 
-  float roomSize = 10.0f;
+  /*float roomSize = 25.0f;
 
   scene.AddObject((new Cube(*wallMat))
                           ->SetPos({roomSize, 0, 0})
@@ -73,23 +73,25 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
 
   scene.AddObject((new Cube(*wallMat))
                           ->SetPos({0, -roomSize, 0})
-                          ->SetScale({roomSize, 0.1, roomSize}));
+                          ->SetScale({roomSize, 0.1, roomSize}));*/
 
-//  auto l = new LightSource();
-//  l->type = LIGHT_POINT;
-//  l->pos = glm::vec3(3, 0, 0);
-//  l->dir = glm::normalize(-l->pos);
-//  l->intensities = glm::vec3(0.12f, 1.0f, 0.3f);
-//  l->color = glm::vec3(1.0f, 1.0f, 1.0f);
-//  scene.AddLight(l);
-//
-//  auto *cMat = new Material("lightcube");
-//  auto c = new Cube(*cMat);
-//  c->SetPos(Camera::Pos())
-//          ->SetScale(0.2f)
-//          ->useLighting = false;
-//  scene.AddObject(c);
-//  lightToObj[l] = c;
+  auto l = new LightSource();
+  l->type = LIGHT_DIR;
+  l->idx = 0;
+  l->pos = glm::vec3(1, 1, 1);
+  l->pos *= 5;
+  l->dir = glm::normalize(-l->pos);
+  l->intensities = glm::vec3(0.12f, 1.0f, 0.3f);
+  l->color = glm::vec3(1.0f, 1.0f, 1.0f);
+  scene.AddLight(l);
+
+  auto *cMat = new Material("lightcube");
+  auto c = new Cube(*cMat);
+  c->SetPos(Camera::Pos())
+          ->SetScale(0.2f)
+          ->useLighting = false;
+  scene.AddObject(c);
+  lightToObj[l] = c;
 
 }
 
@@ -165,8 +167,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
 
     glTexSubImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, 0, 0, 0, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
                     nullptr);
@@ -179,9 +181,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       Log::logf("ERROR: Unable to set up shadow framebuffer");
     }
 
-    float lnear = 1.0f, lfar = 25.0f;
+    float lnear = 1.0f, lfar = 50.0f;
     float aspect = (float) SHADOW_WIDTH / (float) SHADOW_HEIGHT;
     glm::mat4 lightProj = glm::perspective(glm::radians(90.0f), aspect, lnear, lfar);
+    glm::mat4 lightOrtho = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, lnear, 7.5f);
     shadowShader->SetUniform("u_farPlane", U1f, &lfar);
 
     bool postProcess = false;
@@ -205,17 +208,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       glClear(GL_DEPTH_BUFFER_BIT);
 
       for (auto light: scene.Lights()) {
-        std::vector<glm::mat4> lightTransforms = {
-                lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(1, 0, 0), {0, -1, 0}),
-                lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(-1, 0, 0), {0, -1, 0}),
-                lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 1, 0), {0, 0, 1}),
-                lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, -1, 0), {0, 0, -1}),
-                lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, 1), {0, -1, 0}),
-                lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, -1), {0, -1, 0})
-        };
+
+        std::vector<glm::mat4> lightTransforms;
+        lightTransforms.reserve(6);
+        if (light->type == LIGHT_POINT) {
+          lightTransforms = {
+                  lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(1, 0, 0), {0, -1, 0}),
+                  lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(-1, 0, 0), {0, -1, 0}),
+                  lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 1, 0), {0, 0, 1}),
+                  lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, -1, 0), {0, 0, -1}),
+                  lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, 1), {0, -1, 0}),
+                  lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, -1), {0, -1, 0})
+          };
+        } else if (light->type == LIGHT_DIR) {
+          light->spaceTransform = lightOrtho * glm::lookAt(light->pos, light->pos + light->dir, {0, 1, 0});
+          lightTransforms = {light->spaceTransform};
+        }
 
         shadowShader->SetUniform("u_lightTransforms", UM4f, &lightTransforms[0], 6);
         shadowShader->SetUniform("u_lightPos", U3f, &(light->pos.x));
+        shadowShader->SetUniform("u_lightType", U1i, &(light->pos.x));
         shadowShader->SetUniform("u_lightIdx", U1i, &(light->idx));
 
         TransformationData t{};
@@ -317,7 +329,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       // Map cube pos and color to light source
       for (auto l: scene.Lights()) {
         auto o = (Primitive *) lightToObj[l];
-        if (o && l->type == LIGHT_POINT) {
+        if (o) {
           o->SetPos(l->pos);
           o->material.get().matData.diffuseColor = l->color;
         }
@@ -345,6 +357,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         lightToObj[l] = c;
         Log::logf("Adding object. Now there are %d!", scene.Objects().size());
       } else if (Input::IsPressed(VK_BACK) && framesSinceAdd >= 30) {
+        framesSinceAdd = 0;
         auto *cMat = new Material("cubemat");
         cMat->matData.diffuseColor = color(rand() % 255, rand() % 255, rand() % 255, 255);
         auto c = new Cube(*cMat);

@@ -2,6 +2,7 @@
 #define GUI_LIGHTSOURCE_H
 
 #include "glm/vec3.hpp"
+#include "glm/mat4x4.hpp"
 
 typedef int LightType;
 const LightType LIGHT_POINT = 0;
@@ -12,6 +13,7 @@ const LightType LIGHT_SPOT = 2;
 struct LightSource {
     LightType type;
     int idx;
+    glm::mat4 spaceTransform;
     glm::vec3 pos;
     glm::vec3 dir;
     glm::vec3 color;

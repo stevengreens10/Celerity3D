@@ -42,6 +42,7 @@ void Renderer::Init(Window *win) {
   BufferLayout lightLayout;
   lightLayout.Push<int>(1); // Type
   lightLayout.Push<int>(1); // idx
+  lightLayout.Push<glm::mat4>(1); // space transform
   lightLayout.Push<glm::vec3>(5);
   sceneLayout.PushStruct(lightLayout, MAX_LIGHTS);
 

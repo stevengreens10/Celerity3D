@@ -1,6 +1,12 @@
 #version 450 core
 #extension GL_ARB_bindless_texture : require
 
+#define MAX_DIR_LIGHTS 10
+
+#define POINT 0
+#define DIRECTIONAL 1
+#define SPOTLIGHT 2
+
 layout(location = 0) out vec4 color;
 
 // Bitmap for textures present in order of below
@@ -26,6 +32,7 @@ uniform float u_alpha;
 struct LightSource {
     int type;
     int idx;
+    mat4 spaceTransform;
     vec3 pos;
     vec3 dir;
     vec3 color;
@@ -45,6 +52,8 @@ in vec3 v_pos;
 in vec2 v_textureUV;
 in vec3 v_normal;
 
+in vec4 v_fragPosLightSpace[MAX_DIR_LIGHTS];
+
 uniform samplerCubeArray u_lightDepthMaps;
 uniform float u_lightFarPlane;
 
@@ -59,24 +68,42 @@ vec3 mapVec(vec3 value, float min1, float max1, float min2, float max2) {
 }
 
 float shadowMultiplier(vec3 normal, LightSource light) {
-    vec3 fragPosToLight = v_pos - light.pos;
-    vec4 texCoord = vec4(fragPosToLight, light.idx);
-    float closestDepth = texture(u_lightDepthMaps, texCoord).r;
-    // [0,1] -> [0, farPlane] (closest distance in world space from the light)
-    closestDepth *= u_lightFarPlane;
+    if(light.type == POINT) {
+        vec3 fragPosToLight = v_pos - light.pos;
+        vec4 texCoord = vec4(fragPosToLight, light.idx);
+        float closestDepth = texture(u_lightDepthMaps, texCoord).r;
+        // [0,1] -> [0, farPlane] (closest distance in world space from the light)
+        closestDepth *= u_lightFarPlane;
 
-    // Distance from frag to light
-    float fragDepth = length(fragPosToLight);
-    //    float bias = max(0.05 * (1.0 - dot(normal, light.dir)), 0.005);
-    float bias = 0.05;
+        // Distance from frag to light
+        float fragDepth = length(fragPosToLight);
+        float bias = 0.05;
 
-    //    if(projCoords.z > 1.0) {
-    //        return 1.0f;
-    //    }
 
-    if (fragDepth - bias > closestDepth) {
-        // In shadow, return 0
-        return 0;
+        if (fragDepth - bias > closestDepth) {
+            // In shadow, return 0
+            return 0;
+        }
+    } else if(light.type == DIRECTIONAL) {
+        // perform perspective divide
+        vec3 projCoords = v_fragPosLightSpace[0].xyz / v_fragPosLightSpace[0].w;
+        // [-1, 1] -> [0, 1]
+        projCoords = projCoords * 0.5 + 0.5;
+
+        // Convert texture UV to direction for +x on cube
+        vec3 dir=vec3(1,-projCoords.x*2+1,-projCoords.y*2+1);
+        vec4 texCoord = vec4(dir, light.idx);
+        float closestDepth = texture(u_lightDepthMaps, texCoord).r;
+        float currentDepth = projCoords.z;
+
+        float bias = max(0.05 * (1.0 - dot(normal, light.dir)), 0.005);
+        if(projCoords.z > 1.0) {
+            return 1.0f;
+        }
+
+        if(currentDepth - bias > closestDepth) {
+            return 0.0f;
+        }
     }
     return 1.0f;
 }
@@ -170,6 +197,6 @@ void main() {
         result += calculateLight(lights[i], normal, ambientColor, diffuseColor, specColor, shininess);
     }
 
-    //    color = vec4(vec3(texture(u_lightDepthMap, v_pos - lights[0].pos).r), 1);
+//        color = vec4(vec3(texture(u_lightDepthMaps, vec4(v_pos - lights[0].pos, 0)).r), 1);
     color = vec4(result, u_alpha);
 }

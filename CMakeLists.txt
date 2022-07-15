@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.18)
 project(GUI)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -14,7 +14,7 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 add_subdirectory(vendor/glm)
 
 add_definitions(-DGLEW_STATIC)
-add_definitions(-DDEBUG)
+add_definitions(-DDEBUG -DIMGUI)
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC ./vendor/glew/include
