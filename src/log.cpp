@@ -194,7 +194,8 @@ void APIENTRY Log::GLDebugMessageCallback(GLenum
   string trace = stack_trace();
   logf("TRACE: %s", trace.c_str());
 #ifdef DEBUG
-  __debugbreak();
+  if(_severity == "HIGH")
+    __debugbreak();
 #endif
 }
 

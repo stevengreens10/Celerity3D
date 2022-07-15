@@ -61,12 +61,21 @@ void Shader::Unbind() {
 }
 
 unsigned int Shader::CompileShader(char *source, GLenum type) {
-  unsigned int id = glCreateShader(type);
-  glShaderSource(id, 1, &source, nullptr);
-  glCompileShader(id);
+  unsigned int shaderId = glCreateShader(type);
+  glShaderSource(shaderId, 1, &source, nullptr);
+  glCompileShader(shaderId);
   int result;
-  glGetShaderiv(id, GL_COMPILE_STATUS, &result);
-  return id;
+  glGetShaderiv(shaderId, GL_COMPILE_STATUS, &result);
+  if(result != GL_TRUE) {
+      int log_length;
+      char message[1024];
+      glGetShaderInfoLog(shaderId, 1024, &log_length, message);
+      Log::logf("%s shader could not be compiled: %s", name.c_str(), message);
+#ifdef DEBUG
+      __debugbreak();
+#endif
+  }
+  return shaderId;
 }
 
 Shader *Shader::LoadShader(const std::string &name) {

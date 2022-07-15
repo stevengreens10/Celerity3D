@@ -1,5 +1,4 @@
 #version 450 core
-#extension GL_ARB_bindless_texture : require
 
 #define MAX_DIR_LIGHTS 10
 

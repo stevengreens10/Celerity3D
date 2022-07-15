@@ -64,7 +64,7 @@ public:
 private:
     explicit Shader(const std::string &baseName, bool compute = false);
 
-    static unsigned int CompileShader(char *source, GLenum type);
+    unsigned int CompileShader(char *source, GLenum type);
 
     static unsigned int CreateBuffer(GLenum type, const string &name, BufferLayout layout, int idx);
 

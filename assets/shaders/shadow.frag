@@ -6,8 +6,6 @@
 
 in vec4 FragPos;
 
-layout(location = 0) vec4 color;
-
 uniform vec3 u_lightPos;
 uniform int u_lightType;
 uniform float u_farPlane;
