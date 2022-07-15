@@ -41,8 +41,7 @@ void Renderer::Init(Window *win) {
   // LightSource struct
   BufferLayout lightLayout;
   lightLayout.Push<int>(1); // Type
-  lightLayout.Push<float>(1); // Far plane
-  lightLayout.Push<uint64_t>(1); // Depth map handle
+  lightLayout.Push<int>(1); // idx
   lightLayout.Push<glm::vec3>(5);
   sceneLayout.PushStruct(lightLayout, MAX_LIGHTS);
 

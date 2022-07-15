@@ -25,8 +25,7 @@ uniform float u_alpha;
 
 struct LightSource {
     int type;
-    float farPlane;
-    uvec2 depthMap;
+    int idx;
     vec3 pos;
     vec3 dir;
     vec3 color;
@@ -46,7 +45,7 @@ in vec3 v_pos;
 in vec2 v_textureUV;
 in vec3 v_normal;
 
-uniform samplerCube u_lightDepthMap;
+uniform samplerCubeArray u_lightDepthMaps;
 uniform float u_lightFarPlane;
 
 float map(float value, float min1, float max1, float min2, float max2) {
@@ -61,9 +60,10 @@ vec3 mapVec(vec3 value, float min1, float max1, float min2, float max2) {
 
 float shadowMultiplier(vec3 normal, LightSource light) {
     vec3 fragPosToLight = v_pos - light.pos;
-    float closestDepth = texture(samplerCube(light.depthMap), fragPosToLight).r;
+    vec4 texCoord = vec4(fragPosToLight, light.idx);
+    float closestDepth = texture(u_lightDepthMaps, texCoord).r;
     // [0,1] -> [0, farPlane] (closest distance in world space from the light)
-    closestDepth *= light.farPlane;
+    closestDepth *= u_lightFarPlane;
 
     // Distance from frag to light
     float fragDepth = length(fragPosToLight);

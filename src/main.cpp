@@ -150,26 +150,34 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 //    shadowMap.CreateTextureAttachment(GL_COLOR_ATTACHMENT0, 1024, 1024);
     shadowMap.CreateTextureAttachment(GL_DEPTH_ATTACHMENT, 1024, 1024);
     shadowMap.resizeToScreen = false;
+    shadowMap.DisableColor();
 
     int SHADOW_WIDTH = 1024;
     int SHADOW_HEIGHT = 1024;
 
     std::unordered_map<LightSource *, CubeTexture *> depthTextures;
 
-//    auto depthCubeMap1 = new CubeTexture(SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT);
-//    depthCubeMap1->Bind();
-//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-//    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-//    depthTextures[scene.Lights()[0]] = depthCubeMap1;
-//
-//    scene.Lights()[0]->depthMap = glGetTextureHandleARB(depthCubeMap1->id);
-//    glMakeTextureHandleResidentARB(scene.Lights()[0]->depthMap);
+    GLuint cubeTexArrId;
+    glGenTextures(1, &cubeTexArrId);
+    glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeTexArrId);
+    glTexStorage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 1, GL_DEPTH_COMPONENT32, SHADOW_WIDTH, SHADOW_HEIGHT, 5 * 6);
 
-//    shadowMap.CreateTextureAttachment(GL_COLOR_ATTACHMENT1, 1, 1);
-//    shadowMap.DisableColor();
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glTexSubImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, 0, 0, 0, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
+                    nullptr);
+
+
+    shadowMap.Bind();
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, cubeTexArrId, 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+      Log::logf("ERROR: Unable to set up shadow framebuffer");
+    }
 
     float lnear = 1.0f, lfar = 25.0f;
     float aspect = (float) SHADOW_WIDTH / (float) SHADOW_HEIGHT;
@@ -192,6 +200,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       glCullFace(GL_FRONT);
       glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
       glActiveTexture(GL_TEXTURE0);
+      shadowMap.Bind();
+      glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeTexArrId);
+      glClear(GL_DEPTH_BUFFER_BIT);
 
       for (auto light: scene.Lights()) {
         std::vector<glm::mat4> lightTransforms = {
@@ -205,12 +216,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
         shadowShader->SetUniform("u_lightTransforms", UM4f, &lightTransforms[0], 6);
         shadowShader->SetUniform("u_lightPos", U3f, &(light->pos.x));
+        shadowShader->SetUniform("u_lightIdx", U1i, &(light->idx));
 
-        auto depthCubeMap = depthTextures[light];
-        shadowMap.SetTextureAttachment(GL_DEPTH_ATTACHMENT, depthCubeMap);
-        shadowMap.BindTexture(GL_DEPTH_ATTACHMENT, 0);
-
-        glClear(GL_DEPTH_BUFFER_BIT);
         TransformationData t{};
         t.vp = glm::mat4(1.0f);
 
@@ -243,6 +250,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       glEnable(GL_CULL_FACE);
 
       // ---MAIN RENDER---
+      Shader::LoadShader("light")->SetUniform("u_lightFarPlane", U1f, &lfar);
+      int depthTexSlot = 31;
+      glActiveTexture(GL_TEXTURE0 + depthTexSlot);
+      glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeTexArrId);
+      Shader::LoadShader("light")->SetUniform("u_lightDepthMaps", U1i, &depthTexSlot);
 #ifdef IMGUI
       ImGui::Begin("Debug");
       ImGui::Checkbox("Postprocess", &postProcess);
@@ -319,19 +331,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         l->pos = Camera::Pos() + glm::vec3(0, 0.5f, 0);
         l->color = color(rand() % 255, rand() % 255, rand() % 255, 255);
         l->intensities = {0.01, 1.0, 1.0};
+        l->idx = scene.Lights().size();
         scene.AddLight(l);
-
-        auto depthTex = new CubeTexture(SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT);
-        depthTex->Bind();
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        depthTextures[l] = depthTex;
-
-        l->depthMap = glGetTextureHandleARB(depthTex->id);
-        glMakeTextureHandleResidentARB(l->depthMap);
 
         Log::logf("Adding light. Now there are %d!", scene.Lights().size());
         auto *cMat = new Material("lightcube");
