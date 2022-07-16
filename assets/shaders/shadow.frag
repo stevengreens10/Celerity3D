@@ -6,18 +6,18 @@
 
 in vec4 FragPos;
 
-uniform vec3 u_lightPos;
-uniform int u_lightType;
+flat in vec3 lightPos;
+flat in int lightType;
 uniform float u_farPlane;
 
 void main() {
-    if(u_lightType == POINT) {
-        float lightDistance = length(FragPos.xyz - u_lightPos);
+    if(lightType == POINT) {
+        float lightDistance = length(FragPos.xyz - lightPos);
 //         Map to [0, 1] by dividing far plane
         lightDistance /= u_farPlane;
 
         gl_FragDepth = lightDistance;
-    } else if(u_lightType == DIRECTIONAL) {
+    } else if(lightType == DIRECTIONAL) {
         gl_FragDepth = gl_FragCoord.z;
     }
 }

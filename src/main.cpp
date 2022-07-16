@@ -207,31 +207,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       glClear(GL_DEPTH_BUFFER_BIT);
 
       for (auto light: scene.Lights()) {
-
-        std::vector<glm::mat4> lightTransforms;
         if (light->type == LIGHT_POINT) {
-          lightTransforms = {
-                  lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(1, 0, 0), {0, -1, 0}),
-                  lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(-1, 0, 0), {0, -1, 0}),
-                  lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 1, 0), {0, 0, 1}),
-                  lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, -1, 0), {0, 0, -1}),
-                  lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, 1), {0, -1, 0}),
-                  lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, -1), {0, -1, 0})
-          };
+          light->spaceTransform[0] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(1, 0, 0), {0, -1, 0});
+          light->spaceTransform[1] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(-1, 0, 0), {0, -1, 0});
+          light->spaceTransform[2] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 1, 0), {0, 0, 1});
+          light->spaceTransform[3] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, -1, 0), {0, 0, -1});
+          light->spaceTransform[4] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, 1), {0, -1, 0});
+          light->spaceTransform[5] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, -1), {0, -1, 0});
         } else if (light->type == LIGHT_DIR) {
-          light->spaceTransform = lightOrtho * glm::lookAt(light->pos, light->pos + light->dir, {0, 1, 0});
-          lightTransforms = {light->spaceTransform};
+          light->spaceTransform[0] = lightOrtho * glm::lookAt(light->pos, light->pos + light->dir, {0, 1, 0});
         }
+      }
 
-        lightTransforms.reserve(6);
-        shadowShader->SetUniform("u_lightTransforms", UM4f, &lightTransforms[0], 6);
-        shadowShader->SetUniform("u_lightPos", U3f, &(light->pos.x));
-        shadowShader->SetUniform("u_lightType", U1i, &(light->type));
-        shadowShader->SetUniform("u_lightIdx", U1i, &(light->idx));
+      // Set scene buffer
+      uint64_t bufSize = 16 + scene.Lights().size() * sizeof(LightSource);
+      char *buf = (char *) malloc(bufSize);
+      ((glm::vec3 *) buf)[0] = Camera::Pos();
+      ((int *) (buf + 12))[0] = (int) scene.Lights().size();
+      for (int i = 0; i < scene.Lights().size(); i++) {
+        auto offset = 16 + sizeof(LightSource) * i;
+        ((LightSource *) (buf + offset))[0] = *scene.Lights()[i];
+      }
+      Shader::SetShaderStorageBuffer("Scene", buf, bufSize);
+      free(buf);
 
-        TransformationData t{};
-        t.vp = glm::mat4(1.0f);
+      TransformationData t{};
+      t.vp = glm::mat4(1.0f);
 
+      int shadowPasses = scene.Lights().size() / 14 + 1;
+      for (int i = 0; i < shadowPasses; i++) {
         for (auto object: scene.Objects()) {
           t.model = object->Model();
           Shader::SetGlobalUniform("Transformations", (char *) &t, sizeof(TransformationData));

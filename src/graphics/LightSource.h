@@ -13,7 +13,7 @@ const LightType LIGHT_SPOT = 2;
 struct LightSource {
     LightType type;
     int idx;
-    glm::mat4 spaceTransform;
+    glm::mat4 spaceTransform[6];
     glm::vec3 pos;
     glm::vec3 dir;
     glm::vec3 color;

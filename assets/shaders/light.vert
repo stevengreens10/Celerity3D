@@ -13,7 +13,7 @@ layout(std140, binding = 1) uniform Transformations {
 struct LightSource {
     int type;
     int idx;
-    mat4 spaceTransform;
+    mat4 spaceTransform[6];
     vec3 pos;
     vec3 dir;
     vec3 color;

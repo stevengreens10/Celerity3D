@@ -29,7 +29,7 @@ uniform float u_alpha;
 struct LightSource {
     int type;
     int idx;
-    mat4 spaceTransform;
+    mat4 spaceTransform[6];
     vec3 pos;
     vec3 dir;
     vec3 color;
@@ -80,7 +80,7 @@ float shadowMultiplier(vec3 normal, LightSource light) {
             return 0;
         }
     } else if(light.type == DIRECTIONAL) {
-        vec4 fragPosLightSpace = light.spaceTransform * vec4(v_pos, 1.0f);
+        vec4 fragPosLightSpace = light.spaceTransform[0] * vec4(v_pos, 1.0f);
         // perform perspective divide
         vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
         // [-1, 1] -> [0, 1]
