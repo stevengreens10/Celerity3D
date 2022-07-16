@@ -339,7 +339,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       }
 
       // Add lights dynamically
-      if (scene.Lights().empty() || (Input::IsPressed(VK_TAB) && framesSinceAdd >= 30)) {
+      if (Input::IsPressed(VK_TAB) && framesSinceAdd >= 30) {
         framesSinceAdd = 0;
         auto l = new LightSource();
         l->type = LIGHT_POINT;

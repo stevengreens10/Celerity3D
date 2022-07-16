@@ -12,18 +12,22 @@
 #include "object/primitive/Cube.h"
 #include "object/primitive/Square.h"
 #include "Scene.h"
+#include "Framebuffer.h"
 
 #define MAX_LIGHTS 100
 
 class Renderer {
+private:
+    inline static const int SHADOW_WIDTH = 1024;
+    inline static const int SHADOW_HEIGHT = 1024;
+    std::unique_ptr<Framebuffer> renderBuf;
+    std::unique_ptr<Framebuffer> shadowBuf;
 public:
     static void Clear();
 
     void Draw(const Scene &s) const;
 
     void SetProjection(int width, int height);
-
-    static glm::mat4 GetModel(glm::vec3 pivot, float modelScale, glm::vec3 modelTranslate, glm::vec3 modelRotate);
 
     static void NewFrame();
 

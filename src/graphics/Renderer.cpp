@@ -8,6 +8,7 @@
 #include "GL/wglew.h"
 #include "object/primitive/Cube.h"
 #include "../Camera.h"
+#include "../Application.h"
 
 void Renderer::Init(Window *win) {
   glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -94,6 +95,31 @@ void Renderer::Draw(const Scene &s) const {
   TransformationData t{};
 #pragma pack(pop)
 
+  Shader *shadowShader = Shader::LoadShader("shadow");
+  Shader *lightShader = Shader::LoadShader("light");
+  Shader *colorShader = Shader::LoadShader("color");
+  Shader *skyShader = Shader::LoadShader("skybox");
+  Shader *screenShader = Shader::LoadShader("screen");
+
+  // Update light transforms
+  float lnear = 1.0f, lfar = 50.0f;
+  float aspect = (float) SHADOW_WIDTH / (float) SHADOW_HEIGHT;
+  glm::mat4 lightProj = glm::perspective(glm::radians(90.0f), aspect, lnear, lfar);
+  glm::mat4 lightOrtho = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, lnear, 30.0f);
+  shadowShader->SetUniform("u_farPlane", U1f, &lfar);
+  for (auto light: s.Lights()) {
+    if (light->type == LIGHT_POINT) {
+      light->spaceTransform[0] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(1, 0, 0), {0, -1, 0});
+      light->spaceTransform[1] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(-1, 0, 0), {0, -1, 0});
+      light->spaceTransform[2] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 1, 0), {0, 0, 1});
+      light->spaceTransform[3] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, -1, 0), {0, 0, -1});
+      light->spaceTransform[4] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, 1), {0, -1, 0});
+      light->spaceTransform[5] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, -1), {0, -1, 0});
+    } else if (light->type == LIGHT_DIR) {
+      light->spaceTransform[0] = lightOrtho * glm::lookAt(light->pos, light->pos + light->dir, {0, 1, 0});
+    }
+  }
+
   // Set scene buffer
   uint64_t bufSize = 16 + s.Lights().size() * sizeof(LightSource);
   char *buf = (char *) malloc(bufSize);
@@ -106,9 +132,52 @@ void Renderer::Draw(const Scene &s) const {
   Shader::SetShaderStorageBuffer("Scene", buf, bufSize);
   free(buf);
 
+  // ---SHADOW PASSES---
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_FRONT);
+  glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+  glActiveTexture(GL_TEXTURE0);
+  shadowBuf->Bind();
+  glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeTexArrId);
+  glClear(GL_DEPTH_BUFFER_BIT);
+
+  t.vp = glm::mat4(1.0f);
+
+  size_t shadowPasses = s.Lights().size() / 14 + 1;
+  for (int i = 0; i < shadowPasses; i++) {
+    for (auto object: s.Objects()) {
+      t.model = object->Model();
+      Shader::SetGlobalUniform("Transformations", (char *) &t, sizeof(TransformationData));
+      object->Draw(*shadowShader);
+    }
+  }
+
+  // ---SKYBOX---
+  glDisable(GL_CULL_FACE);
+  glDepthMask(GL_FALSE);
+  skyShader->Bind();
+  TransformationData skyTransforms{};
+  auto view = glm::mat4(glm::mat3(Camera::ViewMatrix()));
+  skyTransforms.vp = proj * view;
+  skyTransforms.model = glm::mat4(1.0f); // Identity
+  Shader::SetGlobalUniform("Transformations", (char *) &skyTransforms, sizeof(TransformationData));
+  int skyTexSlot = 18;
+  s.skyboxTex->Bind(skyTexSlot);
+  skyShader->SetUniform("u_cubeTex", U1i, &skyTexSlot);
+  skyCube.Draw(*skyShader);
+  glDepthMask(GL_TRUE);
+  glEnable(GL_CULL_FACE);
+
+
+  // ---MAIN RENDER---
+  Shader::LoadShader("light")->SetUniform("u_lightFarPlane", U1f, &lfar);
+  int depthTexSlot = 31;
+  glActiveTexture(GL_TEXTURE0 + depthTexSlot);
+  glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeTexArrId);
+  Shader::LoadShader("light")->SetUniform("u_lightDepthMaps", U1i, &depthTexSlot);
+
   t.vp = proj * Camera::ViewMatrix();
-  Shader *lightShader = Shader::LoadShader("light");
-  Shader *colorShader = Shader::LoadShader("color");
   lightShader->Bind();
   for (auto object: s.Objects()) {
     t.model = object->Model();
@@ -120,6 +189,21 @@ void Renderer::Draw(const Scene &s) const {
     else
       object->Draw(*colorShader);
   }
+
+  // --- SCREEN RENDER ---
+  int texSlot = 0;
+  renderBuf->BindTexture(GL_COLOR_ATTACHMENT0, texSlot);
+  screenShader->Bind();
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  screenShader->SetUniform("u_screenTexture", U1i, &texSlot);
+  screenShader->SetUniform("width", U1i, &Application::window->width);
+  screenShader->SetUniform("height", U1i, &Application::window->height);
+  int pp = (int) postProcess;
+  screenShader->SetUniform("postProcess", U1i, &pp);
+  screenShader->SetUniform("samples", U1i, &renderBuf->samples);
+  glDisable(GL_DEPTH_TEST);
+  screen.Draw(*screenShader);
 }
 
 void Renderer::SetProjection(int width, int height) {
