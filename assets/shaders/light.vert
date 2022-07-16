@@ -1,7 +1,5 @@
 #version 450 core
 
-#define MAX_DIR_LIGHTS 10
-
 #define POINT 0
 #define DIRECTIONAL 1
 #define SPOTLIGHT 2
@@ -38,8 +36,6 @@ out vec3 v_normal;
 out vec3 v_pos;
 out vec2 v_textureUV;
 
-out vec4 v_fragPosLightSpace[MAX_DIR_LIGHTS];
-
 void main() {
     vec4 worldPos = u_M * vec4(position, 1.0);
     gl_Position = u_VP * worldPos;
@@ -52,16 +48,4 @@ void main() {
     v_normal = normalTransform * normal;
 
     v_textureUV = texCoord;
-
-    int idx = 0;
-    for (int i = 0; i < lights.length(); i++) {
-        LightSource light = lights[i];
-        if (light.type == DIRECTIONAL) {
-            if(idx < MAX_DIR_LIGHTS) {
-                v_fragPosLightSpace[idx] = light.spaceTransform * worldPos;
-                idx++;
-            }
-        }
-    }
-
 }

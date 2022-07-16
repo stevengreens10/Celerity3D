@@ -1,7 +1,5 @@
 #version 450 core
 
-#define MAX_DIR_LIGHTS 10
-
 #define POINT 0
 #define DIRECTIONAL 1
 #define SPOTLIGHT 2
@@ -51,8 +49,6 @@ in vec3 v_pos;
 in vec2 v_textureUV;
 in vec3 v_normal;
 
-in vec4 v_fragPosLightSpace[MAX_DIR_LIGHTS];
-
 uniform samplerCubeArray u_lightDepthMaps;
 uniform float u_lightFarPlane;
 
@@ -84,13 +80,14 @@ float shadowMultiplier(vec3 normal, LightSource light) {
             return 0;
         }
     } else if(light.type == DIRECTIONAL) {
+        vec4 fragPosLightSpace = light.spaceTransform * vec4(v_pos, 1.0f);
         // perform perspective divide
-        vec3 projCoords = v_fragPosLightSpace[0].xyz / v_fragPosLightSpace[0].w;
+        vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
         // [-1, 1] -> [0, 1]
         projCoords = projCoords * 0.5 + 0.5;
 
         // Convert texture UV to direction for +x on cube
-        vec3 dir=vec3(1,-projCoords.x*2+1,-projCoords.y*2+1);
+        vec3 dir=vec3(1,-projCoords.y*2+1,-projCoords.x*2+1);
         vec4 texCoord = vec4(dir, light.idx);
         float closestDepth = texture(u_lightDepthMaps, texCoord).r;
         float currentDepth = projCoords.z;
@@ -196,6 +193,5 @@ void main() {
         result += calculateLight(lights[i], normal, ambientColor, diffuseColor, specColor, shininess);
     }
 
-//        color = vec4(vec3(texture(u_lightDepthMaps, vec4(v_pos - lights[0].pos, 0)).r), 1);
     color = vec4(result, u_alpha);
 }

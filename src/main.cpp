@@ -79,7 +79,7 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
   l->type = LIGHT_DIR;
   l->idx = 0;
   l->pos = glm::vec3(1, 1, 1);
-  l->pos *= 5;
+  l->pos *= 10;
   l->dir = glm::normalize(-l->pos);
   l->intensities = glm::vec3(0.12f, 1.0f, 0.3f);
   l->color = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -87,7 +87,7 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
 
   auto *cMat = new Material("lightcube");
   auto c = new Cube(*cMat);
-  c->SetPos(Camera::Pos())
+  c->SetPos(l->pos)
           ->SetScale(0.2f)
           ->useLighting = false;
   scene.AddObject(c);
@@ -149,7 +149,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
     Application::frameBuf.push_back(new Framebuffer());
     auto &shadowMap = *Application::frameBuf[Application::frameBuf.size() - 1];
-//    shadowMap.CreateTextureAttachment(GL_COLOR_ATTACHMENT0, 1024, 1024);
     shadowMap.CreateTextureAttachment(GL_DEPTH_ATTACHMENT, 1024, 1024);
     shadowMap.resizeToScreen = false;
     shadowMap.DisableColor();
@@ -184,7 +183,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     float lnear = 1.0f, lfar = 50.0f;
     float aspect = (float) SHADOW_WIDTH / (float) SHADOW_HEIGHT;
     glm::mat4 lightProj = glm::perspective(glm::radians(90.0f), aspect, lnear, lfar);
-    glm::mat4 lightOrtho = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, lnear, 7.5f);
+    glm::mat4 lightOrtho = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, lnear, 30.0f);
     shadowShader->SetUniform("u_farPlane", U1f, &lfar);
 
     bool postProcess = false;
@@ -210,7 +209,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       for (auto light: scene.Lights()) {
 
         std::vector<glm::mat4> lightTransforms;
-        lightTransforms.reserve(6);
         if (light->type == LIGHT_POINT) {
           lightTransforms = {
                   lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(1, 0, 0), {0, -1, 0}),
@@ -225,9 +223,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
           lightTransforms = {light->spaceTransform};
         }
 
+        lightTransforms.reserve(6);
         shadowShader->SetUniform("u_lightTransforms", UM4f, &lightTransforms[0], 6);
         shadowShader->SetUniform("u_lightPos", U3f, &(light->pos.x));
-        shadowShader->SetUniform("u_lightType", U1i, &(light->pos.x));
+        shadowShader->SetUniform("u_lightType", U1i, &(light->type));
         shadowShader->SetUniform("u_lightIdx", U1i, &(light->idx));
 
         TransformationData t{};
