@@ -49,6 +49,8 @@ in vec3 v_pos;
 in vec2 v_textureUV;
 in vec3 v_normal;
 
+in mat3 TBN;
+
 uniform samplerCubeArray u_lightDepthMaps;
 uniform float u_lightFarPlane;
 
@@ -162,6 +164,7 @@ vec3 calculateLight(LightSource light, vec3 normal, vec3 ambientColor, vec3 diff
 }
 
 void main() {
+    vec3 normal = normalize(v_normal);
     // Load texture data
     vec2 scaledUV = v_textureUV * u_texScale;
 
@@ -169,7 +172,6 @@ void main() {
     vec3 diffuseTex = vec3(1.0f);
     vec3 specTex = vec3(1.0f);
     float shinyTex = 1.0f;
-    vec3 bumpTex = vec3(1.0f);
     if ((u_texturesPresent & 1) >= 1)
     ambientTex = vec3(texture(u_ambientTex, scaledUV));
     if ((u_texturesPresent & 2) >= 1)
@@ -178,15 +180,18 @@ void main() {
     specTex    = vec3(texture(u_specTex, scaledUV));
     if ((u_texturesPresent & 8) >= 1)
     shinyTex   = float(texture(u_shinyTex, scaledUV));
-    if ((u_texturesPresent & 16) >= 1)
-    bumpTex    = vec3(texture(u_bumpTex, scaledUV));
+//    if ((u_texturesPresent & 16) >= 1) {
+//        vec3 bumpTex = vec3(texture(u_bumpTex, scaledUV));
+//         Map [0,1] -> [-1,1]
+//        bumpTex  = bumpTex * 2.0 - 1.0;
+//        bumpTex = normalize(TBN * bumpTex);
+//    }
 
     vec3 ambientColor = u_ambientColor * ambientTex;
     vec3 diffuseColor = u_diffuseColor * diffuseTex;
     vec3 specColor = u_specColor * specTex;
     float shininess = u_shininess * shinyTex;
 
-    vec3 normal = normalize(v_normal);
 
     vec3 result = vec3(0.0f);
     for (int i = 0; i < numLights; i++) {

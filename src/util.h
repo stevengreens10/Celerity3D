@@ -16,6 +16,7 @@ typedef struct {
     glm::vec3 pos;
     glm::vec3 normal;
     glm::vec2 uv;
+    glm::vec3 tangent;
 } Vertex;
 
 typedef struct {
@@ -41,5 +42,7 @@ glm::vec4 color(int r, int g, int b, int a);
 glm::vec2 sToVec2(vector<string> s, int startIdx);
 
 glm::vec3 sToVec3(vector<string> s, int startIdx);
+
+void calculateTangents(vector<Vertex> &vertices, const vector<uint32_t> &indices);
 
 #endif //GUI_UTIL_H

@@ -71,3 +71,24 @@ glm::vec2 sToVec2(vector<string> s, int startIdx) {
   }
   return vec;
 }
+
+void calculateTangents(vector<Vertex> &vertices, const vector<uint32_t> &indices) {
+  for (int i = 0; i < indices.size(); i += 3) {
+    glm::vec3 edge1 = vertices[indices[i + 1]].pos - vertices[indices[i]].pos;
+    glm::vec3 edge2 = vertices[indices[i + 2]].pos - vertices[indices[i]].pos;
+    glm::vec2 deltaUV1 = vertices[indices[i + 2]].uv - vertices[indices[i]].uv;
+    glm::vec2 deltaUV2 = vertices[indices[i + 2]].uv - vertices[indices[i]].uv;
+
+    glm::vec3 tangent;
+
+    float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+    tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+    tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+    tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+
+    vertices[indices[i]].tangent = tangent;
+    vertices[indices[i + 1]].tangent = tangent;
+    vertices[indices[i + 2]].tangent = tangent;
+  }
+}

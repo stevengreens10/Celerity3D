@@ -31,10 +31,13 @@ readonly layout(std430, binding=2) buffer Scene {
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 texCoord;
+layout(location = 3) in vec3 tangent;
 
 out vec3 v_normal;
 out vec3 v_pos;
 out vec2 v_textureUV;
+
+out mat3 TBN;
 
 void main() {
     vec4 worldPos = u_M * vec4(position, 1.0);
@@ -46,6 +49,10 @@ void main() {
     // And handles non-uniform scaling
     mat3 normalTransform = transpose(inverse(mat3(u_M)));
     v_normal = normalTransform * normal;
+    vec3 T = normalTransform * tangent;
+    vec3 B = cross(normal, tangent);
+
+    mat3 TBN = mat3(T, B, v_normal);
 
     v_textureUV = texCoord;
 }
