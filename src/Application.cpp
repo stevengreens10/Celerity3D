@@ -3,6 +3,13 @@
 #include "Camera.h"
 
 void Application::Init() {
+
+  Shader::CreateShader("color");
+  Shader::CreateShader("light");
+  Shader::CreateShader("shadow");
+  Shader::CreateShader("screen");
+  Shader::CreateShader("skybox");
+
   Application::renderer = new Renderer();
   Camera::Translate(glm::vec3(0, 0, -4));
   Camera::Rotate(90.0f, 0.0f);

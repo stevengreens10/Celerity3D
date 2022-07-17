@@ -9,8 +9,6 @@ class Application {
 public:
     inline static Window *window;
     inline static Renderer *renderer;
-    // TODO: Figure out better place
-    inline static std::vector<Framebuffer *> frameBuf;
     inline static bool running = true;
 
     static void Init();

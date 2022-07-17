@@ -15,6 +15,7 @@
 #include "Framebuffer.h"
 
 #define MAX_LIGHTS 100
+#define MAX_SHADOW_LIGHTS 5
 
 class Renderer {
 private:
@@ -22,6 +23,13 @@ private:
     inline static const int SHADOW_HEIGHT = 1024;
     std::unique_ptr<Framebuffer> renderBuf;
     std::unique_ptr<Framebuffer> shadowBuf;
+
+    std::unique_ptr<Object> skyCube;
+    GLuint cubeTexArrId;
+    std::unique_ptr<Square> screen;
+    glm::mat4 lightProj;
+    glm::mat4 lightOrtho;
+    float lightFarPlane;
 public:
     static void Clear();
 
@@ -29,11 +37,11 @@ public:
 
     void SetProjection(int width, int height);
 
-    static void NewFrame();
+    void NewFrame();
 
     void Init(Window *win);
 
-    static void EndFrame(Window *win);
+    void EndFrame(Window *win);
 
 
     static void Cleanup(Window *win);
@@ -43,7 +51,6 @@ private:
     static void InitImGui(Window *win);
 
     static void UpdateImGui(Window *win);
-
 };
 
 #endif //GUI_RENDERER_H

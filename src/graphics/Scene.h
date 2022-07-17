@@ -29,6 +29,8 @@ public:
     inline const vector<LightSource *> &Lights() const { return lights; }
 
     inline const vector<Object *> &Objects() const { return objects; }
+
+    Texture *skyboxTex;
 };
 
 

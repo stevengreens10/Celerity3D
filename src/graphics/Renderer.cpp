@@ -3,6 +3,8 @@
 #include <backends/imgui_impl_opengl3.h>
 #include <imgui_internal.h>
 
+#include <memory>
+
 #include "Renderer.h"
 #include "../log.h"
 #include "GL/wglew.h"
@@ -51,6 +53,53 @@ void Renderer::Init(Window *win) {
 #ifdef IMGUI
   Renderer::InitImGui(win);
 #endif
+
+  renderBuf = std::make_unique<Framebuffer>(1);
+  renderBuf->CreateTextureAttachment(GL_DEPTH_ATTACHMENT, Application::window->width, Application::window->height);
+  renderBuf->CreateTextureAttachment(GL_COLOR_ATTACHMENT0, Application::window->width, Application::window->height);
+
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    Log::logf("ERROR: Unable to set up framebuffer");
+  }
+
+  shadowBuf = std::make_unique<Framebuffer>(1);
+  shadowBuf->CreateTextureAttachment(GL_DEPTH_ATTACHMENT, SHADOW_WIDTH, SHADOW_HEIGHT);
+  shadowBuf->resizeToScreen = false;
+  shadowBuf->DisableColor();
+
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    Log::logf("ERROR: Unable to set up framebuffer");
+  }
+
+
+  glGenTextures(1, &cubeTexArrId);
+  glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeTexArrId);
+  glTexStorage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 1, GL_DEPTH_COMPONENT32, SHADOW_WIDTH, SHADOW_HEIGHT,
+                 MAX_SHADOW_LIGHTS * 6);
+
+  glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+
+  glTexSubImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, 0, 0, 0, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
+                  nullptr);
+
+  shadowBuf->Bind();
+  glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, cubeTexArrId, 0);
+
+  skyCube = std::make_unique<Cube>(Material::DEFAULT);
+
+  screen = std::make_unique<Square>(Material::DEFAULT);
+
+  float lnear = 1.0f;
+  lightFarPlane = 50.0f;
+  float aspect = (float) SHADOW_WIDTH / (float) SHADOW_HEIGHT;
+  lightProj = glm::perspective(glm::radians(90.0f), aspect, lnear, lightFarPlane);
+  lightOrtho = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, lnear, 30.0f);
+  Shader::LoadShader("shadow")->SetUniform("u_farPlane", U1f, &lightFarPlane);
+
 }
 
 void Renderer::Cleanup(Window *win) {
@@ -75,7 +124,7 @@ void Renderer::Clear() {
 }
 
 void Renderer::NewFrame() {
-  Clear();
+//  Clear();
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
 #ifdef IMGUI
@@ -102,11 +151,6 @@ void Renderer::Draw(const Scene &s) const {
   Shader *screenShader = Shader::LoadShader("screen");
 
   // Update light transforms
-  float lnear = 1.0f, lfar = 50.0f;
-  float aspect = (float) SHADOW_WIDTH / (float) SHADOW_HEIGHT;
-  glm::mat4 lightProj = glm::perspective(glm::radians(90.0f), aspect, lnear, lfar);
-  glm::mat4 lightOrtho = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, lnear, 30.0f);
-  shadowShader->SetUniform("u_farPlane", U1f, &lfar);
   for (auto light: s.Lights()) {
     if (light->type == LIGHT_POINT) {
       light->spaceTransform[0] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(1, 0, 0), {0, -1, 0});
@@ -137,8 +181,8 @@ void Renderer::Draw(const Scene &s) const {
   glEnable(GL_CULL_FACE);
   glCullFace(GL_FRONT);
   glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-  glActiveTexture(GL_TEXTURE0);
   shadowBuf->Bind();
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeTexArrId);
   glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -154,6 +198,9 @@ void Renderer::Draw(const Scene &s) const {
   }
 
   // ---SKYBOX---
+  renderBuf->Bind();
+  glViewport(0, 0, Application::window->width, Application::window->height);
+  Clear();
   glDisable(GL_CULL_FACE);
   glDepthMask(GL_FALSE);
   skyShader->Bind();
@@ -165,13 +212,14 @@ void Renderer::Draw(const Scene &s) const {
   int skyTexSlot = 18;
   s.skyboxTex->Bind(skyTexSlot);
   skyShader->SetUniform("u_cubeTex", U1i, &skyTexSlot);
-  skyCube.Draw(*skyShader);
+  skyCube->Draw(*skyShader);
   glDepthMask(GL_TRUE);
   glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
 
 
   // ---MAIN RENDER---
-  Shader::LoadShader("light")->SetUniform("u_lightFarPlane", U1f, &lfar);
+  Shader::LoadShader("light")->SetUniform("u_lightFarPlane", U1f, (void *) &lightFarPlane);
   int depthTexSlot = 31;
   glActiveTexture(GL_TEXTURE0 + depthTexSlot);
   glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeTexArrId);
@@ -191,24 +239,26 @@ void Renderer::Draw(const Scene &s) const {
   }
 
   // --- SCREEN RENDER ---
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   int texSlot = 0;
   renderBuf->BindTexture(GL_COLOR_ATTACHMENT0, texSlot);
   screenShader->Bind();
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   screenShader->SetUniform("u_screenTexture", U1i, &texSlot);
   screenShader->SetUniform("width", U1i, &Application::window->width);
   screenShader->SetUniform("height", U1i, &Application::window->height);
-  int pp = (int) postProcess;
+  int pp = (int) false;
   screenShader->SetUniform("postProcess", U1i, &pp);
   screenShader->SetUniform("samples", U1i, &renderBuf->samples);
   glDisable(GL_DEPTH_TEST);
-  screen.Draw(*screenShader);
+  screen->Draw(*screenShader);
 }
 
 void Renderer::SetProjection(int width, int height) {
   proj = glm::perspective(glm::radians(59.0f), (float) width / (float) height, 0.1f, 1000.0f);
-  glViewport(0, 0, width, height);
+  if (renderBuf)
+    renderBuf->Resize(width, height);
 }
 
 void Renderer::InitImGui(Window *win) {

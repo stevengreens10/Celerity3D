@@ -128,7 +128,7 @@ WINAPI NewWindow(HINSTANCE hInstance, const std::string &title, int width, int h
   int_attributes.push_back(WGL_CONTEXT_MINOR_VERSION_ARB);
   int_attributes.push_back(6);
 
-  auto modernContext = wglCreateContextAttribsARB(hDC, 0, &int_attributes[0]);
+  auto modernContext = wglCreateContextAttribsARB(hDC, nullptr, &int_attributes[0]);
   if (!modernContext) {
     Log::logf("Error: %d", glGetError());
     Log::logf("ERROR: Could not create modern render context");

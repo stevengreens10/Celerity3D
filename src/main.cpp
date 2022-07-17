@@ -15,7 +15,6 @@
 #include "Input.h"
 #include "Application.h"
 #include "graphics/Scene.h"
-#include "graphics/Framebuffer.h"
 #include "graphics/CubeTexture.h"
 
 #define INIT_WIDTH 800
@@ -40,16 +39,16 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
           ->SetTexScale(100.0f);
   scene.AddObject(ground);
 
-  Mesh *cube = new Mesh("assets/mesh/cube.obj");
+  Mesh *cube = new Mesh("assets/mesh/bottles.obj");
   cube->SetPos(glm::vec3(0, -0.5, 0))
-          ->SetScale(1);
+          ->SetScale(10.0f);
   scene.AddObject(cube);
 
   auto wallMat = new Material("Wall");
   wallMat->matData.diffuseColor = glm::vec3(color(84, 157, 235, 255));
   wallMat->matData.specColor = glm::vec3(1.0f);
 
-  /*float roomSize = 25.0f;
+  float roomSize = 12.0f;
 
   scene.AddObject((new Cube(*wallMat))
                           ->SetPos({roomSize, 0, 0})
@@ -73,25 +72,25 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
 
   scene.AddObject((new Cube(*wallMat))
                           ->SetPos({0, -roomSize, 0})
-                          ->SetScale({roomSize, 0.1, roomSize}));*/
+                          ->SetScale({roomSize, 0.1, roomSize}));
 
-  auto l = new LightSource();
-  l->type = LIGHT_DIR;
-  l->idx = 0;
-  l->pos = glm::vec3(1, 1, 1);
-  l->pos *= 10;
-  l->dir = glm::normalize(-l->pos);
-  l->intensities = glm::vec3(0.12f, 1.0f, 0.3f);
-  l->color = glm::vec3(1.0f, 1.0f, 1.0f);
-  scene.AddLight(l);
-
-  auto *cMat = new Material("lightcube");
-  auto c = new Cube(*cMat);
-  c->SetPos(l->pos)
-          ->SetScale(0.2f)
-          ->useLighting = false;
-  scene.AddObject(c);
-  lightToObj[l] = c;
+//  auto l = new LightSource();
+//  l->type = LIGHT_DIR;
+//  l->idx = 0;
+//  l->pos = glm::vec3(1, 1, 1);
+//  l->pos *= 10;
+//  l->dir = glm::normalize(-l->pos);
+//  l->intensities = glm::vec3(0.12f, 1.0f, 0.3f);
+//  l->color = glm::vec3(1.0f, 1.0f, 1.0f);
+//  scene.AddLight(l);
+//
+//  auto *cMat = new Material("lightcube");
+//  auto c = new Cube(*cMat);
+//  c->SetPos(l->pos)
+//          ->SetScale(0.2f)
+//          ->useLighting = false;
+//  scene.AddObject(c);
+//  lightToObj[l] = c;
 
 }
 
@@ -104,15 +103,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     Log::logf("Version: %s", glGetString(GL_VERSION));
     Log::logf("GLSL Version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-    Shader::CreateShader("color");
-    Shader::CreateShader("light");
-    Shader *shadowShader = Shader::CreateShader("shadow");
-    Shader *screenShader = Shader::CreateShader("screen");
-    Shader *skyShader = Shader::CreateShader("skybox");
-
-    std::unique_ptr<CubeTexture> skyboxTex(CubeTexture::Load("assets/images/skybox/",
-                                                             {"right.jpg", "left.jpg", "top.jpg",
-                                                              "bottom.jpg", "front.jpg", "back.jpg"}));
+    CubeTexture *skyboxTex(CubeTexture::Load("assets/images/skybox/",
+                                             {"right.jpg", "left.jpg", "top.jpg",
+                                              "bottom.jpg", "front.jpg", "back.jpg"}));
 
 #if ASCII == true
     Shader *compShader = Shader::CreateComputeShader("ascii");
@@ -123,70 +116,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     uint32_t *chars = (uint32_t *) glMapNamedBuffer(asciiBuf, GL_READ_ONLY);
 #endif
 
-    Cube skyCube(Material::DEFAULT);
-    skyCube.SetScale(100);
-
     Scene scene;
     unordered_map<LightSource *, Object *> lightToObj;
 
     SetupScene(scene, lightToObj);
 
-    const Renderer &renderer = *Application::renderer;
+    scene.skyboxTex = skyboxTex;
+
+    Renderer &renderer = *Application::renderer;
 
     int framesSinceAdd = 30;
-
-    Material screenMat("ScreenMat");
-    Square screen(screenMat);
-
-    Application::frameBuf.push_back(new Framebuffer(1));
-    auto &frameBuf = *Application::frameBuf[Application::frameBuf.size() - 1];
-    frameBuf.CreateTextureAttachment(GL_DEPTH_ATTACHMENT, Application::window->width, Application::window->height);
-    frameBuf.CreateTextureAttachment(GL_COLOR_ATTACHMENT0, Application::window->width, Application::window->height);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-      Log::logf("ERROR: Unable to set up framebuffer");
-    }
-
-    Application::frameBuf.push_back(new Framebuffer());
-    auto &shadowMap = *Application::frameBuf[Application::frameBuf.size() - 1];
-    shadowMap.CreateTextureAttachment(GL_DEPTH_ATTACHMENT, 1024, 1024);
-    shadowMap.resizeToScreen = false;
-    shadowMap.DisableColor();
-
-    int SHADOW_WIDTH = 1024;
-    int SHADOW_HEIGHT = 1024;
-
-    std::unordered_map<LightSource *, CubeTexture *> depthTextures;
-
-    GLuint cubeTexArrId;
-    glGenTextures(1, &cubeTexArrId);
-    glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeTexArrId);
-    glTexStorage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 1, GL_DEPTH_COMPONENT32, SHADOW_WIDTH, SHADOW_HEIGHT, 5 * 6);
-
-    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-
-    glTexSubImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, 0, 0, 0, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
-                    nullptr);
-
-
-    shadowMap.Bind();
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, cubeTexArrId, 0);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-      Log::logf("ERROR: Unable to set up shadow framebuffer");
-    }
-
-    float lnear = 1.0f, lfar = 50.0f;
-    float aspect = (float) SHADOW_WIDTH / (float) SHADOW_HEIGHT;
-    glm::mat4 lightProj = glm::perspective(glm::radians(90.0f), aspect, lnear, lfar);
-    glm::mat4 lightOrtho = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, lnear, 30.0f);
-    shadowShader->SetUniform("u_farPlane", U1f, &lfar);
-
-    bool postProcess = false;
     // --- MAIN LOOP
     while (true) {
       framesSinceAdd++;
@@ -196,83 +135,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         break;
       }
 
-      // ---SHADOW MAP---
-      glEnable(GL_DEPTH_TEST);
-      glEnable(GL_CULL_FACE);
-      glCullFace(GL_FRONT);
-      glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-      glActiveTexture(GL_TEXTURE0);
-      shadowMap.Bind();
-      glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeTexArrId);
-      glClear(GL_DEPTH_BUFFER_BIT);
+      renderer.NewFrame();
 
-      for (auto light: scene.Lights()) {
-        if (light->type == LIGHT_POINT) {
-          light->spaceTransform[0] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(1, 0, 0), {0, -1, 0});
-          light->spaceTransform[1] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(-1, 0, 0), {0, -1, 0});
-          light->spaceTransform[2] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 1, 0), {0, 0, 1});
-          light->spaceTransform[3] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, -1, 0), {0, 0, -1});
-          light->spaceTransform[4] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, 1), {0, -1, 0});
-          light->spaceTransform[5] = lightProj * glm::lookAt(light->pos, light->pos + glm::vec3(0, 0, -1), {0, -1, 0});
-        } else if (light->type == LIGHT_DIR) {
-          light->spaceTransform[0] = lightOrtho * glm::lookAt(light->pos, light->pos + light->dir, {0, 1, 0});
-        }
-      }
-
-      // Set scene buffer
-      uint64_t bufSize = 16 + scene.Lights().size() * sizeof(LightSource);
-      char *buf = (char *) malloc(bufSize);
-      ((glm::vec3 *) buf)[0] = Camera::Pos();
-      ((int *) (buf + 12))[0] = (int) scene.Lights().size();
-      for (int i = 0; i < scene.Lights().size(); i++) {
-        auto offset = 16 + sizeof(LightSource) * i;
-        ((LightSource *) (buf + offset))[0] = *scene.Lights()[i];
-      }
-      Shader::SetShaderStorageBuffer("Scene", buf, bufSize);
-      free(buf);
-
-      TransformationData t{};
-      t.vp = glm::mat4(1.0f);
-
-      int shadowPasses = scene.Lights().size() / 14 + 1;
-      for (int i = 0; i < shadowPasses; i++) {
-        for (auto object: scene.Objects()) {
-          t.model = object->Model();
-          Shader::SetGlobalUniform("Transformations", (char *) &t, sizeof(TransformationData));
-          object->Draw(*shadowShader);
-        }
-      }
-
-      // Set lightTransform in lighting shader for render
-      frameBuf.Bind();
-      glViewport(0, 0, Application::window->width, Application::window->height);
-      Renderer::NewFrame();
-
-      // ---SKYBOX---
-      glDisable(GL_CULL_FACE);
-      glDepthMask(GL_FALSE);
-      skyShader->Bind();
-      TransformationData skyTransforms{};
-      auto view = glm::mat4(glm::mat3(Camera::ViewMatrix()));
-      skyTransforms.vp = renderer.proj * view;
-      skyTransforms.model = glm::mat4(1.0f); // Identity
-      Shader::SetGlobalUniform("Transformations", (char *) &skyTransforms, sizeof(TransformationData));
-      int skyTexSlot = 18;
-      skyboxTex->Bind(skyTexSlot);
-      skyShader->SetUniform("u_cubeTex", U1i, &skyTexSlot);
-      skyCube.Draw(*skyShader);
-      glDepthMask(GL_TRUE);
-      glEnable(GL_CULL_FACE);
-
-      // ---MAIN RENDER---
-      Shader::LoadShader("light")->SetUniform("u_lightFarPlane", U1f, &lfar);
-      int depthTexSlot = 31;
-      glActiveTexture(GL_TEXTURE0 + depthTexSlot);
-      glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeTexArrId);
-      Shader::LoadShader("light")->SetUniform("u_lightDepthMaps", U1i, &depthTexSlot);
 #ifdef IMGUI
       ImGui::Begin("Debug");
-      ImGui::Checkbox("Postprocess", &postProcess);
+//      ImGui::Checkbox("Postprocess", &postProcess);
       if (ImGui::TreeNode("Scene")) {
         if (ImGui::TreeNode("Lights")) {
           int idx = 0;
@@ -346,7 +213,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         l->pos = Camera::Pos() + glm::vec3(0, 0.5f, 0);
         l->color = color(rand() % 255, rand() % 255, rand() % 255, 255);
         l->intensities = {0.01, 1.0, 1.0};
-        l->idx = scene.Lights().size();
+        l->idx = (int) scene.Lights().size();
         scene.AddLight(l);
 
         Log::logf("Adding light. Now there are %d!", scene.Lights().size());
@@ -371,11 +238,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
       renderer.Draw(scene);
 
-      frameBuf.Unbind();
-      Renderer::Clear();
+//      Renderer::Clear();
 
-      int texSlot = 0;
-      frameBuf.BindTexture(GL_COLOR_ATTACHMENT0, texSlot);
 #if ASCII == true
       // ---ASCII Compute Shader---
       int imageSlot = 0;
@@ -399,21 +263,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         putc((char) (chars[i] & 0xff), stdout);
       }
       fflush(stdout);
-#else
-      // ---SCREEN DRAW---
-      screenShader->Bind();
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-      screenShader->SetUniform("u_screenTexture", U1i, &texSlot);
-      screenShader->SetUniform("width", U1i, &Application::window->width);
-      screenShader->SetUniform("height", U1i, &Application::window->height);
-      int pp = (int) postProcess;
-      screenShader->SetUniform("postProcess", U1i, &pp);
-      screenShader->SetUniform("samples", U1i, &frameBuf.samples);
-      glDisable(GL_DEPTH_TEST);
-      screen.Draw(*screenShader);
 #endif
-      Renderer::EndFrame(Application::window);
+      renderer.EndFrame(Application::window);
     }
     // Cleanup
     Renderer::Cleanup(Application::window);
