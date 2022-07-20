@@ -198,7 +198,7 @@ void main() {
         result += calculateLight(lights[i], normal, ambientColor, diffuseColor, specColor, shininess);
     }
 
-//    color = vec4(result, u_alpha);
-    vec3 mappedNormal = mapVec(normal, -1, 1, 0, 1);
-    color = vec4(normal.x, normal.y, normal.z, 1.0);
+    color = vec4(result, u_alpha);
+//    vec3 mappedNormal = mapVec(normal, -1, 1, 0, 1);
+//    color = vec4(normal.x, normal.y, normal.z, 1.0);
 }
