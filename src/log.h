@@ -54,7 +54,7 @@ public:
 
     template<class ... Args>
     static void fatalf(const string &format, Args ... args) {
-      logf(format, args...);
+      logf("FATAL: " + format, args...);
       exit(1);
     }
 

@@ -39,8 +39,26 @@ Shader::Shader(const std::string &baseName, bool compute) {
     idsToDelete[0] = shaderId;
     free(source);
   }
+  int linkStatus;
   glLinkProgram(id);
+  glGetProgramiv(id, GL_LINK_STATUS, &linkStatus);
+  if(linkStatus != GL_TRUE) {
+    int log_length;
+    char message[1024];
+    glGetProgramInfoLog(id, 1024, &log_length, message);
+    Log::fatalf("%s link error: %s", name.c_str(), message);
+  }
+
+  int validateStatus;
   glValidateProgram(id);
+  glGetProgramiv(id, GL_VALIDATE_STATUS, &validateStatus);
+  if(validateStatus != GL_TRUE) {
+    int log_length;
+    char message[1024];
+    glGetProgramInfoLog(id, 1024, &log_length, message);
+    Log::fatalf("%s validation error: %s", name.c_str(), message);
+  }
+
   for (unsigned int i: idsToDelete) {
     // Delete intermediates
     if (i)
@@ -70,7 +88,7 @@ unsigned int Shader::CompileShader(char *source, GLenum type) {
       int log_length;
       char message[1024];
       glGetShaderInfoLog(shaderId, 1024, &log_length, message);
-      Log::logf("%s shader could not be compiled: %s", name.c_str(), message);
+      Log::fatalf("%s shader could not be compiled: %s", name.c_str(), message);
 #ifdef DEBUG
       __debugbreak();
 #endif

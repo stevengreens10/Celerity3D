@@ -1,3 +1,4 @@
+#include <chrono>
 #include <windows.h>
 #include <sstream>
 #include "window.h"
@@ -14,12 +15,10 @@
 #include "Input.h"
 #include "Application.h"
 #include "World.h"
-#include "graphics/Framebuffer.h"
 #include "graphics/CubeTexture.h"
 
 #include "PxPhysicsAPI.h"
 #include "extensions/PxSimpleFactory.h"
-#include "../vendor/PhysX/include/foundation/PxAllocator.h"
 #include "physx/PhysXUtil.h"
 
 #define INIT_WIDTH 800
@@ -99,7 +98,7 @@ void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &light
                           ->SetPos({0, -roomSize, 0})
                           ->SetScale({roomSize, 0.1, roomSize}));*/
 
-  auto l = new LightSource();
+  /*auto l = new LightSource();
   l->type = LIGHT_DIR;
   l->idx = 0;
   l->pos = glm::vec3(1, 1, 1);
@@ -115,7 +114,7 @@ void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &light
           ->SetScale(0.2f)
           ->useLighting = false;
   world.AddObject(nullptr, c);
-  lightToObj[l] = c;
+  lightToObj[l] = c;*/
 
 }
 
@@ -147,7 +146,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     World world;
     unordered_map<LightSource *, Object *> lightToObj;
 
-    bool simulatePhysics = true;
+    bool simulatePhysics = false;
     world.InitPhysics();
     SetupScene(world, lightToObj);
 
@@ -309,8 +308,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       renderer.EndFrame(Application::window);
 
 //      world.SimulatePhysics(1.0f / ImGui::GetIO().Framerate);
+      auto start = std::chrono::high_resolution_clock::now();
+
+
       if (simulatePhysics)
         world.SimulatePhysics(1.0f / 60.0f);
+
+      auto end = std::chrono::high_resolution_clock::now();
+
+      Log::logf("Time taken to simulate physics: %f s", (start - end).count());
     }
     // Cleanup
     Renderer::Cleanup(Application::window);
