@@ -76,7 +76,7 @@ void calculateTangents(vector<Vertex> &vertices, const vector<uint32_t> &indices
   for (int i = 0; i < indices.size(); i += 3) {
     glm::vec3 edge1 = vertices[indices[i + 1]].pos - vertices[indices[i]].pos;
     glm::vec3 edge2 = vertices[indices[i + 2]].pos - vertices[indices[i]].pos;
-    glm::vec2 deltaUV1 = vertices[indices[i + 2]].uv - vertices[indices[i]].uv;
+    glm::vec2 deltaUV1 = vertices[indices[i + 1]].uv - vertices[indices[i]].uv;
     glm::vec2 deltaUV2 = vertices[indices[i + 2]].uv - vertices[indices[i]].uv;
 
     glm::vec3 tangent;

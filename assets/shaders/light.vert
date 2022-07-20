@@ -52,7 +52,7 @@ void main() {
     vec3 T = normalTransform * tangent;
     vec3 B = cross(normal, tangent);
 
-    mat3 TBN = mat3(T, B, v_normal);
+    TBN = mat3(T, B, v_normal);
 
     v_textureUV = texCoord;
 }

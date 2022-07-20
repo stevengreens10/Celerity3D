@@ -136,13 +136,7 @@ void Renderer::NewFrame() {
 }
 
 void Renderer::Draw(const Scene &s) const {
-#pragma pack(push, 1)
-  struct TransformationData {
-      glm::mat4 vp;
-      glm::mat4 model;
-  };
   TransformationData t{};
-#pragma pack(pop)
 
   Shader *shadowShader = Shader::LoadShader("shadow");
   Shader *lightShader = Shader::LoadShader("light");

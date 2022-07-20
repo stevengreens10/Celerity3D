@@ -22,7 +22,8 @@ void Material::Bind(Shader &shader) {
   texturesPresent |= setTexture(shader, "u_diffuseTex", diffuseTex, 1) << 1;
   texturesPresent |= setTexture(shader, "u_specTex", specTex, 2) << 2;
   texturesPresent |= setTexture(shader, "u_shinyTex", shininessTex, 3) << 3;
-  texturesPresent |= setTexture(shader, "u_bumpTex", bumpTex, 4) << 4;
+  if (matData.useBump)
+    texturesPresent |= setTexture(shader, "u_bumpTex", bumpTex, 4) << 4;
   shader.SetUniform("u_texturesPresent", U1i, &texturesPresent);
 
   setMaterialData(shader, matData);

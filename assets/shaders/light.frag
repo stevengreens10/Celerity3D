@@ -180,12 +180,12 @@ void main() {
     specTex    = vec3(texture(u_specTex, scaledUV));
     if ((u_texturesPresent & 8) >= 1)
     shinyTex   = float(texture(u_shinyTex, scaledUV));
-//    if ((u_texturesPresent & 16) >= 1) {
-//        vec3 bumpTex = vec3(texture(u_bumpTex, scaledUV));
-//         Map [0,1] -> [-1,1]
-//        bumpTex  = bumpTex * 2.0 - 1.0;
-//        bumpTex = normalize(TBN * bumpTex);
-//    }
+    if ((u_texturesPresent & 16) >= 1) {
+        vec3 bumpTex = vec3(texture(u_bumpTex, scaledUV));
+        // Map [0,1] -> [-1,1]
+        bumpTex  = bumpTex * 2.0 - 1.0;
+        normal = normalize(TBN * bumpTex);
+    }
 
     vec3 ambientColor = u_ambientColor * ambientTex;
     vec3 diffuseColor = u_diffuseColor * diffuseTex;
@@ -198,5 +198,7 @@ void main() {
         result += calculateLight(lights[i], normal, ambientColor, diffuseColor, specColor, shininess);
     }
 
-    color = vec4(result, u_alpha);
+//    color = vec4(result, u_alpha);
+    vec3 mappedNormal = mapVec(normal, -1, 1, 0, 1);
+    color = vec4(normal.x, normal.y, normal.z, 1.0);
 }

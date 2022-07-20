@@ -40,8 +40,8 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
   scene.AddObject(ground);
 
   Mesh *cube = new Mesh("assets/mesh/bottles.obj");
-  cube->SetPos(glm::vec3(0, -0.5, 0))
-          ->SetScale(10.0f);
+  cube->SetPos(glm::vec3(0, 0.16, 0))
+          ->SetScale(20.0f);
   scene.AddObject(cube);
 
   auto wallMat = new Material("Wall");
@@ -50,7 +50,7 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
 
   float roomSize = 12.0f;
 
-  scene.AddObject((new Cube(*wallMat))
+  /*scene.AddObject((new Cube(*wallMat))
                           ->SetPos({roomSize, 0, 0})
                           ->SetScale({0.1, roomSize, roomSize}));
 
@@ -72,25 +72,25 @@ void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &light
 
   scene.AddObject((new Cube(*wallMat))
                           ->SetPos({0, -roomSize, 0})
-                          ->SetScale({roomSize, 0.1, roomSize}));
+                          ->SetScale({roomSize, 0.1, roomSize}));*/
 
-//  auto l = new LightSource();
-//  l->type = LIGHT_DIR;
-//  l->idx = 0;
-//  l->pos = glm::vec3(1, 1, 1);
-//  l->pos *= 10;
-//  l->dir = glm::normalize(-l->pos);
-//  l->intensities = glm::vec3(0.12f, 1.0f, 0.3f);
-//  l->color = glm::vec3(1.0f, 1.0f, 1.0f);
-//  scene.AddLight(l);
-//
-//  auto *cMat = new Material("lightcube");
-//  auto c = new Cube(*cMat);
-//  c->SetPos(l->pos)
-//          ->SetScale(0.2f)
-//          ->useLighting = false;
-//  scene.AddObject(c);
-//  lightToObj[l] = c;
+  auto l = new LightSource();
+  l->type = LIGHT_DIR;
+  l->idx = 0;
+  l->pos = glm::vec3(1, 1, 1);
+  l->pos *= 10;
+  l->dir = glm::normalize(-l->pos);
+  l->intensities = glm::vec3(0.12f, 1.0f, 0.3f);
+  l->color = glm::vec3(1.0f, 1.0f, 1.0f);
+  scene.AddLight(l);
+
+  auto *cMat = new Material("lightcube");
+  auto c = new Cube(*cMat);
+  c->SetPos(l->pos)
+          ->SetScale(0.2f)
+          ->useLighting = false;
+  scene.AddObject(c);
+  lightToObj[l] = c;
 
 }
 
@@ -176,6 +176,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
                 sceneObj->SetPos(p);
               if (ImGui::SliderFloat3("Rotation", &(r.x), 0, 359))
                 sceneObj->SetRot(r);
+              ImGui::Checkbox("Bump map", &(sceneObj->useBump));
               ImGui::NewLine();
               if (typeid(*sceneObj) == typeid(Mesh)) {
                 auto sceneMesh = (Mesh *) sceneObj;

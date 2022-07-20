@@ -18,6 +18,7 @@ private:
     float texScale = 1.0f;
 public:
     bool useLighting = true;
+    bool useBump = false;
 
 
     explicit Object() {

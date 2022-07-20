@@ -8,6 +8,7 @@
 
 
 struct MaterialData {
+    bool useBump = false;
     glm::vec3 ambientColor;
     glm::vec3 diffuseColor;
     glm::vec3 specColor;

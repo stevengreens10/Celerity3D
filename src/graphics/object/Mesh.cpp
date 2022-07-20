@@ -20,6 +20,7 @@ void Mesh::Draw(Shader &shader) {
       continue;
     for (auto &it: mesh.matToIBO) {
       it.second->Bind();
+      it.first->matData.useBump = useBump;
       it.first->Bind(shader);
       glDrawElements(GL_TRIANGLES, (int) it.second->getCount(), GL_UNSIGNED_INT, nullptr);
     }
@@ -164,12 +165,6 @@ bool Mesh::loadMesh(const string &fileName) {
   }
 
   vao = std::make_unique<VertexArray>();
-  VertexBuffer vbuf(&vertices[0], vertices.size() * sizeof(Vertex));
-  BufferLayout layout;
-  layout.Push<float>(3); // Pos
-  layout.Push<float>(3); // Normal
-  layout.Push<float>(2); // UV
-  vao->AddBuffer(vbuf, layout);
   for (int n = 0; n < meshes.size(); n++) {
     auto &meshData = meshes[n];
     for (const auto &it: meshData.matToIBO) {
@@ -189,10 +184,20 @@ bool Mesh::loadMesh(const string &fileName) {
         indices[idx + 1] = triVertexMap[get<1>(t)];
         indices[idx + 2] = triVertexMap[get<2>(t)];
       }
+
+      calculateTangents(vertices, indices);
       meshData.matToIBO[it.first] = std::make_shared<IndexBuffer>(
               &indices[0], numIndices);
     }
   }
+
+  BufferLayout layout;
+  layout.Push<float>(3); // Pos
+  layout.Push<float>(3); // Normal
+  layout.Push<float>(2); // UV
+  layout.Push<float>(3); // Tangent
+  VertexBuffer vbuf(&vertices[0], vertices.size() * sizeof(Vertex));
+  vao->AddBuffer(vbuf, layout);
 
   Log::logf("Mesh loaded!");
   return true;
