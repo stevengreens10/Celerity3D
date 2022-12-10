@@ -1,5 +1,4 @@
 #include <windows.h>
-#include <cstdio>
 #include <sstream>
 #include "window.h"
 #include "graphics/Shader.h"
@@ -14,8 +13,14 @@
 #include "Camera.h"
 #include "Input.h"
 #include "Application.h"
-#include "graphics/Scene.h"
+#include "World.h"
+#include "graphics/Framebuffer.h"
 #include "graphics/CubeTexture.h"
+
+#include "PxPhysicsAPI.h"
+#include "extensions/PxSimpleFactory.h"
+#include "../vendor/PhysX/include/foundation/PxAllocator.h"
+#include "physx/PhysXUtil.h"
 
 #define INIT_WIDTH 800
 #define INIT_HEIGHT 600
@@ -28,71 +33,94 @@
 
 glm::vec4 color(int i, int i1, int i2);
 
-void SetupScene(Scene &scene, std::unordered_map<LightSource *, Object *> &lightToObj) {
+void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &lightToObj) {
+
+  physx::PxMaterial *physMaterial = world.physics->createMaterial(0.5f, 0.5f, 0.6f);
+
   auto m = new Material("Ground");
   m->diffuseTex = Texture::Load("assets/images/ground.jpg", true);
   m->matData.diffuseColor = glm::vec3(1.0f);
   m->matData.specColor = glm::vec3(0.0f);
   Cube *ground = new Cube(*m);
-  ground->SetPos(glm::vec3(0, -2, 0.0f))
-          ->SetScale(glm::vec3(200, 0.1, 200))
+  const glm::vec groundPos = glm::vec3(0, -2, 0.0f);
+  const glm::vec groundScale = glm::vec3(200, 0.1, 200);
+  ground->SetPos(groundPos)
+          ->SetScale(groundScale)
           ->SetTexScale(100.0f);
-  scene.AddObject(ground);
 
-  Mesh *cube = new Mesh("assets/mesh/bottles.obj");
-  cube->SetPos(glm::vec3(0, -0.5, 0))
-          ->SetScale(10.0f);
-  scene.AddObject(cube);
+  physx::PxTransform transform = PhysXUtil::transformFromPosRot(groundPos);
+  physx::PxRigidStatic *groundActor = world.physics->createRigidStatic(transform);
+  physx::PxShape *groundShape = world.physics->createShape(
+          physx::PxBoxGeometry(groundScale.x, groundScale.y, groundScale.z), *physMaterial);
+
+  groundActor->attachShape(*groundShape);
+  world.AddObject(groundActor, ground);
+
+  Mesh *cube = new Mesh("assets/mesh/cube.obj");
+  const glm::vec cubePos = glm::vec3(0, 5, 0);
+  cube->SetPos(cubePos)
+          ->SetScale(1);
+
+  transform = PhysXUtil::transformFromPosRot(cubePos);
+  physx::PxRigidDynamic *cubeActor = world.physics->createRigidDynamic(transform);
+  physx::PxShape *cubeShape = world.physics->createShape(
+          physx::PxBoxGeometry(1, 1, 1), *physMaterial);
+
+  cubeActor->attachShape(*cubeShape);
+  world.AddObject(cubeActor, cube);
 
   auto wallMat = new Material("Wall");
   wallMat->matData.diffuseColor = glm::vec3(color(84, 157, 235, 255));
   wallMat->matData.specColor = glm::vec3(1.0f);
 
-  float roomSize = 12.0f;
+  /*float roomSize = 12.0f;
 
-  scene.AddObject((new Cube(*wallMat))
+  world.AddObject((new Cube(*wallMat))
                           ->SetPos({roomSize, 0, 0})
                           ->SetScale({0.1, roomSize, roomSize}));
 
-  scene.AddObject((new Cube(*wallMat))
+  world.AddObject((new Cube(*wallMat))
                           ->SetPos({-roomSize, 0, 0})
                           ->SetScale({0.1, roomSize, roomSize}));
 
-  scene.AddObject((new Cube(*wallMat))
+  world.AddObject((new Cube(*wallMat))
                           ->SetPos({0, 0, roomSize})
                           ->SetScale({roomSize, roomSize, 0.1}));
 
-  scene.AddObject((new Cube(*wallMat))
+  world.AddObject((new Cube(*wallMat))
                           ->SetPos({0, 0, -roomSize})
                           ->SetScale({roomSize, roomSize, 0.1}));
 
-  scene.AddObject((new Cube(*wallMat))
+  world.AddObject((new Cube(*wallMat))
                           ->SetPos({0, roomSize, 0})
                           ->SetScale({roomSize, 0.1, roomSize}));
 
-  scene.AddObject((new Cube(*wallMat))
+  world.AddObject((new Cube(*wallMat))
                           ->SetPos({0, -roomSize, 0})
-                          ->SetScale({roomSize, 0.1, roomSize}));
+                          ->SetScale({roomSize, 0.1, roomSize}));*/
 
-//  auto l = new LightSource();
-//  l->type = LIGHT_DIR;
-//  l->idx = 0;
-//  l->pos = glm::vec3(1, 1, 1);
-//  l->pos *= 10;
-//  l->dir = glm::normalize(-l->pos);
-//  l->intensities = glm::vec3(0.12f, 1.0f, 0.3f);
-//  l->color = glm::vec3(1.0f, 1.0f, 1.0f);
-//  scene.AddLight(l);
-//
-//  auto *cMat = new Material("lightcube");
-//  auto c = new Cube(*cMat);
-//  c->SetPos(l->pos)
-//          ->SetScale(0.2f)
-//          ->useLighting = false;
-//  scene.AddObject(c);
-//  lightToObj[l] = c;
+  auto l = new LightSource();
+  l->type = LIGHT_DIR;
+  l->idx = 0;
+  l->pos = glm::vec3(1, 1, 1);
+  l->pos *= 10;
+  l->dir = glm::normalize(-l->pos);
+  l->intensities = glm::vec3(0.12f, 1.0f, 0.3f);
+  l->color = glm::vec3(1.0f, 1.0f, 1.0f);
+  world.AddLight(l);
+
+  auto *cMat = new Material("lightcube");
+  auto c = new Cube(*cMat);
+  c->SetPos(l->pos)
+          ->SetScale(0.2f)
+          ->useLighting = false;
+  world.AddObject(nullptr, c);
+  lightToObj[l] = c;
 
 }
+
+static physx::PxDefaultAllocator gAllocator;
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow) {
   {
@@ -116,12 +144,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     uint32_t *chars = (uint32_t *) glMapNamedBuffer(asciiBuf, GL_READ_ONLY);
 #endif
 
-    Scene scene;
+    World world;
     unordered_map<LightSource *, Object *> lightToObj;
 
-    SetupScene(scene, lightToObj);
+    bool simulatePhysics = true;
+    world.InitPhysics();
+    SetupScene(world, lightToObj);
 
-    scene.skyboxTex = skyboxTex;
+    world.skyboxTex = skyboxTex;
 
     Renderer &renderer = *Application::renderer;
 
@@ -140,10 +170,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 #ifdef IMGUI
       ImGui::Begin("Debug");
 //      ImGui::Checkbox("Postprocess", &postProcess);
+      ImGui::Checkbox("Do Physic", &simulatePhysics);
       if (ImGui::TreeNode("Scene")) {
         if (ImGui::TreeNode("Lights")) {
           int idx = 0;
-          for (auto sceneLight: scene.Lights()) {
+          for (auto sceneLight: world.Lights()) {
             std::stringstream name;
             name << idx++;
             if (ImGui::TreeNode(name.str().c_str())) {
@@ -160,7 +191,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         }
         if (ImGui::TreeNode("Objects")) {
           int idx = 0;
-          for (auto sceneObj: scene.Objects()) {
+          for (auto sceneObj: world.Objects()) {
             std::stringstream name;
             name << idx++;
             if (ImGui::TreeNode(name.str().c_str())) {
@@ -197,7 +228,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 #endif
 
       // Map cube pos and color to light source
-      for (auto l: scene.Lights()) {
+      for (auto l: world.Lights()) {
         auto o = (Primitive *) lightToObj[l];
         if (o) {
           o->SetPos(l->pos);
@@ -213,30 +244,41 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         l->pos = Camera::Pos() + glm::vec3(0, 0.5f, 0);
         l->color = color(rand() % 255, rand() % 255, rand() % 255, 255);
         l->intensities = {0.01, 1.0, 1.0};
-        l->idx = (int) scene.Lights().size();
-        scene.AddLight(l);
+        l->idx = (int) world.Lights().size();
+        world.AddLight(l);
 
-        Log::logf("Adding light. Now there are %d!", scene.Lights().size());
+        Log::logf("Adding light. Now there are %d!", world.Lights().size());
         auto *cMat = new Material("lightcube");
         auto c = new Cube(*cMat);
         c->SetPos(Camera::Pos())
                 ->SetScale(0.3f)
                 ->useLighting = false;
 
-        scene.AddObject(c);
+        world.AddObject(nullptr, c);
         lightToObj[l] = c;
-        Log::logf("Adding object. Now there are %d!", scene.Objects().size());
+        Log::logf("Adding object. Now there are %d!", world.Objects().size());
       } else if (Input::IsPressed(VK_BACK) && framesSinceAdd >= 30) {
         framesSinceAdd = 0;
         auto *cMat = new Material("cubemat");
         cMat->matData.diffuseColor = color(rand() % 255, rand() % 255, rand() % 255, 255);
         auto c = new Cube(*cMat);
-        c->SetPos(Camera::Pos() - glm::vec3(0, 0.5, 0))
-                ->SetScale(1.0f);
-        scene.AddObject(c);
+        const glm::vec3 cubePos = Camera::Pos() - glm::vec3(0, 0.5, 0);
+        c->SetPos(cubePos)
+                ->SetScale(0.5f);
+
+        physx::PxMaterial *physMaterial = world.physics->createMaterial(0.5f, 0.5f, 0.6f);
+        physx::PxTransform transform = PhysXUtil::transformFromPosRot(cubePos);
+        physx::PxRigidDynamic *cubeActor = world.physics->createRigidDynamic(transform);
+        physx::PxShape *cubeShape = world.physics->createShape(
+                physx::PxBoxGeometry(0.5f, 0.5f, 0.5f), *physMaterial);
+        glm::vec3 velocity = glm::normalize(Camera::Dir()) * 30.0f;
+        cubeActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
+        cubeActor->setAngularDamping(0.5f);
+        cubeActor->attachShape(*cubeShape);
+        world.AddObject(cubeActor, c);
       }
 
-      renderer.Draw(scene);
+      renderer.Draw(world);
 
 //      Renderer::Clear();
 
@@ -265,11 +307,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       fflush(stdout);
 #endif
       renderer.EndFrame(Application::window);
+
+//      world.SimulatePhysics(1.0f / ImGui::GetIO().Framerate);
+      if (simulatePhysics)
+        world.SimulatePhysics(1.0f / 60.0f);
     }
     // Cleanup
     Renderer::Cleanup(Application::window);
   }
   Log::close();
+
 
   return 0;
 }

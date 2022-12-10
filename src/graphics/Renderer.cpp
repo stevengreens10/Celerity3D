@@ -135,7 +135,7 @@ void Renderer::NewFrame() {
 #endif
 }
 
-void Renderer::Draw(const Scene &s) const {
+void Renderer::Draw(const World &s) const {
 #pragma pack(push, 1)
   struct TransformationData {
       glm::mat4 vp;

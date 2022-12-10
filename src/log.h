@@ -52,6 +52,12 @@ public:
 #endif
     }
 
+    template<class ... Args>
+    static void fatalf(const string &format, Args ... args) {
+      logf(format, args...);
+      exit(1);
+    }
+
     static void close();
 
 };

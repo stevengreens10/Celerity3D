@@ -11,7 +11,7 @@
 #include "../window.h"
 #include "object/primitive/Cube.h"
 #include "object/primitive/Square.h"
-#include "Scene.h"
+#include "../World.h"
 #include "Framebuffer.h"
 
 #define MAX_LIGHTS 100
@@ -33,7 +33,7 @@ private:
 public:
     static void Clear();
 
-    void Draw(const Scene &s) const;
+    void Draw(const World &s) const;
 
     void SetProjection(int width, int height);
 
