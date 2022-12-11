@@ -4,6 +4,7 @@
 #include <imgui_internal.h>
 
 #include <memory>
+#include <chrono>
 
 #include "Renderer.h"
 #include "../log.h"
@@ -112,9 +113,11 @@ void Renderer::Cleanup(Window *win) {
 }
 
 void Renderer::EndFrame(Window *win) {
+  auto start = std::chrono::high_resolution_clock::now();
 #ifdef IMGUI
   Renderer::UpdateImGui(win);
 #endif
+  Log::logf("Time taken to update ImGUI: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
   SwapBuffers(win->deviceContext);
 }
 
@@ -290,15 +293,15 @@ void Renderer::UpdateImGui(Window *win) {
   ImGui::Render();
   ImGuiIO &io = ImGui::GetIO();
   (void) io;
-  glViewport(0, 0, (int) io.DisplaySize.x, (int) io.DisplaySize.y);
+//  glViewport(0, 0, (int) io.DisplaySize.x, (int) io.DisplaySize.y);
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
   // Update and Render additional Platform Windows
   // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
   if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-    HDC backup_current_context = GetDC(win->hWnd);
+//    HDC backup_current_context = GetDC(win->hWnd);
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
-    wglMakeCurrent(backup_current_context, win->renderContext);
+//    wglMakeCurrent(backup_current_context, win->renderContext);
   }
 }

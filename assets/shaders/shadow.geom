@@ -5,7 +5,7 @@
 #define SPOTLIGHT 2
 
 layout(triangles) in;
-layout(triangle_strip, max_vertices=252) out;
+layout(triangle_strip, max_vertices=78) out;
 
 
 struct LightSource {

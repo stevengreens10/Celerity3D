@@ -157,6 +157,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     int framesSinceAdd = 30;
     // --- MAIN LOOP
     while (true) {
+      auto start = std::chrono::high_resolution_clock::now();
       framesSinceAdd++;
       HandleWindowMessage();
       Application::Update();
@@ -165,7 +166,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       }
 
       renderer.NewFrame();
+      Log::logf("Time at start loop: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
 
+      start = std::chrono::high_resolution_clock::now();
 #ifdef IMGUI
       ImGui::Begin("Debug");
 //      ImGui::Checkbox("Postprocess", &postProcess);
@@ -225,7 +228,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       ImGui::Text("%.3f ms/frame (%.1f) FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
       ImGui::End();
 #endif
+      Log::logf("Time taken to GUI: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
 
+      start = std::chrono::high_resolution_clock::now();
       // Map cube pos and color to light source
       for (auto l: world.Lights()) {
         auto o = (Primitive *) lightToObj[l];
@@ -234,6 +239,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
           o->material.get().matData.diffuseColor = l->color;
         }
       }
+      Log::logf("Time taken to update lights: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
+
 
       // Add lights dynamically
       if (Input::IsPressed(VK_TAB) && framesSinceAdd >= 30) {
@@ -277,7 +284,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         world.AddObject(cubeActor, c);
       }
 
+      start = std::chrono::high_resolution_clock::now();
       renderer.Draw(world);
+      Log::logf("Time taken to render: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
 
 //      Renderer::Clear();
 
@@ -305,18 +314,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       }
       fflush(stdout);
 #endif
+
+      start = std::chrono::high_resolution_clock::now();
       renderer.EndFrame(Application::window);
+      Log::logf("Time taken to end frame: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
 
 //      world.SimulatePhysics(1.0f / ImGui::GetIO().Framerate);
-      auto start = std::chrono::high_resolution_clock::now();
+      start = std::chrono::high_resolution_clock::now();
 
 
       if (simulatePhysics)
         world.SimulatePhysics(1.0f / 60.0f);
 
-      auto end = std::chrono::high_resolution_clock::now();
-
-      Log::logf("Time taken to simulate physics: %f s", (start - end).count());
+      Log::logf("Time taken to simulate physics: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
     }
     // Cleanup
     Renderer::Cleanup(Application::window);
