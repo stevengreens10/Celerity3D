@@ -10,6 +10,7 @@
 class Physics {
 private:
     static inline physx::PxFoundation *pxFoundation;
+    static inline physx::PxOmniPvd *omniPvd;
     static inline physx::PxScene *pxScene;
     static inline physx::PxPhysics *physics;
 public:

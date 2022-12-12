@@ -3,6 +3,9 @@
 //
 
 #include "Physics.h"
+#include "omnipvd/PxOmniPvd.h"
+#include "pvdruntime/OmniPvdWriter.h"
+#include "pvdruntime/OmniPvdFileWriteStream.h"
 #include "PhysXUtil.h"
 
 void Physics::init() {
@@ -13,10 +16,29 @@ void Physics::init() {
   if (!pxFoundation)
     Log::fatalf("PxCreateFoundation failed!");
 
+  // Create the OmniPVD instance
+  omniPvd = PxCreateOmniPvd(*pxFoundation);
+
+  if (!omniPvd) {
+    Log::fatalf("Could not set up omnipvd");
+  }
+  OmniPvdWriter *omniWriter = omniPvd->getWriter();
+  // Uncomment for debugging the OmniPvd write stream
+  omniWriter->setLogFunction([](char *logMsg) {std::cout << logMsg << std::endl;});
+  OmniPvdFileWriteStream *omniFileWriteStream = omniPvd->getFileWriteStream();
+  if (omniWriter && omniFileWriteStream) {
+    omniWriter->setWriteStream((OmniPvdWriteStream *) omniFileWriteStream);
+  }
+
   physics = PxCreatePhysics(PX_PHYSICS_VERSION, *pxFoundation,
-                            physx::PxTolerancesScale(100, 981), false);
+                            physx::PxTolerancesScale(100, 981), true, nullptr, omniPvd);
   if (!physics)
     Log::fatalf("PxCreatePhysics failed!");
+
+  // Once the PhysX instance is created with a non-zero OmniPVD object, one can now proced to set the simulation
+  omniFileWriteStream->setFileName("myoutputfile.ovd");
+  omniPvd->startSampling();
+
   physx::PxSceneDesc sceneDesc(physics->getTolerancesScale());
   sceneDesc.gravity = physx::PxVec3(0, -9.81f, 0);
 //    sceneDesc.bounceThresholdVelocity = physx::PxReal(?f);
@@ -71,5 +93,6 @@ void Physics::addActor(physx::PxActor *actor) {
 void Physics::cleanup() {
   PX_RELEASE(pxScene);
   PX_RELEASE(physics);
+  omniPvd->release();
   PX_RELEASE(pxFoundation);
 }

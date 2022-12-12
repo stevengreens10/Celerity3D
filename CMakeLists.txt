@@ -39,6 +39,6 @@ ADD_CUSTOM_COMMAND(TARGET ${PROJECT_NAME} POST_BUILD
 endforeach()
 
 target_link_libraries(${PROJECT_NAME} d2d1 opengl32 Ws2_32 ole32 comctl32 gdi32 comdlg32 uuid dwmapi xinput dbghelp
-        PhysX_64 PhysXCommon_64 PhysXFoundation_64 PhysXExtensions_static_64)
+        PhysX_64 PhysXCommon_64 PhysXFoundation_64 PVDRuntime_64 PhysXExtensions_static_64)
 
 
