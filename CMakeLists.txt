@@ -7,7 +7,7 @@ FILE(GLOB_RECURSE MainSources src/*.cpp)
 FILE(GLOB IMGUI_SOURCES vendor/imgui/*.cpp)
 list(APPEND IMGUI_SOURCES vendor/imgui/backends/imgui_impl_win32.cpp vendor/imgui/backends/imgui_impl_opengl3.cpp)
 
-add_executable(${PROJECT_NAME} WIN32 ${MainSources} ${IMGUI_SOURCES} ./vendor/glew/src/glew.c src/physx/PhysXUtil.h)
+add_executable(${PROJECT_NAME} WIN32 ${MainSources} ${IMGUI_SOURCES} ./vendor/glew/src/glew.c)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
@@ -26,7 +26,6 @@ target_link_directories(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/lib
         PRIVATE ${CMAKE_BINARY_DIR}/bin
         PRIVATE ./vendor/physx/lib)
 
-execute_process(COMMAND mkdir -p ${CMAKE_BINARY_DIR}/lib)
 
 file(GLOB PhysX_DLLs
         "./vendor/PhysX/lib/*.dll"

@@ -20,6 +20,8 @@
 #include "PxPhysicsAPI.h"
 #include "extensions/PxSimpleFactory.h"
 #include "physx/PhysXUtil.h"
+#include "physx/Physics.h"
+#include "sample/MoveComponent.h"
 
 #define INIT_WIDTH 800
 #define INIT_HEIGHT 600
@@ -33,9 +35,7 @@
 glm::vec4 color(int i, int i1, int i2);
 
 void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &lightToObj) {
-
-  physx::PxMaterial *physMaterial = world.physics->createMaterial(0.5f, 0.5f, 0.6f);
-
+  Log::logf("Populating world");
   auto m = new Material("Ground");
   m->diffuseTex = Texture::Load("assets/images/ground.jpg", true);
   m->matData.diffuseColor = glm::vec3(1.0f);
@@ -47,26 +47,20 @@ void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &light
           ->SetScale(groundScale)
           ->SetTexScale(100.0f);
 
-  physx::PxTransform transform = PhysXUtil::transformFromPosRot(groundPos);
-  physx::PxRigidStatic *groundActor = world.physics->createRigidStatic(transform);
-  physx::PxShape *groundShape = world.physics->createShape(
-          physx::PxBoxGeometry(groundScale.x, groundScale.y, groundScale.z), *physMaterial);
-
-  groundActor->attachShape(*groundShape);
-  world.AddObject(groundActor, ground);
+  PhysicsMaterial physMat{0.5, 0.5, 0.6};
+  physx::PxRigidActor *groundActor = Physics::createRigidStatic(groundPos, glm::vec3(0.0f), groundScale, physMat);
+  ground->SetPhysicsActor(groundActor);
+  world.AddObject(ground);
 
   Mesh *cube = new Mesh("assets/mesh/cube.obj");
   const glm::vec cubePos = glm::vec3(0, 5, 0);
   cube->SetPos(cubePos)
           ->SetScale(1);
 
-  transform = PhysXUtil::transformFromPosRot(cubePos);
-  physx::PxRigidDynamic *cubeActor = world.physics->createRigidDynamic(transform);
-  physx::PxShape *cubeShape = world.physics->createShape(
-          physx::PxBoxGeometry(1, 1, 1), *physMaterial);
-
-  cubeActor->attachShape(*cubeShape);
-  world.AddObject(cubeActor, cube);
+  physx::PxRigidActor *cubeActor = Physics::createRigidDynamic(cubePos, glm::vec3(0.0f), glm::vec3(1.0f), physMat);
+  cube->SetPhysicsActor(cubeActor);
+  cube->AddComponent(new MoveComponent());
+  world.AddObject(cube);
 
   auto wallMat = new Material("Wall");
   wallMat->matData.diffuseColor = glm::vec3(color(84, 157, 235, 255));
@@ -116,10 +110,8 @@ void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &light
   world.AddObject(nullptr, c);
   lightToObj[l] = c;*/
 
+  Log::logf("Done populating world");
 }
-
-static physx::PxDefaultAllocator gAllocator;
-
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow) {
   {
@@ -147,7 +139,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     unordered_map<LightSource *, Object *> lightToObj;
 
     bool simulatePhysics = false;
-    world.InitPhysics();
+    Physics::init();
     SetupScene(world, lightToObj);
 
     world.skyboxTex = skyboxTex;
@@ -156,6 +148,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
     int framesSinceAdd = 30;
     // --- MAIN LOOP
+    auto lastFrameTime = std::chrono::high_resolution_clock::now();
     while (true) {
       auto start = std::chrono::high_resolution_clock::now();
       framesSinceAdd++;
@@ -166,7 +159,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       }
 
       renderer.NewFrame();
-      Log::logf("Time at start loop: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
+      Log::logf("Time at start loop: %f ms",
+                std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
       start = std::chrono::high_resolution_clock::now();
 #ifdef IMGUI
@@ -228,7 +222,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       ImGui::Text("%.3f ms/frame (%.1f) FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
       ImGui::End();
 #endif
-      Log::logf("Time taken to GUI: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
+      Log::logf("Time taken to GUI: %f ms",
+                std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
       start = std::chrono::high_resolution_clock::now();
       // Map cube pos and color to light source
@@ -239,7 +234,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
           o->material.get().matData.diffuseColor = l->color;
         }
       }
-      Log::logf("Time taken to update lights: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
+      Log::logf("Time taken to update lights: %f ms",
+                std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
 
       // Add lights dynamically
@@ -260,7 +256,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
                 ->SetScale(0.3f)
                 ->useLighting = false;
 
-        world.AddObject(nullptr, c);
+        world.AddObject(c);
         lightToObj[l] = c;
         Log::logf("Adding object. Now there are %d!", world.Objects().size());
       } else if (Input::IsPressed(VK_BACK) && framesSinceAdd >= 30) {
@@ -272,21 +268,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         c->SetPos(cubePos)
                 ->SetScale(0.5f);
 
-        physx::PxMaterial *physMaterial = world.physics->createMaterial(0.5f, 0.5f, 0.6f);
-        physx::PxTransform transform = PhysXUtil::transformFromPosRot(cubePos);
-        physx::PxRigidDynamic *cubeActor = world.physics->createRigidDynamic(transform);
-        physx::PxShape *cubeShape = world.physics->createShape(
-                physx::PxBoxGeometry(0.5f, 0.5f, 0.5f), *physMaterial);
+        PhysicsMaterial physMat{0.5f, 0.5f, 0.6f};
         glm::vec3 velocity = glm::normalize(Camera::Dir()) * 30.0f;
+        physx::PxRigidDynamic *cubeActor = Physics::createRigidDynamic(cubePos, glm::vec3(0.0f), glm::vec3(0.5f),
+                                                                       physMat);
         cubeActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
         cubeActor->setAngularDamping(0.5f);
-        cubeActor->attachShape(*cubeShape);
-        world.AddObject(cubeActor, c);
+        c->SetPhysicsActor(cubeActor);
+        world.AddObject(c);
       }
 
       start = std::chrono::high_resolution_clock::now();
       renderer.Draw(world);
-      Log::logf("Time taken to render: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
+      Log::logf("Time taken to render: %f ms",
+                std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
 //      Renderer::Clear();
 
@@ -317,18 +312,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
       start = std::chrono::high_resolution_clock::now();
       renderer.EndFrame(Application::window);
-      Log::logf("Time taken to end frame: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
+      Log::logf("Time taken to end frame: %f ms",
+                std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
-//      world.SimulatePhysics(1.0f / ImGui::GetIO().Framerate);
       start = std::chrono::high_resolution_clock::now();
 
-
+      auto endFrameTime = std::chrono::high_resolution_clock::now();
+      Application::deltaT = std::chrono::duration<double, std::milli>(endFrameTime - lastFrameTime).count() / 1000.0f;
       if (simulatePhysics)
-        world.SimulatePhysics(1.0f / 60.0f);
+        world.Update(Application::deltaT);
 
-      Log::logf("Time taken to simulate physics: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
+      Log::logf("Time taken to simulate physics: %f ms",
+                std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
+
+      lastFrameTime = endFrameTime;
     }
     // Cleanup
+    Physics::cleanup();
     Renderer::Cleanup(Application::window);
   }
   Log::close();

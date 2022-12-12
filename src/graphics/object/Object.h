@@ -7,6 +7,11 @@
 #include "../Shader.h"
 #include "../Texture.h"
 #include "../Material.h"
+#include "PxPhysicsAPI.h"
+#include "../../Component.h"
+
+// Forward declaration
+class Component;
 
 class Object {
 private:
@@ -15,7 +20,12 @@ private:
     // In degrees
     glm::vec3 rot{};
     glm::mat4 model;
+
+    physx::PxRigidActor *physActor = nullptr;
+
     float texScale = 1.0f;
+
+    std::vector<Component *> components;
 public:
     bool useLighting = true;
 
@@ -30,17 +40,21 @@ public:
 
     Object *SetPos(glm::vec3 p);
 
+    Object *SetRot(glm::vec3 r);
+
     Object *Translate(glm::vec3 p);
 
     Object *SetScale(float s);
 
     Object *SetScale(glm::vec3 s);
 
+    Object *SetPhysicsActor(physx::PxRigidActor *actor);
+
     inline const glm::vec3 &Scale() const { return scale; }
 
     inline const glm::vec3 &Rot() const { return rot; }
 
-    Object *SetRot(glm::vec3 r);
+    inline physx::PxActor *PhysicsActor() { return physActor; }
 
     inline float TexScale() const { return texScale; }
 
@@ -49,6 +63,12 @@ public:
     inline const glm::mat4 &Model() const { return model; }
 
     void UpdateModel();
+
+    void AddComponent(Component *c);
+
+    void StartComponents();
+
+    void UpdateComponents();
 
     virtual void Draw(Shader &shader) = 0;
 

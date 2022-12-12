@@ -10,6 +10,7 @@ public:
     inline static Window *window;
     inline static Renderer *renderer;
     inline static bool running = true;
+    inline static float deltaT = 0.0f;
 
     static void Init();
 
