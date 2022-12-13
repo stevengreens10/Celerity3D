@@ -11,7 +11,7 @@ World::~World() {
 
 void World::Update(float deltaT) {
   int numActors;
-  std::vector<physx::PxActor *> activeActors = Physics::simulate(deltaT, numActors);
+  physx::PxActor **activeActors = Physics::simulate(deltaT, numActors);
 
   for (int i = 0; i < numActors; i++) {
     physx::PxActor *activeActor = activeActors[i];

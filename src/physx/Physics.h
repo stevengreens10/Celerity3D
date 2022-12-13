@@ -17,7 +17,7 @@ public:
 
     static void init();
 
-    static std::vector<physx::PxActor *> simulate(float deltaT, int &numActors);
+    static physx::PxActor **simulate(float deltaT, int &numActors);
 
     static physx::PxRigidStatic *createRigidStatic(glm::vec3 pos, glm::vec3 rot, glm::vec3 scale, PhysicsMaterial mat);
 

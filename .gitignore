@@ -6,3 +6,4 @@ imgui.ini
 log.txt
 CMakeSettings.json
 *.trace
+*.ovd

@@ -57,7 +57,7 @@ void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &light
   cube->SetPos(cubePos)
           ->SetScale(1);
 
-  physx::PxRigidActor *cubeActor = Physics::createRigidDynamic(cubePos, glm::vec3(0.0f), glm::vec3(1.0f), physMat);
+  physx::PxRigidDynamic *cubeActor = Physics::createRigidDynamic(cubePos, glm::vec3(0.0f), glm::vec3(1.0f), physMat);
   cube->SetPhysicsActor(cubeActor);
 //  cube->AddComponent(new MoveComponent());
   world.AddObject(cube);
@@ -162,7 +162,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
       renderer.NewFrame();
       Log::debugf("Time at start loop: %f ms",
-                std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
+                  std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
       start = std::chrono::high_resolution_clock::now();
 #ifdef IMGUI
@@ -206,6 +206,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
               if (ImGui::SliderFloat3("Rotation", &(r.x), 0, 359))
                 sceneObj->SetRot(r);
               ImGui::NewLine();
+              physx::PxActor *pActor = sceneObj->PhysicsActor();
+              if (pActor && pActor->getType() == physx::PxActorType::eRIGID_DYNAMIC) {
+                ImGui::Text("Is sleeping? %s", ((physx::PxRigidDynamic *) (pActor))->isSleeping() ? "true" : "false");
+                ImGui::NewLine();
+              }
               if (typeid(*sceneObj) == typeid(Mesh)) {
                 auto sceneMesh = (Mesh *) sceneObj;
                 for (auto &submesh: sceneMesh->meshes) {
@@ -225,7 +230,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       ImGui::End();
 #endif
       Log::debugf("Time taken to GUI: %f ms",
-                std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
+                  std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
       start = std::chrono::high_resolution_clock::now();
       // Map cube pos and color to light source
@@ -237,7 +242,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         }
       }
       Log::debugf("Time taken to update lights: %f ms",
-                std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
+                  std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
 
       // Add lights dynamically
@@ -284,7 +289,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       start = std::chrono::high_resolution_clock::now();
       renderer.Draw(world);
       Log::debugf("Time taken to render: %f ms",
-                std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
+                  std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
 //      Renderer::Clear();
 
@@ -316,7 +321,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       start = std::chrono::high_resolution_clock::now();
       renderer.EndFrame(Application::window);
       Log::debugf("Time taken to end frame: %f ms",
-                std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
+                  std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
       start = std::chrono::high_resolution_clock::now();
 
@@ -326,17 +331,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         world.Update(Application::deltaT);
 
       Log::debugf("Time taken to simulate physics: %f ms",
-                std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
+                  std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
       lastFrameTime = endFrameTime;
-
-      auto p1 = latestObject->Pos();
-      auto p2 = ((physx::PxRigidActor *)latestObject->PhysicsActor())->getGlobalPose().p;
-      Log::logf("Engine pos: (%f,%f,%f) | PhysX pos: (%f, %f, %f)", p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
-
-      auto r1 = latestObject->Rot();
-      auto r2 = PhysXUtil::physQuatRotToGlmEuler(((physx::PxRigidActor *)latestObject->PhysicsActor())->getGlobalPose().q);
-      Log::logf("Engine rot: (%f,%f,%f) | PhysX rot: (%f, %f, %f)", r1.x, r1.y, r1.z, r2.x, r2.y, r2.z);
 
     }
     // Cleanup

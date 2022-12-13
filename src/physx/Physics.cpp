@@ -47,26 +47,19 @@ void Physics::init() {
   sceneDesc.cpuDispatcher = dispatcher;
   sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
   pxScene = physics->createScene(sceneDesc);
-//  pxScene->setFlag(physx::PxSceneFlag::eENABLE_ACTIVE_ACTORS, true);
+  pxScene->setFlag(physx::PxSceneFlag::eENABLE_ACTIVE_ACTORS, true);
 
   Log::logf("PhysX initialized!");
 }
 
-std::vector<physx::PxActor *> Physics::simulate(float deltaT, int &numActors) {
+physx::PxActor **Physics::simulate(float deltaT, int &numActors) {
   pxScene->simulate(physx::PxReal(deltaT));
   /* blocking */
   pxScene->fetchResults(true);
 
   physx::PxU32 pxNumActors;
-//  physx::PxActor **actors = pxScene->getActiveActors(pxNumActors);
-//  numActors = pxNumActors;
-
-  physx::PxU32 nbActors = pxScene->getNbActors(
-          physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
-  std::vector<physx::PxActor *> actors(nbActors);
-  pxScene->getActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC, &actors[0], nbActors);
-
-  numActors = nbActors;
+  physx::PxActor **actors = pxScene->getActiveActors(pxNumActors);
+  numActors = pxNumActors;
 
   Log::logf("Simulating %f seconds. Updating %d physics actors", deltaT, numActors);
   return actors;
@@ -92,6 +85,10 @@ physx::PxRigidDynamic *Physics::createRigidDynamic(glm::vec3 pos, glm::vec3 rot,
           physx::PxBoxGeometry(scale.x, scale.y, scale.z), *physMaterial);
   physx::PxRigidDynamic *rigidDynamic = physics->createRigidDynamic(transform);
   rigidDynamic->attachShape(*shape);
+
+  // TODO: Better solution
+  rigidDynamic->setSleepThreshold(0.0f);
+
   return rigidDynamic;
 }
 

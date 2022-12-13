@@ -117,7 +117,6 @@ void Renderer::EndFrame(Window *win) {
 #ifdef IMGUI
   Renderer::UpdateImGui(win);
 #endif
-  Log::logf("Time taken to update ImGUI: %f ms", std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now()-start).count());
   SwapBuffers(win->deviceContext);
 }
 
