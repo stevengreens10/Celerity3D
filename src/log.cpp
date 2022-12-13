@@ -203,7 +203,7 @@ void Log::file(const string &filename) {
   if (out != &std::cout) {
     delete out;
   }
-  out = new ofstream(filename, ofstream::out);
+  out = new ofstream(filename, ofstream::out | ofstream::trunc);
 }
 
 void Log::close() {

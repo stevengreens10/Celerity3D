@@ -11,7 +11,7 @@ World::~World() {
 
 void World::Update(float deltaT) {
   int numActors;
-  physx::PxActor **activeActors = Physics::simulate(deltaT, numActors);
+  std::vector<physx::PxActor *> activeActors = Physics::simulate(deltaT, numActors);
 
   for (int i = 0; i < numActors; i++) {
     physx::PxActor *activeActor = activeActors[i];
@@ -24,8 +24,8 @@ void World::Update(float deltaT) {
 
     auto [pos, rot] = PhysXUtil::posAndRotFromTransform(&transform);
 
-    worldObj->SetPos(pos);
-    worldObj->SetRot(rot);
+    worldObj->SetPos(pos, false);
+    worldObj->SetRot(rot, false);
   }
 
   std::for_each(objects.begin(), objects.end(), [](Object *o) { o->UpdateComponents(); });

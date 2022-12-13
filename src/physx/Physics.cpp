@@ -2,6 +2,7 @@
 // Created by steve on 12/11/2022.
 //
 
+#include <vector>
 #include "Physics.h"
 #include "omnipvd/PxOmniPvd.h"
 #include "pvdruntime/OmniPvdWriter.h"
@@ -24,7 +25,7 @@ void Physics::init() {
   }
   OmniPvdWriter *omniWriter = omniPvd->getWriter();
   // Uncomment for debugging the OmniPvd write stream
-  omniWriter->setLogFunction([](char *logMsg) {std::cout << logMsg << std::endl;});
+  //  omniWriter->setLogFunction([](char *logMsg) {std::cout << logMsg << std::endl;});
   OmniPvdFileWriteStream *omniFileWriteStream = omniPvd->getFileWriteStream();
   if (omniWriter && omniFileWriteStream) {
     omniWriter->setWriteStream((OmniPvdWriteStream *) omniFileWriteStream);
@@ -36,7 +37,7 @@ void Physics::init() {
     Log::fatalf("PxCreatePhysics failed!");
 
   // Once the PhysX instance is created with a non-zero OmniPVD object, one can now proced to set the simulation
-  omniFileWriteStream->setFileName("myoutputfile.ovd");
+  omniFileWriteStream->setFileName("output.ovd");
   omniPvd->startSampling();
 
   physx::PxSceneDesc sceneDesc(physics->getTolerancesScale());
@@ -46,19 +47,27 @@ void Physics::init() {
   sceneDesc.cpuDispatcher = dispatcher;
   sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
   pxScene = physics->createScene(sceneDesc);
-  pxScene->setFlag(physx::PxSceneFlag::eENABLE_ACTIVE_ACTORS, true);
+//  pxScene->setFlag(physx::PxSceneFlag::eENABLE_ACTIVE_ACTORS, true);
 
   Log::logf("PhysX initialized!");
 }
 
-physx::PxActor **Physics::simulate(float deltaT, int &numActors) {
+std::vector<physx::PxActor *> Physics::simulate(float deltaT, int &numActors) {
   pxScene->simulate(physx::PxReal(deltaT));
   /* blocking */
   pxScene->fetchResults(true);
 
   physx::PxU32 pxNumActors;
-  physx::PxActor **actors = pxScene->getActiveActors(pxNumActors);
-  numActors = pxNumActors;
+//  physx::PxActor **actors = pxScene->getActiveActors(pxNumActors);
+//  numActors = pxNumActors;
+
+  physx::PxU32 nbActors = pxScene->getNbActors(
+          physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC);
+  std::vector<physx::PxActor *> actors(nbActors);
+  pxScene->getActors(physx::PxActorTypeFlag::eRIGID_DYNAMIC | physx::PxActorTypeFlag::eRIGID_STATIC, &actors[0], nbActors);
+
+  numActors = nbActors;
+
   Log::logf("Simulating %f seconds. Updating %d physics actors", deltaT, numActors);
   return actors;
 }

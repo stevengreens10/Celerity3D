@@ -2,9 +2,9 @@
 #include "../../physx/PhysXUtil.h"
 #include <algorithm>
 
-Object *Object::SetPos(glm::vec3 p) {
+Object *Object::SetPos(glm::vec3 p, bool updatePhysics) {
   pos = p;
-  if (physActor != nullptr) {
+  if (physActor != nullptr && updatePhysics) {
     physx::PxTransform t = physActor->getGlobalPose();
     t.p = PhysXUtil::glmVec3ToPhys(pos);
     physActor->setGlobalPose(t);
@@ -13,9 +13,9 @@ Object *Object::SetPos(glm::vec3 p) {
   return this;
 }
 
-Object *Object::Translate(glm::vec3 p) {
+Object *Object::Translate(glm::vec3 p, bool updatePhysics) {
   pos += p;
-  if (physActor != nullptr) {
+  if (physActor != nullptr && updatePhysics) {
     physx::PxTransform t = physActor->getGlobalPose();
     t.p = PhysXUtil::glmVec3ToPhys(pos);
     physActor->setGlobalPose(t);
@@ -62,10 +62,10 @@ Object *Object::SetScale(glm::vec3 s) {
   return this;
 }
 
-Object *Object::SetRot(glm::vec3 r) {
+Object *Object::SetRot(glm::vec3 r, bool updatePhysics) {
   rot = r;
 
-  if (physActor != nullptr) {
+  if (physActor != nullptr && updatePhysics) {
     physx::PxTransform t = physActor->getGlobalPose();
     t.q = PhysXUtil::glmVec3RotToPhysQuat(rot);
     physActor->setGlobalPose(t);
@@ -108,7 +108,6 @@ void Object::AddComponent(Component *c) {
   c->object = this;
   components.emplace_back(c);
 }
-
 
 void Object::StartComponents() {
   std::for_each(components.begin(), components.end(), [](Component *c) { c->Start(); });

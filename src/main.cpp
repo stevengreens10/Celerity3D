@@ -59,7 +59,7 @@ void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &light
 
   physx::PxRigidActor *cubeActor = Physics::createRigidDynamic(cubePos, glm::vec3(0.0f), glm::vec3(1.0f), physMat);
   cube->SetPhysicsActor(cubeActor);
-  cube->AddComponent(new MoveComponent());
+//  cube->AddComponent(new MoveComponent());
   world.AddObject(cube);
 
   auto wallMat = new Material("Wall");
@@ -149,6 +149,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     int framesSinceAdd = 30;
     // --- MAIN LOOP
     auto lastFrameTime = std::chrono::high_resolution_clock::now();
+    // TODO: Remove
+    Object *latestObject = world.Objects()[1];
     while (true) {
       auto start = std::chrono::high_resolution_clock::now();
       framesSinceAdd++;
@@ -159,7 +161,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       }
 
       renderer.NewFrame();
-      Log::logf("Time at start loop: %f ms",
+      Log::debugf("Time at start loop: %f ms",
                 std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
       start = std::chrono::high_resolution_clock::now();
@@ -222,7 +224,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       ImGui::Text("%.3f ms/frame (%.1f) FPS", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
       ImGui::End();
 #endif
-      Log::logf("Time taken to GUI: %f ms",
+      Log::debugf("Time taken to GUI: %f ms",
                 std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
       start = std::chrono::high_resolution_clock::now();
@@ -234,7 +236,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
           o->material.get().matData.diffuseColor = l->color;
         }
       }
-      Log::logf("Time taken to update lights: %f ms",
+      Log::debugf("Time taken to update lights: %f ms",
                 std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
 
@@ -276,11 +278,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         cubeActor->setAngularDamping(0.5f);
         c->SetPhysicsActor(cubeActor);
         world.AddObject(c);
+        latestObject = c;
       }
 
       start = std::chrono::high_resolution_clock::now();
       renderer.Draw(world);
-      Log::logf("Time taken to render: %f ms",
+      Log::debugf("Time taken to render: %f ms",
                 std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
 //      Renderer::Clear();
@@ -312,7 +315,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
       start = std::chrono::high_resolution_clock::now();
       renderer.EndFrame(Application::window);
-      Log::logf("Time taken to end frame: %f ms",
+      Log::debugf("Time taken to end frame: %f ms",
                 std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
       start = std::chrono::high_resolution_clock::now();
@@ -322,10 +325,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
       if (simulatePhysics)
         world.Update(Application::deltaT);
 
-      Log::logf("Time taken to simulate physics: %f ms",
+      Log::debugf("Time taken to simulate physics: %f ms",
                 std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start).count());
 
       lastFrameTime = endFrameTime;
+
+      auto p1 = latestObject->Pos();
+      auto p2 = ((physx::PxRigidActor *)latestObject->PhysicsActor())->getGlobalPose().p;
+      Log::logf("Engine pos: (%f,%f,%f) | PhysX pos: (%f, %f, %f)", p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
+
+      auto r1 = latestObject->Rot();
+      auto r2 = PhysXUtil::physQuatRotToGlmEuler(((physx::PxRigidActor *)latestObject->PhysicsActor())->getGlobalPose().q);
+      Log::logf("Engine rot: (%f,%f,%f) | PhysX rot: (%f, %f, %f)", r1.x, r1.y, r1.z, r2.x, r2.y, r2.z);
+
     }
     // Cleanup
     Physics::cleanup();

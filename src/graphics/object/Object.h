@@ -38,11 +38,11 @@ public:
 
     inline const glm::vec3 &Pos() const { return pos; }
 
-    Object *SetPos(glm::vec3 p);
+    Object *SetPos(glm::vec3 p, bool updatePhysics = true);
 
-    Object *SetRot(glm::vec3 r);
+    Object *SetRot(glm::vec3 r, bool updatePhysics = true);
 
-    Object *Translate(glm::vec3 p);
+    Object *Translate(glm::vec3 p, bool updatePhysics = true);
 
     Object *SetScale(float s);
 
