@@ -17,51 +17,51 @@ public:
     }
 
     // Returns <pos, rot>
-    static std::pair<glm::vec3, glm::vec3> posAndRotFromTransform(physx::PxTransform *transform) {
+    static std::pair<glm::vec3, glm::quat> posAndRotFromTransform(physx::PxTransform *transform) {
       glm::vec3 pos, rot;
       physx::PxQuat q = transform->q;
 
-      rot = physQuatRotToGlmEuler(q);
+//      rot = physQuatRotToGlmEuler(q);
 
       pos.x = transform->p.x;
       pos.y = transform->p.y;
       pos.z = transform->p.z;
-      return std::make_pair(pos, rot);
+      return std::make_pair(pos, physQuatToGlm(q));
     }
 
     static physx::PxVec3 glmVec3ToPhys(glm::vec3 v) {
       return physx::PxVec3{v.x, v.y, v.z};
     }
 
-    static glm::vec3 physVec3ToGlm(const physx::PxVec3& v) {
+    static glm::vec3 physVec3ToGlm(const physx::PxVec3 &v) {
       return glm::vec3{v.x, v.y, v.z};
     }
 
-    static glm::quat physQuatToGlm(const physx::PxQuat& q) {
-      return glm::quat {q.w, q.x, q.y, q.z};
+    static glm::quat physQuatToGlm(const physx::PxQuat &q) {
+      return glm::quat{q.w, q.x, q.y, q.z};
     }
 
-    static physx::PxQuat glmQuatToPhys(const glm::quat& q) {
+    static physx::PxQuat glmQuatToPhys(const glm::quat &q) {
       return physx::PxQuat{q.x, q.y, q.z, q.w};
     }
 
-    static glm::vec3 physQuatRotToGlmEuler(const physx::PxQuat& q) {
+    static glm::vec3 physQuatRotToGlmEuler(const physx::PxQuat &q) {
       glm::quat glmQ = physQuatToGlm(q);
       glm::vec3 rot = glm::degrees(glm::eulerAngles(glmQ));
-      Log::logf("Converting phys quat {%f, %f, %f, %f} to euler {%f, %f, %f}", q.x, q.y, q.z, q.w, rot.x, rot.y, rot.z);
+//      Log::logf("Converting phys quat {%f, %f, %f, %f} to euler {%f, %f, %f}", q.x, q.y, q.z, q.w, rot.x, rot.y, rot.z);
       return rot;
     }
 
     static physx::PxQuat glmVec3RotToPhysQuat(glm::vec3 rotDeg) {
       glm::vec3 rot = glm::radians(rotDeg);
 
-      const double c1 = cos( rot.x / 2 );
-      const double c2 = cos( rot.y / 2 );
-      const double c3 = cos( rot.z / 2 );
+      const double c1 = cos(rot.x / 2);
+      const double c2 = cos(rot.y / 2);
+      const double c3 = cos(rot.z / 2);
 
-      const double s1 = sin( rot.x / 2 );
-      const double s2 = sin( rot.y / 2 );
-      const double s3 = sin( rot.z / 2 );
+      const double s1 = sin(rot.x / 2);
+      const double s2 = sin(rot.y / 2);
+      const double s3 = sin(rot.z / 2);
 
       physx::PxQuat q;
 
@@ -82,7 +82,7 @@ public:
 //      q.y = cr * sp * cy + sr * cp * sy;
 //      q.z = cr * cp * sy - sr * sp * cy;
 
-      Log::logf("Converting euler {%f, %f, %f} to phys quat {%f, %f, %f, %f}", rotDeg.x, rotDeg.y, rotDeg.z, q.x, q.y, q.z, q.w);
+//      Log::logf("Converting euler {%f, %f, %f} to phys quat {%f, %f, %f, %f}", rotDeg.x, rotDeg.y, rotDeg.z, q.x, q.y, q.z, q.w);
       return q;
     }
 };

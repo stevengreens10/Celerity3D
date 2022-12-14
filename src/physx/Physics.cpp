@@ -32,7 +32,7 @@ void Physics::init() {
   }
 
   physics = PxCreatePhysics(PX_PHYSICS_VERSION, *pxFoundation,
-                            physx::PxTolerancesScale(100, 981), true, nullptr, omniPvd);
+                            physx::PxTolerancesScale(), true, nullptr, omniPvd);
   if (!physics)
     Log::fatalf("PxCreatePhysics failed!");
 
@@ -86,8 +86,6 @@ physx::PxRigidDynamic *Physics::createRigidDynamic(glm::vec3 pos, glm::vec3 rot,
   physx::PxRigidDynamic *rigidDynamic = physics->createRigidDynamic(transform);
   rigidDynamic->attachShape(*shape);
 
-  // TODO: Better solution
-  rigidDynamic->setSleepThreshold(0.0f);
 
   return rigidDynamic;
 }

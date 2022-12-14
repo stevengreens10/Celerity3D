@@ -26,6 +26,10 @@ target_link_directories(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/lib
         PRIVATE ${CMAKE_BINARY_DIR}/bin
         PRIVATE ./vendor/physx/lib)
 
+if(MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /W0)
+endif()
+
 
 file(GLOB PhysX_DLLs
         "./vendor/PhysX/lib/*.dll"

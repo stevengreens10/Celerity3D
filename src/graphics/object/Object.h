@@ -1,7 +1,6 @@
 #ifndef GUI_OBJECT_H
 #define GUI_OBJECT_H
 
-#include "glm/vec3.hpp"
 #include "../VertexArray.h"
 #include "../IndexBuffer.h"
 #include "../Shader.h"
@@ -9,6 +8,8 @@
 #include "../Material.h"
 #include "PxPhysicsAPI.h"
 #include "../../Component.h"
+#include "glm/detail/type_quat.hpp"
+#include "glm/gtc/quaternion.hpp"
 
 // Forward declaration
 class Component;
@@ -18,7 +19,8 @@ private:
     glm::vec3 pos{};
     glm::vec3 scale{};
     // In degrees
-    glm::vec3 rot{};
+    glm::vec3 rotEuler{};
+    glm::quat rotQuat;
     glm::mat4 model;
 
     physx::PxRigidActor *physActor = nullptr;
@@ -33,7 +35,8 @@ public:
     explicit Object() {
       pos = glm::vec3(0.0f);
       scale = glm::vec3(1.0f);
-      rot = glm::vec3(0.0f);
+      rotEuler = glm::vec3(0.0f);
+      rotQuat = glm::quat(1, 0, 0, 0);
     }
 
     inline const glm::vec3 &Pos() const { return pos; }
@@ -41,6 +44,8 @@ public:
     Object *SetPos(glm::vec3 p, bool updatePhysics = true);
 
     Object *SetRot(glm::vec3 r, bool updatePhysics = true);
+
+    Object *SetRot(glm::quat r, bool updatePhysics = true);
 
     Object *Translate(glm::vec3 p, bool updatePhysics = true);
 
@@ -52,7 +57,7 @@ public:
 
     inline const glm::vec3 &Scale() const { return scale; }
 
-    inline const glm::vec3 &Rot() const { return rot; }
+    inline const glm::vec3 &Rot() const { return rotEuler; }
 
     inline physx::PxActor *PhysicsActor() { return physActor; }
 

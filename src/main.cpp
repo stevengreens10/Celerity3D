@@ -47,20 +47,44 @@ void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &light
           ->SetScale(groundScale)
           ->SetTexScale(100.0f);
 
-  PhysicsMaterial physMat{0.5, 0.5, 0.6};
+  PhysicsMaterial physMat{0.9, 0.9, 0.1};
   physx::PxRigidActor *groundActor = Physics::createRigidStatic(groundPos, glm::vec3(0.0f), groundScale, physMat);
   ground->SetPhysicsActor(groundActor);
   world.AddObject(ground);
 
   Mesh *cube = new Mesh("assets/mesh/cube.obj");
   const glm::vec cubePos = glm::vec3(0, 5, 0);
-  cube->SetPos(cubePos)
-          ->SetScale(1);
+  glm::vec3 cubeRot(60.0f, 0.0f, 0.0f);
+  cube->SetPos(cubePos)->SetRot(cubeRot)->SetScale(1);
 
-  physx::PxRigidDynamic *cubeActor = Physics::createRigidDynamic(cubePos, glm::vec3(0.0f), glm::vec3(1.0f), physMat);
+  physx::PxRigidDynamic *cubeActor = Physics::createRigidDynamic(cubePos, cubeRot, glm::vec3(1.0f),
+                                                                 physMat);
   cube->SetPhysicsActor(cubeActor);
-//  cube->AddComponent(new MoveComponent());
   world.AddObject(cube);
+
+  float z = 5;
+  for (int k = 0; k < 2; k++) {
+    float x = 5;
+    for (int j = 0; j < 10; j++) {
+      float y = -1.4;
+      for (int i = 0; i < 10; i++) {
+        const glm::vec p = glm::vec3(x, y, z);
+        auto *cMat = new Material("cubemat");
+        cMat->matData.diffuseColor = color(rand() % 255, rand() % 255, rand() % 255, 255);
+        Cube *c = new Cube(*cMat);
+        c->SetPos(p)->SetScale(0.5);
+
+        physx::PxRigidDynamic *rigidDynamic = Physics::createRigidDynamic(p, glm::vec3(0.0f), glm::vec3(0.5f),
+                                                                          physMat);
+        c->SetPhysicsActor(rigidDynamic);
+        world.AddObject(c);
+        y += 1.0;
+      }
+      x += 1.0;
+    }
+    z++;
+  }
+
 
   auto wallMat = new Material("Wall");
   wallMat->matData.diffuseColor = glm::vec3(color(84, 157, 235, 255));
@@ -149,8 +173,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     int framesSinceAdd = 30;
     // --- MAIN LOOP
     auto lastFrameTime = std::chrono::high_resolution_clock::now();
-    // TODO: Remove
-    Object *latestObject = world.Objects()[1];
     while (true) {
       auto start = std::chrono::high_resolution_clock::now();
       framesSinceAdd++;
@@ -275,7 +297,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         c->SetPos(cubePos)
                 ->SetScale(0.5f);
 
-        PhysicsMaterial physMat{0.5f, 0.5f, 0.6f};
+        PhysicsMaterial physMat{0.5f, 0.5f, 0.1f};
         glm::vec3 velocity = glm::normalize(Camera::Dir()) * 30.0f;
         physx::PxRigidDynamic *cubeActor = Physics::createRigidDynamic(cubePos, glm::vec3(0.0f), glm::vec3(0.5f),
                                                                        physMat);
@@ -283,7 +305,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
         cubeActor->setAngularDamping(0.5f);
         c->SetPhysicsActor(cubeActor);
         world.AddObject(c);
-        latestObject = c;
       }
 
       start = std::chrono::high_resolution_clock::now();
