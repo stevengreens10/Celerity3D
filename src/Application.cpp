@@ -17,7 +17,7 @@ void Application::Init() {
 }
 
 void Application::Update() {
-  float speed = 0.1f;
+  float speed = 10 * deltaT;
 
   glm::vec3 horizontalDir = glm::normalize(glm::cross(glm::vec3(0, 1, 0), Camera::Dir())) * speed;
   if (Input::IsPressed('A')) {

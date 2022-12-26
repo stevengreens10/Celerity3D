@@ -70,9 +70,6 @@ Object *Object::SetRot(glm::vec3 r, bool updatePhysics) {
   rotQuat = rotate(rotQuat, glm::radians(r.y), glm::vec3(0, 1, 0));
   rotQuat = rotate(rotQuat, glm::radians(r.z), glm::vec3(0, 0, 1));
 
-  Log::logf("Converting XYZ euler {%f, %f, %f} to quat {%f, %f, %f, %f}", r.x, r.y, r.z, rotQuat.w, rotQuat.x,
-            rotQuat.y, rotQuat.z);
-
   if (physActor != nullptr && updatePhysics) {
     physx::PxTransform t = physActor->getGlobalPose();
     t.q = PhysXUtil::glmQuatToPhys(rotQuat);
@@ -87,9 +84,6 @@ Object *Object::SetRot(glm::quat r, bool updatePhysics) {
   rotQuat = r;
 
   rotEuler = glm::degrees(glm::eulerAngles(rotQuat));
-
-  Log::logf("Converting quat {%f, %f, %f, %f} to XYZ euler {%f, %f, %f}", rotQuat.w, rotQuat.x, rotQuat.y, rotQuat.z,
-            rotEuler.x, rotEuler.y, rotEuler.z);
 
   if (physActor != nullptr && updatePhysics) {
     physx::PxTransform t = physActor->getGlobalPose();

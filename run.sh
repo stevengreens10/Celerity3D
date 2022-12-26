@@ -1,2 +1,2 @@
 #!/bin/bash
-./cmake-build-release/GUI.exe
+./cmake-build-debug/GUI.exe

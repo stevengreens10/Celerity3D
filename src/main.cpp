@@ -53,8 +53,8 @@ void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &light
   world.AddObject(ground);
 
   Mesh *cube = new Mesh("assets/mesh/cube.obj");
-  const glm::vec cubePos = glm::vec3(0, 5, 0);
-  glm::vec3 cubeRot(60.0f, 0.0f, 0.0f);
+  const glm::vec cubePos = glm::vec3(0, 0, 0);
+  glm::vec3 cubeRot(0.0f, 0.0f, 0.0f);
   cube->SetPos(cubePos)->SetRot(cubeRot)->SetScale(1);
 
   physx::PxRigidDynamic *cubeActor = Physics::createRigidDynamic(cubePos, cubeRot, glm::vec3(1.0f),
@@ -63,11 +63,11 @@ void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &light
   world.AddObject(cube);
 
   float z = 5;
-  for (int k = 0; k < 2; k++) {
+  for (int k = 0; k < 5; k++) {
     float x = 5;
-    for (int j = 0; j < 10; j++) {
+    for (int j = 0; j < 7; j++) {
       float y = -1.4;
-      for (int i = 0; i < 10; i++) {
+      for (int i = 0; i < 7; i++) {
         const glm::vec p = glm::vec3(x, y, z);
         auto *cMat = new Material("cubemat");
         cMat->matData.diffuseColor = color(rand() % 255, rand() % 255, rand() % 255, 255);
@@ -78,11 +78,11 @@ void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &light
                                                                           physMat);
         c->SetPhysicsActor(rigidDynamic);
         world.AddObject(c);
-        y += 1.0;
+        y += 1.00001;
       }
-      x += 1.0;
+      x += 1.00001;
     }
-    z++;
+    z += 2;
   }
 
 
@@ -116,10 +116,10 @@ void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &light
                           ->SetPos({0, -roomSize, 0})
                           ->SetScale({roomSize, 0.1, roomSize}));*/
 
-  /*auto l = new LightSource();
+  auto l = new LightSource();
   l->type = LIGHT_DIR;
   l->idx = 0;
-  l->pos = glm::vec3(1, 1, 1);
+  l->pos = glm::vec3(-1, 1, -1);
   l->pos *= 10;
   l->dir = glm::normalize(-l->pos);
   l->intensities = glm::vec3(0.12f, 1.0f, 0.3f);
@@ -131,8 +131,8 @@ void SetupScene(World &world, std::unordered_map<LightSource *, Object *> &light
   c->SetPos(l->pos)
           ->SetScale(0.2f)
           ->useLighting = false;
-  world.AddObject(nullptr, c);
-  lightToObj[l] = c;*/
+  world.AddObject(c);
+  lightToObj[l] = c;
 
   Log::logf("Done populating world");
 }
@@ -228,11 +228,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
               if (ImGui::SliderFloat3("Rotation", &(r.x), 0, 359))
                 sceneObj->SetRot(r);
               ImGui::NewLine();
-              physx::PxActor *pActor = sceneObj->PhysicsActor();
-              if (pActor && pActor->getType() == physx::PxActorType::eRIGID_DYNAMIC) {
-                ImGui::Text("Is sleeping? %s", ((physx::PxRigidDynamic *) (pActor))->isSleeping() ? "true" : "false");
-                ImGui::NewLine();
-              }
+//              physx::PxActor *pActor = sceneObj->PhysicsActor();
+//              if (pActor && pActor->getType() == physx::PxActorType::eRIGID_DYNAMIC) {
+//                ImGui::Text("Is sleeping? %s", ((physx::PxRigidDynamic *) (pActor))->isSleeping() ? "true" : "false");
+//                ImGui::NewLine();
+//              }
               if (typeid(*sceneObj) == typeid(Mesh)) {
                 auto sceneMesh = (Mesh *) sceneObj;
                 for (auto &submesh: sceneMesh->meshes) {
@@ -298,11 +298,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
                 ->SetScale(0.5f);
 
         PhysicsMaterial physMat{0.5f, 0.5f, 0.1f};
-        glm::vec3 velocity = glm::normalize(Camera::Dir()) * 30.0f;
+        glm::vec3 velocity = glm::normalize(Camera::Dir()) * 50.0f;
         physx::PxRigidDynamic *cubeActor = Physics::createRigidDynamic(cubePos, glm::vec3(0.0f), glm::vec3(0.5f),
                                                                        physMat);
         cubeActor->setLinearVelocity(physx::PxVec3(velocity.x, velocity.y, velocity.z));
         cubeActor->setAngularDamping(0.5f);
+        cubeActor->setMass(3);
         c->SetPhysicsActor(cubeActor);
         world.AddObject(c);
       }
