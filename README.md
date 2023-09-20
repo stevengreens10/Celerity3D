@@ -1,6 +1,6 @@
 # Celerity3D
 
-This is a personal project for me to what it takes to build an engine using OpenGL and Win32 programming.
+This is a personal project for me to learn what it takes to build an engine using OpenGL and Win32 programming.
 
 ![](assets/images/example.gif)
 ![](assets/images/lights.gif)
