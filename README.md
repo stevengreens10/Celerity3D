@@ -12,6 +12,11 @@ This is a personal project for me to learn OpenGL and Win32 programming.
 - Blinn phong reflection model for lighting
 - FPS style controls to fly around scene
 - ImGui support to create windows and change values live
+- Skybox rendering.
+- Shadow mapping (current implementation supports up to 5 shadow-casting lights).
+- PhysX physics engine integration for rigid body dynamics.
+- A component system for attaching custom behaviors to scene objects.
+- Enhanced material system with support for ambient, diffuse, specular, shininess, and bump maps.
 ## Inputs
 - W/A/S/D + Mouse to move around the scene
 - ESC to regain mouse control
